@@ -1,0 +1,178 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "D:\\GameDev\\Unity Hub\\Projects\\Horror_Game_Ai\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{BD29BFA3-6A08-1D33-C384-64D36E09BDA9}|Assembly-CSharp.csproj|D:\\GameDev\\Unity Hub\\Projects\\Horror_Game_Ai\\assets\\ai\\director.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{BD29BFA3-6A08-1D33-C384-64D36E09BDA9}|Assembly-CSharp.csproj|solutionrelative:assets\\ai\\director.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{BD29BFA3-6A08-1D33-C384-64D36E09BDA9}|Assembly-CSharp.csproj|D:\\GameDev\\Unity Hub\\Projects\\Horror_Game_Ai\\assets\\ai\\actions.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{BD29BFA3-6A08-1D33-C384-64D36E09BDA9}|Assembly-CSharp.csproj|solutionrelative:assets\\ai\\actions.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{BD29BFA3-6A08-1D33-C384-64D36E09BDA9}|Assembly-CSharp.csproj|D:\\GameDev\\Unity Hub\\Projects\\Horror_Game_Ai\\assets\\roomscript\\rooms.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{BD29BFA3-6A08-1D33-C384-64D36E09BDA9}|Assembly-CSharp.csproj|solutionrelative:assets\\roomscript\\rooms.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{BD29BFA3-6A08-1D33-C384-64D36E09BDA9}|Assembly-CSharp.csproj|d:\\gamedev\\unity hub\\projects\\horror_game_ai\\assets\\ai\\fieldofview.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{BD29BFA3-6A08-1D33-C384-64D36E09BDA9}|Assembly-CSharp.csproj|solutionrelative:assets\\ai\\fieldofview.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{BD29BFA3-6A08-1D33-C384-64D36E09BDA9}|Assembly-CSharp.csproj|d:\\gamedev\\unity hub\\projects\\horror_game_ai\\assets\\ai\\hunter_basic.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{BD29BFA3-6A08-1D33-C384-64D36E09BDA9}|Assembly-CSharp.csproj|solutionrelative:assets\\ai\\hunter_basic.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{BD29BFA3-6A08-1D33-C384-64D36E09BDA9}|Assembly-CSharp.csproj|D:\\GameDev\\Unity Hub\\Projects\\Horror_Game_Ai\\assets\\firstpersoncharacter\\scripts\\playermovement.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{BD29BFA3-6A08-1D33-C384-64D36E09BDA9}|Assembly-CSharp.csproj|solutionrelative:assets\\firstpersoncharacter\\scripts\\playermovement.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{30378016-0241-F713-985A-EAFF24C4036A}|Assembly-CSharp-Editor.csproj|D:\\GameDev\\Unity Hub\\Projects\\Horror_Game_Ai\\assets\\editor\\foveditor.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{30378016-0241-F713-985A-EAFF24C4036A}|Assembly-CSharp-Editor.csproj|solutionrelative:assets\\editor\\foveditor.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{BD29BFA3-6A08-1D33-C384-64D36E09BDA9}|Assembly-CSharp.csproj|D:\\GameDev\\Unity Hub\\Projects\\Horror_Game_Ai\\assets\\firstpersoncharacter\\scripts\\playercamera.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{BD29BFA3-6A08-1D33-C384-64D36E09BDA9}|Assembly-CSharp.csproj|solutionrelative:assets\\firstpersoncharacter\\scripts\\playercamera.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{BD29BFA3-6A08-1D33-C384-64D36E09BDA9}|Assembly-CSharp.csproj|D:\\GameDev\\Unity Hub\\Projects\\Horror_Game_Ai\\assets\\firstpersoncharacter\\scripts\\movecamera.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{BD29BFA3-6A08-1D33-C384-64D36E09BDA9}|Assembly-CSharp.csproj|solutionrelative:assets\\firstpersoncharacter\\scripts\\movecamera.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Director.cs",
+              "DocumentMoniker": "D:\\GameDev\\Unity Hub\\Projects\\Horror_Game_Ai\\Assets\\AI\\Director.cs",
+              "RelativeDocumentMoniker": "Assets\\AI\\Director.cs",
+              "ToolTip": "D:\\GameDev\\Unity Hub\\Projects\\Horror_Game_Ai\\Assets\\AI\\Director.cs",
+              "RelativeToolTip": "Assets\\AI\\Director.cs",
+              "ViewState": "AQIAAJMAAAAAAAAAAAAmwKsAAAAYAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-03-22T19:58:03.944Z",
+              "IsPinned": true,
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "Actions.cs",
+              "DocumentMoniker": "D:\\GameDev\\Unity Hub\\Projects\\Horror_Game_Ai\\Assets\\AI\\Actions.cs",
+              "RelativeDocumentMoniker": "Assets\\AI\\Actions.cs",
+              "ToolTip": "D:\\GameDev\\Unity Hub\\Projects\\Horror_Game_Ai\\Assets\\AI\\Actions.cs",
+              "RelativeToolTip": "Assets\\AI\\Actions.cs",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAoAAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-03-22T19:51:59.595Z",
+              "IsPinned": true,
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "Rooms.cs",
+              "DocumentMoniker": "D:\\GameDev\\Unity Hub\\Projects\\Horror_Game_Ai\\Assets\\RoomScript\\Rooms.cs",
+              "RelativeDocumentMoniker": "Assets\\RoomScript\\Rooms.cs",
+              "ToolTip": "D:\\GameDev\\Unity Hub\\Projects\\Horror_Game_Ai\\Assets\\RoomScript\\Rooms.cs",
+              "RelativeToolTip": "Assets\\RoomScript\\Rooms.cs",
+              "ViewState": "AQIAAAUAAAAAAAAAAAAQwDwAAAAFAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-03-23T15:16:10.633Z",
+              "IsPinned": true,
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "FieldOfView.cs",
+              "DocumentMoniker": "D:\\GameDev\\Unity Hub\\Projects\\Horror_Game_Ai\\Assets\\AI\\FieldOfView.cs",
+              "RelativeDocumentMoniker": "Assets\\AI\\FieldOfView.cs",
+              "ToolTip": "D:\\GameDev\\Unity Hub\\Projects\\Horror_Game_Ai\\Assets\\AI\\FieldOfView.cs",
+              "RelativeToolTip": "Assets\\AI\\FieldOfView.cs",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAD8AAAAUAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-03-24T13:07:02.401Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "FoVEditor.cs",
+              "DocumentMoniker": "D:\\GameDev\\Unity Hub\\Projects\\Horror_Game_Ai\\Assets\\Editor\\FoVEditor.cs",
+              "RelativeDocumentMoniker": "Assets\\Editor\\FoVEditor.cs",
+              "ToolTip": "D:\\GameDev\\Unity Hub\\Projects\\Horror_Game_Ai\\Assets\\Editor\\FoVEditor.cs",
+              "RelativeToolTip": "Assets\\Editor\\FoVEditor.cs",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAABYAAABaAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-03-24T13:31:43.094Z"
+            }
+          ]
+        },
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "Hunter_Basic.cs",
+              "DocumentMoniker": "D:\\GameDev\\Unity Hub\\Projects\\Horror_Game_Ai\\Assets\\AI\\Hunter_Basic.cs",
+              "RelativeDocumentMoniker": "Assets\\AI\\Hunter_Basic.cs",
+              "ToolTip": "D:\\GameDev\\Unity Hub\\Projects\\Horror_Game_Ai\\Assets\\AI\\Hunter_Basic.cs",
+              "RelativeToolTip": "Assets\\AI\\Hunter_Basic.cs",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAACkAAAAMAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-03-22T20:06:29.564Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "PlayerMovement.cs",
+              "DocumentMoniker": "D:\\GameDev\\Unity Hub\\Projects\\Horror_Game_Ai\\Assets\\FirstPersonCharacter\\Scripts\\PlayerMovement.cs",
+              "RelativeDocumentMoniker": "Assets\\FirstPersonCharacter\\Scripts\\PlayerMovement.cs",
+              "ToolTip": "D:\\GameDev\\Unity Hub\\Projects\\Horror_Game_Ai\\Assets\\FirstPersonCharacter\\Scripts\\PlayerMovement.cs",
+              "RelativeToolTip": "Assets\\FirstPersonCharacter\\Scripts\\PlayerMovement.cs",
+              "ViewState": "AQIAADwAAAAAAAAAAAAowEEAAAAQAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-03-21T18:12:29.129Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "MoveCamera.cs",
+              "DocumentMoniker": "D:\\GameDev\\Unity Hub\\Projects\\Horror_Game_Ai\\Assets\\FirstPersonCharacter\\Scripts\\MoveCamera.cs",
+              "RelativeDocumentMoniker": "Assets\\FirstPersonCharacter\\Scripts\\MoveCamera.cs",
+              "ToolTip": "D:\\GameDev\\Unity Hub\\Projects\\Horror_Game_Ai\\Assets\\FirstPersonCharacter\\Scripts\\MoveCamera.cs",
+              "RelativeToolTip": "Assets\\FirstPersonCharacter\\Scripts\\MoveCamera.cs",
+              "ViewState": "AQIAAFMAAAAAAAAAAAAwwBUAAAAdAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-03-15T16:21:03.43Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "PlayerCamera.cs",
+              "DocumentMoniker": "D:\\GameDev\\Unity Hub\\Projects\\Horror_Game_Ai\\Assets\\FirstPersonCharacter\\Scripts\\PlayerCamera.cs",
+              "RelativeDocumentMoniker": "Assets\\FirstPersonCharacter\\Scripts\\PlayerCamera.cs",
+              "ToolTip": "D:\\GameDev\\Unity Hub\\Projects\\Horror_Game_Ai\\Assets\\FirstPersonCharacter\\Scripts\\PlayerCamera.cs",
+              "RelativeToolTip": "Assets\\FirstPersonCharacter\\Scripts\\PlayerCamera.cs",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAwAAAAEAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-03-15T12:40:32.195Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

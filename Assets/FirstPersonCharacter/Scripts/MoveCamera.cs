@@ -129,6 +129,4 @@ public class MoveCamera : MonoBehaviour
             cameraState = MovementState.walking;
         }
     }
-
-
 }
