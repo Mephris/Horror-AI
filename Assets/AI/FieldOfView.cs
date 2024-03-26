@@ -1,7 +1,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 
 public class FieldOfView : MonoBehaviour
@@ -40,7 +39,7 @@ public class FieldOfView : MonoBehaviour
             }
             else if(targetObjRef.CompareTag("Enemy"))
             {
-                Actions.HunterCanSeePlayer(canSeeTarget);
+                
             }
             
         }
