@@ -23,24 +23,21 @@ public class Director : MonoBehaviour
     //[SerializeField] private float pathfindingDelay = 20.0f;
 
     [Header("Enemy Information")]
-    [SerializeField] private Transform hunterPos;
+    [SerializeField] private Transform hunter;
     private NavMeshAgent hunterAgent;
 
     //We will use seperate NavMeshAgent in order to create a position which hunter will be able to take.
     private Transform Endpoint;
     private Vector3 EndpointPos;
-    private Vector3 LastEndpoint;
 
     private Rooms roomToTarget ;
 
     //Command time interval so that the command isnt sent out constantly, you can say its an interval in which every x seconds a command is sent to hunter
 
-    private float lastExecutionTime = 0f;
-    private float executionInterval = 10f;
-
     //Hunter commands is a simple state machine that we will use, States will switch according to tension Meter
     [Header("Current State/Task")]
     public Commands CurrentState;
+    private Commands PreviousState;
     public enum Commands
     {
         HighPriorityIncreaseTension,
@@ -69,7 +66,7 @@ public class Director : MonoBehaviour
     {
         TensionCalculation();
         StateHandler();
-        GiveCommandToMove();
+
     }
 
     private void Awake()
@@ -130,17 +127,16 @@ public class Director : MonoBehaviour
                 break;
 
         }
-       
+        GiveCommandToMove();
     }
 
     private void GiveCommandToMove()
     {
-        if (Time.time - lastExecutionTime >= executionInterval)
+        if (PreviousState != CurrentState || CurrentState == Commands.HighPriorityIncreaseTension)
         {
             Endpoint.transform.position = EndpointPos;
             Actions.CommandToMove(Endpoint.position);
-            LastEndpoint = Endpoint.position;
-            lastExecutionTime = Time.time;
+            PreviousState = CurrentState;
         }
     }
 
@@ -151,8 +147,8 @@ public class Director : MonoBehaviour
     {
         if (Time.time - calculationElapsedTime >= calculationInterval)
         {
-            tension += Vector3.Distance(player.position, hunterPos.position) < 10f ? 1 :
-                       Vector3.Distance(player.position, hunterPos.position) > 12f ? -1 : 0;
+            tension += Vector3.Distance(player.position, hunter.position) < 10f ? 1 :
+                       Vector3.Distance(player.position, hunter.position) > 12f ? -1 : 0;
 
             calculationElapsedTime = Time.time;
         }
@@ -195,7 +191,7 @@ public class Director : MonoBehaviour
     }
     private void PosFarFromPlayer()
     {
-        Room targetRoom = this.roomToTarget.GetFurthestRoom(player.position);
+        Room targetRoom = this.roomToTarget.MostCostMovement(player.position);
         NavMeshPath path = new NavMeshPath();
         if (hunterAgent.CalculatePath(targetRoom.transform.position, path))
         {
@@ -213,13 +209,13 @@ public class Director : MonoBehaviour
     }
     private void FurthestRoom()
     {
-        Room targetRoom = this.roomToTarget.GetFurthestRoom(player.position);
-        Endpoint.transform.position = targetRoom.transform.position;
+        Room targetRoom = this.roomToTarget.MostCostMovement(player.position);
+        EndpointPos = targetRoom.transform.position;
     }
 
     private void SecondClosestRoom()
     {
-        Room targetRoom = this.roomToTarget.GetSecondClosestRoom(player.position);
-        Endpoint.transform.position = targetRoom.transform.position;
+        Room targetRoom = this.roomToTarget.LeastCostMovement(hunter.position, player.position);
+        EndpointPos = targetRoom.transform.position;
     }
 }
