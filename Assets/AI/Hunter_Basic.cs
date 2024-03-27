@@ -13,12 +13,13 @@ public class Hunter_Basic : MonoBehaviour
     private NavMeshAgent agent;
 
     [Header("Current Task Priority")]
-    public CommandPriority Priority;
-    public enum CommandPriority
+    public States states;
+    public enum States
     {
-        High,
-        Medium,
-        Low
+        Patrol,
+        Chase,
+        Listen,
+        ExecuteOrder
     }
 
     // Start is called before the first frame update
@@ -36,6 +37,29 @@ public class Hunter_Basic : MonoBehaviour
 
     }
 
+    //--------
+    // STATES
+    //--------
+
+    private void Patrol()
+    {
+
+    }
+
+    private void Chase()
+    {
+
+    }
+
+    private void Listen()
+    {
+
+    }
+
+
+    //---------------------------
+    //EVENTS TRIGGERED BY ACTIONS
+    //---------------------------
     private void OnSeePlayer(bool obj)
     {
         if(obj)

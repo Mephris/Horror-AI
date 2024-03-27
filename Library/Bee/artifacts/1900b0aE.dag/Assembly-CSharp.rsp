@@ -363,6 +363,7 @@
 "Assets/FirstPersonCharacter/Scripts/MoveCamera.cs"
 "Assets/FirstPersonCharacter/Scripts/PlayerCamera.cs"
 "Assets/FirstPersonCharacter/Scripts/PlayerMovement.cs"
+"Assets/RoomScript/PatrolPoints.cs"
 "Assets/RoomScript/Room.cs"
 "Assets/RoomScript/Rooms.cs"
 -langversion:9.0
