@@ -39,7 +39,7 @@ public class FieldOfView : MonoBehaviour
             }
             else if(targetObjRef.CompareTag("Enemy"))
             {
-                
+                Actions.HunterCanSeePlayer(canSeeTarget);
             }
             
         }

@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class Room : MonoBehaviour
 {
-    private PatrolPoints[] patrolPoint;
+    public PatrolPoints[] patrolPoint;
 
     private void Awake()
     {
