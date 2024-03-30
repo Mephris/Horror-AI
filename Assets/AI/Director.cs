@@ -13,7 +13,8 @@ public class Director : MonoBehaviour
     public float tension;
 
     private float calculationElapsedTime = 0f;
-    public float calculationInterval; // Delay, so that calculations on Tension arent done on each frame. 
+    [SerializeField]private float calculationTime;
+    public static float calculationInterval; // Delay, so that calculations on Tension arent done on each frame. 
 
 
     //We save player location to be able to find the locations which we will give Hunter AI
@@ -54,6 +55,7 @@ public class Director : MonoBehaviour
         Actions.PlayerCanSeeHunter += OnPlayerCanSeeHunter;
         Actions.HunterCanSeePlayer += OnHunterCanSeePlayer;
 
+        calculationInterval = calculationTime;
 
         Rooms rooms = FindObjectOfType<Rooms>();
         roomToTarget = rooms;
@@ -132,7 +134,7 @@ public class Director : MonoBehaviour
 
     private void GiveCommandToMove()
     {
-        if (PreviousState != CurrentState || CurrentState == Commands.HighPriorityIncreaseTension)
+        if (PreviousState != CurrentState)
         {
             Endpoint.transform.position = EndpointPos;
             Actions.CommandToMove(Endpoint.position);

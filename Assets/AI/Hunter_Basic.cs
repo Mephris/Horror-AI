@@ -1,11 +1,6 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Net;
-using System.Reflection;
 using UnityEngine;
 using UnityEngine.AI;
-using UnityEngine.UIElements;
+
 
 public class Hunter_Basic : MonoBehaviour
 {
@@ -14,17 +9,17 @@ public class Hunter_Basic : MonoBehaviour
 
     private NavMeshAgent agent;
 
-    private int currentRandomIndex = -1;
-    private Vector3 currentCommandDestination;
+    private bool isMoving = false;
 
+    private float calculationInterval;
     private float calculationElapsedTime = 0f;
-    [SerializeField] private float calculationInterval; // Delay, so that calculations on Tension arent done on each frame. 
 
     [Header("Current Task Priority")]
     public States states;
     public enum States
     {
         Patrol,
+        SwitchRoom,
         Chase,
         Listen,
         ExecuteOrder,
@@ -32,9 +27,8 @@ public class Hunter_Basic : MonoBehaviour
     }
 
     //PatrolPoint Locations
-    private Rooms furthestRoom;
     private Room[] rooms;
-    private Room[] closestRoom;
+    private Room closestRoom;
     
 
     // Start is called before the first frame update
@@ -43,14 +37,16 @@ public class Hunter_Basic : MonoBehaviour
         agent = GetComponent<NavMeshAgent>();
         rooms = FindObjectsOfType<Room>();
 
-        closestRoom = new Room[3];
 
+        ClosestRoom();
 
         Actions.HighPriorityCommandToMove += OnHighPriorityCommandToMove;
         Actions.CommandToMove +=  OnCommandToMove;
-        Actions.HunterCanSeePlayer += OnSeePlayer;
+        
+        calculationInterval = Director.calculationInterval/5.0f;
 
-        FindClosestRoom();
+
+        
     }
 
     // Update is called once per frame
@@ -65,65 +61,127 @@ public class Hunter_Basic : MonoBehaviour
 
     private void StateHandler()
     {
-        switch (states)
+        if (Time.time - calculationElapsedTime >= calculationInterval)
         {
-            case States.Patrol:
-                Patrol();
-                break;
+            switch (states)
+            {
+                case States.Patrol:
+                    Patrol();
+                    break;
 
-            case States.Chase:
-                //comment
-                break;
+                case States.SwitchRoom:
 
-            case States.Listen: 
+                    if (!isMoving)
+                    {
+                        agent.SetDestination(ClosestRoom().transform.position);
+                        isMoving = true;
+                    }
+                    if (agent.remainingDistance < 1.0f)
+                    {
+                        isMoving = false;
+                        states = States.Patrol;
+                    }
+
+                    break;
+
+                case States.Chase:
+                    //comment
+                    break;
+
+                case States.Listen: 
                 
-                break;
+                    break;
 
-            case States.ExecuteOrder:
-                if(agent.remainingDistance <= 1f)
-                {
-                    states = States.Patrol;
-                }
-                break;
+                case States.ExecuteOrder:
 
-            case States.ExecuteHPOrder:
-                if (agent.remainingDistance <= 1f)
-                {
-                    states = States.Patrol;
-                }
-                break;
+                    isMoving = true;
+                    if(agent.remainingDistance <= 3.0f)
+                    {
+                        isMoving = false;
+                        states = States.SwitchRoom;
+                    }
+                    break;
+
+                case States.ExecuteHPOrder:
+
+                    isMoving = true;
+                    if (agent.remainingDistance <= 3.0f)
+                    {
+                        isMoving = false;
+                        states = States.SwitchRoom;
+
+                    }
+                    break;
+            }
+            calculationElapsedTime = Time.time;
         }
     }
 
 
+    private Room ClosestRoom()
+    {
+        Room currentRoom = null;
+        float closestDistance = Mathf.Infinity;
+        Room closestRoomCandidate = null;
+        float closestDistanceCandidate = Mathf.Infinity;
+
+        foreach (Room room in rooms)
+        {
+            float distance = Vector3.Distance(transform.position, room.transform.position);
+            if (distance < closestDistance && !AllPointsChecked(room))
+            {
+                closestDistanceCandidate = closestDistance;
+                closestRoomCandidate = currentRoom;
+
+                closestDistance = distance;
+                currentRoom = room;
+            }
+            else if (distance < closestDistanceCandidate && !AllPointsChecked(room))
+            {
+                closestDistanceCandidate = distance;
+                closestRoomCandidate = room;
+            }
+        }
+        closestRoom = currentRoom;
+        return closestRoomCandidate;
+    }
+    
 
     private void Patrol()
     {
-        if (Time.time - calculationElapsedTime >= calculationInterval)
+        if (!isMoving)
         {
-                // Check if the agent has reached the current patrol point
-            if (currentRandomIndex != -1 && agent.remainingDistance <= 3.0f)
+            foreach (PatrolPoints point in closestRoom.patrolPoint)
             {
-                FindClosestRoom();
-                // If the agent has reached the current patrol point, mark it as checked
-                closestRoom[0].patrolPoint[currentRandomIndex].ToggleCheckStatus();
-
-                // Set currentRandomIndex to -1 to indicate that a new index needs to be selected
-                currentRandomIndex = -1;
-            }
-            else if (currentRandomIndex == -1)
-            {
-                // If currentRandomIndex is -1, it means it's the first patrol point or a new index needs to be selected
-                // Get a new random index
-                currentRandomIndex = GetRandomUncheckedPointIndex(0);
-                if(currentRandomIndex != -1)
+                if (!point.isChecked)
                 {
-                    agent.SetDestination(closestRoom[0].patrolPoint[currentRandomIndex].transform.position);
+                    // Set the flag to indicate that the agent is moving to a patrol point
+                    isMoving = true;
+
+                    // Set the destination to the patrol point
+                    agent.SetDestination(point.transform.position);
+
+                    // Toggle the check status of the patrol point
+                    point.ToggleCheckStatus();
+
+                    // Exit the loop to allow the agent to reach its destination
+                    break;
+                } 
+                else
+                {
+                    if (AllPointsChecked(closestRoom))
+                        states = States.SwitchRoom;
                 }
-                // Set destination to the current patrol point
-                
             }
-            calculationElapsedTime = Time.time;
+        }
+        else
+        {
+            // Check if the agent has reached the patrol point
+            if (agent.remainingDistance <= 0.1f)
+            {
+                // Reset the flag once the agent reaches the patrol point
+                isMoving = false;
+            }
         }
     }
 
@@ -150,6 +208,7 @@ public class Hunter_Basic : MonoBehaviour
 
     private void OnCommandToMove(Vector3 target)
     {
+        ResetRoomPatrolPoints(FindRoom_Command(target));
         agent.SetDestination(targetPos.position);
         states = States.ExecuteOrder;
 
@@ -157,8 +216,9 @@ public class Hunter_Basic : MonoBehaviour
 
     private void OnHighPriorityCommandToMove(Vector3 target)
     {
+        ResetRoomPatrolPoints(FindRoom_Command(target));
         agent.SetDestination(targetPos.position);
-        states = States.ExecuteOrder;
+        states = States.ExecuteHPOrder;
     }
 
 
@@ -166,69 +226,59 @@ public class Hunter_Basic : MonoBehaviour
     //PATROL POINT MANAGING
     //---------------------
 
-    private void FindClosestRoom()
-    {
-        furthestRoom = FindObjectOfType<Rooms>();
-        float closestDistance = Mathf.Infinity;
 
-        Room roomInstance = furthestRoom.GetFurthest(transform.position);
-        closestRoom[0] = roomInstance;
-
-        foreach (Room room in rooms)
-        {
-            float distance = Vector3.Distance(transform.position, room.transform.position);
-            if (distance < closestDistance)
-            {
-                closestDistance = distance;
-                closestRoom[2] = closestRoom[1];
-                closestRoom[1] = closestRoom[0];
-                closestRoom[0] = room;
-            }
-        }
-    }
-
-
-
-    private int GetRandomUncheckedPointIndex(int index)
+    private int GetRandomUncheckedPointIndex()
     {
         int randomIndex = 0;
         int bugFix = 0;
         do
         {
-            randomIndex = UnityEngine.Random.Range(0, closestRoom[index].patrolPoint.Length);
+            randomIndex = UnityEngine.Random.Range(0, closestRoom.patrolPoint.Length);
             bugFix += 1;
             
-        } while (closestRoom[index].patrolPoint[randomIndex].GetComponent<PatrolPoints>().isChecked && bugFix < closestRoom[index].patrolPoint.Length);
+        } while (closestRoom.patrolPoint[randomIndex].GetComponent<PatrolPoints>().isChecked && bugFix < closestRoom.patrolPoint.Length);
         Debug.Log($"RandomIndex {(randomIndex)}");
+
+        if (!AllPointsChecked(closestRoom))
+        {
+            randomIndex = -1;
+        }
 
         return randomIndex;
     }
 
-    private void PushRoomArray()
+    private bool AllPointsChecked(Room room)
     {
-        closestRoom[0] = rooms[0];
-        for(int i = 1; i < closestRoom[0].patrolPoint.Length; i++)
+        foreach (var point in room.patrolPoint)
         {
-            rooms[i - 1] = rooms[i];
+            if (!point.GetComponent<PatrolPoints>().isChecked)
+            {
+                return false;
+            }
         }
-        rooms[rooms.Length - 1] = closestRoom[0];
-
-        if (!CheckPatrolPoint())
-        {
-            PushRoomArray();
-        }
+        return true;
     }
-
-    private bool CheckPatrolPoint()
+    private Room FindRoom_Command(Vector3 target)
     {
-        bool anyFalse = false;
+        Room roomNearby = null;
+        float closestDistance = Mathf.Infinity;
 
-        for (int i = 0; i < closestRoom[0].patrolPoint.Length; i++)
+        foreach (Room room in rooms)
         {
-            if (!closestRoom[0].patrolPoint[i].GetComponent<PatrolPoints>().isChecked)
-                anyFalse = true;
+            float distance = Vector3.Distance(transform.position, room.transform.position);
+            if (distance < closestDistance && !AllPointsChecked(room))
+            {
+                closestDistance = distance;
+                roomNearby = room;
+            }
         }
-
-        return anyFalse;
+        return roomNearby;
+    }
+    private void ResetRoomPatrolPoints(Room room)
+    {
+        foreach (var point in room.patrolPoint)
+        {
+            point.ResetCheckStatus();
+        }
     }
 }

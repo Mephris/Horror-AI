@@ -10,6 +10,23 @@ public class PatrolPoints : MonoBehaviour
     {
         isChecked = true;
         Debug.Log($"Patrol point is {(isChecked ? "checked" : "unchecked")}");
+        StartCoroutine(ResetCheckStatusAfterDelay(20+(Director.calculationInterval*5)));
+    }
+
+    public void ResetCheckStatus()
+    {
+        isChecked = false;
+        Debug.Log($"Patrol point is {(isChecked ? "checked" : "unchecked")} after reset");
+    }
+
+    private IEnumerator ResetCheckStatusAfterDelay(float delay)
+    {
+        // Wait for the specified delay
+        yield return new WaitForSeconds(delay);
+
+        // Reset isChecked to false after the delay
+        isChecked = false;
+        Debug.Log($"Patrol point is {(isChecked ? "checked" : "unchecked")} after delay");
     }
 
     private void OnDrawGizmos()
