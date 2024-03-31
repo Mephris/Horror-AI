@@ -2102,8 +2102,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 60f147fabefe77b40b738ce0434f1883, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tension: 80
-  calculationTime: 2
+  tension: 50
+  calculationTime: 1
   player: {fileID: 1954968990}
   hunter: {fileID: 1109617471}
   CurrentState: 4
@@ -2374,7 +2374,7 @@ Transform:
   m_GameObject: {fileID: 863152227}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 3.5, y: 0, z: 8}
+  m_LocalPosition: {x: -3.5, y: 0, z: 8}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2618,6 +2618,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 512
   canSeeTarget: 0
+  lastSeenTargetLocation: {x: 0, y: 0, z: 0}
 --- !u!1 &1042561355
 GameObject:
   m_ObjectHideFlags: 0
@@ -2885,6 +2886,7 @@ GameObject:
   - component: {fileID: 1109617472}
   - component: {fileID: 1109617473}
   - component: {fileID: 1109617474}
+  - component: {fileID: 1109617475}
   m_Layer: 8
   m_Name: Hunter
   m_TagString: Enemy
@@ -2958,7 +2960,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   radius: 20
-  angle: 60
+  angle: 90
   targetObjRef: {fileID: 1954968989}
   targetMask:
     serializedVersion: 2
@@ -2967,6 +2969,30 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 512
   canSeeTarget: 0
+  lastSeenTargetLocation: {x: 0, y: 0, z: 0}
+--- !u!114 &1109617475
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1109617470}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: da15104aff048f1439b43db681ec945f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  radius: 4
+  angle: 360
+  targetObjRef: {fileID: 1954968989}
+  targetMask:
+    serializedVersion: 2
+    m_Bits: 128
+  obstructionMask:
+    serializedVersion: 2
+    m_Bits: 512
+  canSeeTarget: 0
+  lastSeenTargetLocation: {x: 0, y: 0, z: 0}
 --- !u!1 &1128234832
 GameObject:
   m_ObjectHideFlags: 0
@@ -4353,7 +4379,7 @@ Transform:
   m_GameObject: {fileID: 1713542222}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -3.25, y: 0, z: 8}
+  m_LocalPosition: {x: 3.5, y: 0, z: 8}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -4953,7 +4979,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   walkSpeed: 3
-  sprintSpeed: 4
+  sprintSpeed: 5
   crouchSpeed: 2
   groundDrag: 1
   crouchTransitionDuration: 0.5

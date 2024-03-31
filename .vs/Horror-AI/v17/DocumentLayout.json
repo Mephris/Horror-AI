@@ -3,8 +3,20 @@
   "WorkspaceRootPath": "D:\\GameDev\\Unity Hub\\Projects\\Horror-AI\\",
   "Documents": [
     {
+      "AbsoluteMoniker": "D:0:0:{2D8488E7-17F8-6686-0040-96FE997E9F3D}|Assembly-CSharp.csproj|D:\\GameDev\\Unity Hub\\Projects\\Horror-AI\\assets\\ai\\fieldofview.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2D8488E7-17F8-6686-0040-96FE997E9F3D}|Assembly-CSharp.csproj|solutionrelative:assets\\ai\\fieldofview.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{2D8488E7-17F8-6686-0040-96FE997E9F3D}|Assembly-CSharp.csproj|d:\\gamedev\\unity hub\\projects\\horror-ai\\assets\\ai\\hunter_basic.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{2D8488E7-17F8-6686-0040-96FE997E9F3D}|Assembly-CSharp.csproj|solutionrelative:assets\\ai\\hunter_basic.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2D8488E7-17F8-6686-0040-96FE997E9F3D}|Assembly-CSharp.csproj|D:\\GameDev\\Unity Hub\\Projects\\Horror-AI\\assets\\ai\\director.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2D8488E7-17F8-6686-0040-96FE997E9F3D}|Assembly-CSharp.csproj|solutionrelative:assets\\ai\\director.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2D8488E7-17F8-6686-0040-96FE997E9F3D}|Assembly-CSharp.csproj|D:\\GameDev\\Unity Hub\\Projects\\Horror-AI\\assets\\ai\\actions.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2D8488E7-17F8-6686-0040-96FE997E9F3D}|Assembly-CSharp.csproj|solutionrelative:assets\\ai\\actions.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{2D8488E7-17F8-6686-0040-96FE997E9F3D}|Assembly-CSharp.csproj|d:\\gamedev\\unity hub\\projects\\horror-ai\\assets\\roomscript\\patrolpoints.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
@@ -15,20 +27,8 @@
       "RelativeMoniker": "D:0:0:{2D8488E7-17F8-6686-0040-96FE997E9F3D}|Assembly-CSharp.csproj|solutionrelative:assets\\roomscript\\room.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{2D8488E7-17F8-6686-0040-96FE997E9F3D}|Assembly-CSharp.csproj|D:\\GameDev\\Unity Hub\\Projects\\Horror-AI\\assets\\ai\\director.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2D8488E7-17F8-6686-0040-96FE997E9F3D}|Assembly-CSharp.csproj|solutionrelative:assets\\ai\\director.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{2D8488E7-17F8-6686-0040-96FE997E9F3D}|Assembly-CSharp.csproj|D:\\GameDev\\Unity Hub\\Projects\\Horror-AI\\assets\\roomscript\\rooms.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{2D8488E7-17F8-6686-0040-96FE997E9F3D}|Assembly-CSharp.csproj|solutionrelative:assets\\roomscript\\rooms.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2D8488E7-17F8-6686-0040-96FE997E9F3D}|Assembly-CSharp.csproj|D:\\GameDev\\Unity Hub\\Projects\\Horror-AI\\assets\\ai\\fieldofview.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2D8488E7-17F8-6686-0040-96FE997E9F3D}|Assembly-CSharp.csproj|solutionrelative:assets\\ai\\fieldofview.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2D8488E7-17F8-6686-0040-96FE997E9F3D}|Assembly-CSharp.csproj|D:\\GameDev\\Unity Hub\\Projects\\Horror-AI\\assets\\ai\\actions.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2D8488E7-17F8-6686-0040-96FE997E9F3D}|Assembly-CSharp.csproj|solutionrelative:assets\\ai\\actions.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -38,17 +38,22 @@
       "DocumentGroups": [
         {
           "DockedWidth": 365,
-          "SelectedChildIndex": 4,
+          "SelectedChildIndex": -1,
+          "Children": []
+        },
+        {
+          "DockedWidth": 365,
+          "SelectedChildIndex": 2,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 2,
               "Title": "Director.cs",
               "DocumentMoniker": "D:\\GameDev\\Unity Hub\\Projects\\Horror-AI\\Assets\\AI\\Director.cs",
               "RelativeDocumentMoniker": "Assets\\AI\\Director.cs",
               "ToolTip": "D:\\GameDev\\Unity Hub\\Projects\\Horror-AI\\Assets\\AI\\Director.cs",
               "RelativeToolTip": "Assets\\AI\\Director.cs",
-              "ViewState": "AQIAAKwAAAAAAAAAAAAYwL8AAAAJAAAA",
+              "ViewState": "AQIAAIAAAAAAAAAAAAAIwKkAAAAYAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2024-03-27T09:10:06.309Z",
               "IsPinned": true,
@@ -56,20 +61,34 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 6,
+              "DocumentIndex": 3,
               "Title": "Actions.cs",
               "DocumentMoniker": "D:\\GameDev\\Unity Hub\\Projects\\Horror-AI\\Assets\\AI\\Actions.cs",
               "RelativeDocumentMoniker": "Assets\\AI\\Actions.cs",
               "ToolTip": "D:\\GameDev\\Unity Hub\\Projects\\Horror-AI\\Assets\\AI\\Actions.cs",
               "RelativeToolTip": "Assets\\AI\\Actions.cs",
-              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAA0AAAAmAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2024-03-27T14:40:30.473Z",
-              "IsPinned": true
+              "IsPinned": true,
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 4,
+              "DocumentIndex": 0,
+              "Title": "FieldOfView.cs",
+              "DocumentMoniker": "D:\\GameDev\\Unity Hub\\Projects\\Horror-AI\\Assets\\AI\\FieldOfView.cs",
+              "RelativeDocumentMoniker": "Assets\\AI\\FieldOfView.cs",
+              "ToolTip": "D:\\GameDev\\Unity Hub\\Projects\\Horror-AI\\Assets\\AI\\FieldOfView.cs",
+              "RelativeToolTip": "Assets\\AI\\FieldOfView.cs",
+              "ViewState": "AQIAAAUAAAAAAAAAAAAxwCQAAAAuAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-03-26T13:53:19.207Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
               "Title": "Rooms.cs",
               "DocumentMoniker": "D:\\GameDev\\Unity Hub\\Projects\\Horror-AI\\Assets\\RoomScript\\Rooms.cs",
               "RelativeDocumentMoniker": "Assets\\RoomScript\\Rooms.cs",
@@ -77,12 +96,11 @@
               "RelativeToolTip": "Assets\\RoomScript\\Rooms.cs",
               "ViewState": "AQIAADsAAAAAAAAAAAAUwFYAAAAxAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2024-03-27T09:12:49.451Z",
-              "EditorCaption": ""
+              "WhenOpened": "2024-03-27T09:12:49.451Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 5,
               "Title": "Room.cs",
               "DocumentMoniker": "D:\\GameDev\\Unity Hub\\Projects\\Horror-AI\\Assets\\RoomScript\\Room.cs",
               "RelativeDocumentMoniker": "Assets\\RoomScript\\Room.cs",
@@ -90,12 +108,11 @@
               "RelativeToolTip": "Assets\\RoomScript\\Room.cs",
               "ViewState": "AQIAAAAAAAAAAAAAAAAAAAYAAAAlAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2024-03-27T09:12:48.89Z",
-              "EditorCaption": ""
+              "WhenOpened": "2024-03-27T09:12:48.89Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 4,
               "Title": "PatrolPoints.cs",
               "DocumentMoniker": "D:\\GameDev\\Unity Hub\\Projects\\Horror-AI\\Assets\\RoomScript\\PatrolPoints.cs",
               "RelativeDocumentMoniker": "Assets\\RoomScript\\PatrolPoints.cs",
@@ -107,35 +124,37 @@
               "EditorCaption": ""
             }
           ]
-        },
+        }
+      ]
+    },
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "FloatingWindowState": {
+        "Id": "05056b15-4b9f-4406-a159-870f885ed7bc",
+        "Display": 0,
+        "X": 2249,
+        "Y": 430,
+        "Width": 1123,
+        "Height": 1184,
+        "WindowState": 0
+      },
+      "DocumentGroups": [
         {
-          "DockedWidth": 370,
+          "DockedWidth": 200,
           "SelectedChildIndex": 0,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 1,
               "Title": "Hunter_Basic.cs",
               "DocumentMoniker": "D:\\GameDev\\Unity Hub\\Projects\\Horror-AI\\Assets\\AI\\Hunter_Basic.cs",
               "RelativeDocumentMoniker": "Assets\\AI\\Hunter_Basic.cs",
               "ToolTip": "D:\\GameDev\\Unity Hub\\Projects\\Horror-AI\\Assets\\AI\\Hunter_Basic.cs",
               "RelativeToolTip": "Assets\\AI\\Hunter_Basic.cs",
-              "ViewState": "AQIAALAAAAAAAAAAAAAAwLsAAAAAAAAA",
+              "ViewState": "AQIAAIAAAAAAAAAAAAAIwN0AAABQAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2024-03-30T13:49:31.049Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 5,
-              "Title": "FieldOfView.cs",
-              "DocumentMoniker": "D:\\GameDev\\Unity Hub\\Projects\\Horror-AI\\Assets\\AI\\FieldOfView.cs",
-              "RelativeDocumentMoniker": "Assets\\AI\\FieldOfView.cs",
-              "ToolTip": "D:\\GameDev\\Unity Hub\\Projects\\Horror-AI\\Assets\\AI\\FieldOfView.cs",
-              "RelativeToolTip": "Assets\\AI\\FieldOfView.cs",
-              "ViewState": "AQIAABQAAAAAAAAAAAAQwBgAAAAlAAAA",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2024-03-26T13:53:19.207Z",
               "EditorCaption": ""
             }
           ]

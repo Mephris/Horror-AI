@@ -19,11 +19,11 @@ public class FieldOfView : MonoBehaviour
     [SerializeField] private LayerMask obstructionMask;
 
     public bool canSeeTarget;
+    public Vector3 lastSeenTargetLocation;
 
     private void Start()
     {
         StartCoroutine(FOVRoutine());
-        
     }
 
     private IEnumerator FOVRoutine()
@@ -33,14 +33,19 @@ public class FieldOfView : MonoBehaviour
         {
             yield return wait;
             FieldOfViewCheck();
-            if (targetObjRef.CompareTag("Player"))
+
+            if (targetObjRef.CompareTag("Enemy"))
             {
                 Actions.PlayerCanSeeHunter(canSeeTarget);
             }
-            else if(targetObjRef.CompareTag("Enemy"))
+            else if(targetObjRef.CompareTag("Player"))
             {
-                Actions.HunterCanSeePlayer(canSeeTarget);
+                if (canSeeTarget)
+                    lastSeenTargetLocation = targetObjRef.transform.position;
+
+                Actions.HunterCanSeePlayer(canSeeTarget, lastSeenTargetLocation);
             }
+
             
         }
     }

@@ -10,6 +10,7 @@ public class Hunter_Basic : MonoBehaviour
     private NavMeshAgent agent;
 
     private bool isMoving = false;
+    private bool isNotChasing = true;
 
     private float calculationInterval;
     private float calculationElapsedTime = 0f;
@@ -42,6 +43,8 @@ public class Hunter_Basic : MonoBehaviour
 
         Actions.HighPriorityCommandToMove += OnHighPriorityCommandToMove;
         Actions.CommandToMove +=  OnCommandToMove;
+        Actions.HunterCanSeePlayer += OnSeePlayer;
+        
         
         calculationInterval = Director.calculationInterval/5.0f;
 
@@ -85,7 +88,7 @@ public class Hunter_Basic : MonoBehaviour
                     break;
 
                 case States.Chase:
-                    //comment
+                    
                     break;
 
                 case States.Listen: 
@@ -105,8 +108,13 @@ public class Hunter_Basic : MonoBehaviour
                 case States.ExecuteHPOrder:
 
                     isMoving = true;
+                    if (!isNotChasing)
+                    {
+                        Actions.HunterCanSeePlayer -= OnSeePlayer;
+                    }
                     if (agent.remainingDistance <= 3.0f)
                     {
+                        Actions.HunterCanSeePlayer += OnSeePlayer;
                         isMoving = false;
                         states = States.SwitchRoom;
 
@@ -185,13 +193,12 @@ public class Hunter_Basic : MonoBehaviour
         }
     }
 
-
-    private void Chase()
+    private void Listen()
     {
 
     }
 
-    private void Listen()
+    private void Chase()
     {
 
     }
@@ -200,14 +207,32 @@ public class Hunter_Basic : MonoBehaviour
     //---------------------------
     //EVENTS TRIGGERED BY ACTIONS
     //---------------------------
-    private void OnSeePlayer(bool obj)
+    private void OnSeePlayer(bool canSeePlayer, Vector3 lastSeenTargetLocation)
     {
-        if(obj)
-            agent.SetDestination(GetComponent<FieldOfView>().targetObjRef.transform.position);
+        if (canSeePlayer)
+        {
+            agent.speed = 4f;
+            states = States.Chase;
+            agent.SetDestination(lastSeenTargetLocation);
+            isMoving = true;
+            isNotChasing = false; // Disable CommandToMove while chasing
+        }
+        else if(!isNotChasing)
+        {
+            if (Vector3.Distance(transform.position, lastSeenTargetLocation) < 1.0f)
+            {
+                agent.speed = 3f;
+                states = States.SwitchRoom;
+                isMoving = false;
+                isNotChasing = true; // Enable CommandToMove when not chasing
+            }
+        }
     }
 
     private void OnCommandToMove(Vector3 target)
     {
+        if (!isNotChasing)
+            return;
         ResetRoomPatrolPoints(FindRoom_Command(target));
         agent.SetDestination(targetPos.position);
         states = States.ExecuteOrder;

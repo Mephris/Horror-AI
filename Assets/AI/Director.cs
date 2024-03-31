@@ -164,10 +164,10 @@ public class Director : MonoBehaviour
             tension += 1;
     }
 
-    private void OnHunterCanSeePlayer(bool obj)
+    private void OnHunterCanSeePlayer(bool obj, Vector3 lastPlayerLocation)
     {
         if (obj == true)
-            tension += 2;
+            tension += 1;
     }
 
     //------------------------------------------------
