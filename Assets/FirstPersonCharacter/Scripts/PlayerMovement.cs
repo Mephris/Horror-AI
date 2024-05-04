@@ -26,7 +26,7 @@ public class PlayerMovement : MonoBehaviour
     [Header("GroundCheck")]
     public float playerHeight;
     public LayerMask whatIsGround;
-    bool grounded;
+    [SerializeField] private bool grounded = true;
 
     public Transform orientation;
 
@@ -63,16 +63,16 @@ public class PlayerMovement : MonoBehaviour
     private void Update()
     {
         //ground check
-        grounded = Physics.Raycast(transform.position, Vector3.down, playerHeight * 0.5f + 0.2f, whatIsGround);
+        //grounded = Physics.Raycast(transform.position, Vector3.down, playerHeight * 0.9f + 0.2f, whatIsGround);
 
         MyInput();
         SpeedControl();
         StateHandler();
 
-        if (grounded)
+        //if (grounded)
             rb.drag = groundDrag;
-        else
-            rb.drag = 0;
+        //else
+           // rb.drag = 0;
 
 
     }
@@ -133,20 +133,23 @@ public class PlayerMovement : MonoBehaviour
     private void StateHandler()
     {
 
-        if(grounded && Input.GetKey(crouchKey))
+        if (grounded)
         {
-            playerState = MovementState.crouching;
-            moveSpeed = crouchSpeed;
-        }
-        else if(grounded && Input.GetKey(sprintKey))
-        {
-            playerState = MovementState.sprinting;
-            moveSpeed = sprintSpeed;
-        } 
-        else if (grounded)
-        {
-            playerState = MovementState.walking;
-            moveSpeed = walkSpeed;
+            if (Input.GetKey(crouchKey))
+            {
+                playerState = MovementState.crouching;
+                moveSpeed = crouchSpeed;
+            }
+            else if (Input.GetKey(sprintKey))
+            {
+                playerState = MovementState.sprinting;
+                moveSpeed = sprintSpeed;
+            }
+            else
+            {
+                playerState = MovementState.walking;
+                moveSpeed = walkSpeed;
+            }
         }
         /*
         else if (!grounded)

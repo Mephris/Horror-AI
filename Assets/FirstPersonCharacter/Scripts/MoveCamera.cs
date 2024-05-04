@@ -22,6 +22,7 @@ public class MoveCamera : MonoBehaviour
     private float timeElapsed = 1f;
     private Rigidbody PlayerRigidBody;
     public MovementState cameraState;
+    private MovementState previousState = MovementState.walking;
    
     public Transform cameraPosition;
 
@@ -49,6 +50,7 @@ public class MoveCamera : MonoBehaviour
         float minYLimit = PlayerPosition.y;
         float maxYLimit = PlayerPosition.y;
 
+        MyInput();
 
         switch (cameraState)
         {
@@ -79,10 +81,10 @@ public class MoveCamera : MonoBehaviour
         shakeSpeedUsed = Mathf.Lerp(shakeSpeedUsed, targetShakeSpeed, Time.deltaTime * 5f);
         shakeIntensityUsed = Mathf.Lerp(shakeIntensityUsed, targetShakeIntensity, Time.deltaTime * 5f);
 
-        if (PlayerRigidBody.velocity.magnitude > 0.1f)
+        if (PlayerRigidBody.velocity.magnitude > 0.1f || previousState != cameraState)
         {
 
-            MyInput();
+            previousState = cameraState;
 
             float elapsedTime = 0f;
             Vector3 initialScale = transform.localScale;

@@ -17,6 +17,7 @@ public class Hunter_Basic : MonoBehaviour
 
     [Header("Current Task Priority")]
     public States states;
+    private States previousState;
     public enum States
     {
         Patrol,
@@ -30,7 +31,7 @@ public class Hunter_Basic : MonoBehaviour
     //PatrolPoint Locations
     private Room[] rooms;
     private Room closestRoom;
-    
+
 
     // Start is called before the first frame update
     void Start()
@@ -42,14 +43,14 @@ public class Hunter_Basic : MonoBehaviour
         ClosestRoom();
 
         Actions.HighPriorityCommandToMove += OnHighPriorityCommandToMove;
-        Actions.CommandToMove +=  OnCommandToMove;
+        Actions.CommandToMove += OnCommandToMove;
         Actions.HunterCanSeePlayer += OnSeePlayer;
-        
-        
-        calculationInterval = Director.calculationInterval/5.0f;
 
 
-        
+        calculationInterval = Director.calculationInterval / 5.0f;
+
+
+
     }
 
     // Update is called once per frame
@@ -69,11 +70,12 @@ public class Hunter_Basic : MonoBehaviour
             switch (states)
             {
                 case States.Patrol:
+                    agent.speed = 2.0f;
                     Patrol();
                     break;
 
                 case States.SwitchRoom:
-
+                    agent.speed = 3.0f;
                     if (!isMoving)
                     {
                         agent.SetDestination(ClosestRoom().transform.position);
@@ -88,26 +90,31 @@ public class Hunter_Basic : MonoBehaviour
                     break;
 
                 case States.Chase:
-                    
+                    agent.speed = 3.5f;
                     break;
 
-                case States.Listen: 
-                
+                case States.Listen:
+
                     break;
 
                 case States.ExecuteOrder:
 
+                    agent.speed = 3.0f;
                     isMoving = true;
-                    if(agent.remainingDistance <= 3.0f)
+                    previousState = states;
+                    if (agent.remainingDistance <= 3.0f)
                     {
                         isMoving = false;
-                        states = States.SwitchRoom;
+                        closestRoom = CurrentRoom();
+                        states = States.Patrol;
                     }
                     break;
 
                 case States.ExecuteHPOrder:
 
+                    agent.speed = 3.5f;
                     isMoving = true;
+                    previousState = states;
                     if (!isNotChasing)
                     {
                         Actions.HunterCanSeePlayer -= OnSeePlayer;
@@ -116,7 +123,8 @@ public class Hunter_Basic : MonoBehaviour
                     {
                         Actions.HunterCanSeePlayer += OnSeePlayer;
                         isMoving = false;
-                        states = States.SwitchRoom;
+                        closestRoom = CurrentRoom();
+                        states = States.Patrol;
 
                     }
                     break;
@@ -153,7 +161,24 @@ public class Hunter_Basic : MonoBehaviour
         closestRoom = currentRoom;
         return closestRoomCandidate;
     }
-    
+
+    private Room CurrentRoom()
+    {
+        Room currentRoom = null;
+        float smallestDistance = Mathf.Infinity;
+
+        foreach (Room room in rooms)
+        {
+            float distance = Vector3.Distance(transform.position, room.transform.position);
+            if (distance < smallestDistance && !AllPointsChecked(room))
+            {
+                smallestDistance = distance;
+                currentRoom = room;
+            }
+        }
+
+        return currentRoom;
+    }
 
     private void Patrol()
     {
@@ -174,10 +199,10 @@ public class Hunter_Basic : MonoBehaviour
 
                     // Exit the loop to allow the agent to reach its destination
                     break;
-                } 
+                }
                 else
                 {
-                    if (AllPointsChecked(closestRoom))
+                    if (AllPointsChecked(closestRoom) && previousState != States.ExecuteHPOrder)
                         states = States.SwitchRoom;
                 }
             }
@@ -209,23 +234,28 @@ public class Hunter_Basic : MonoBehaviour
     //---------------------------
     private void OnSeePlayer(bool canSeePlayer, Vector3 lastSeenTargetLocation)
     {
-        if (canSeePlayer)
+        if (states != States.ExecuteHPOrder)
         {
-            agent.speed = 4f;
-            states = States.Chase;
-            agent.SetDestination(lastSeenTargetLocation);
-            isMoving = true;
-            isNotChasing = false; // Disable CommandToMove while chasing
-        }
-        else if(!isNotChasing)
-        {
-            if (Vector3.Distance(transform.position, lastSeenTargetLocation) < 1.0f)
+            if (canSeePlayer)
             {
-                agent.speed = 3f;
-                states = States.SwitchRoom;
-                isMoving = false;
-                isNotChasing = true; // Enable CommandToMove when not chasing
+                agent.speed = 4f;
+                states = States.Chase;
+                agent.SetDestination(lastSeenTargetLocation);
+                isMoving = true;
+                isNotChasing = false; // Disable CommandToMove while chasing
             }
+            else if (!isNotChasing)
+            {
+                if (Vector3.Distance(transform.position, lastSeenTargetLocation) < 0.3f)
+                {
+                    agent.speed = 3f;
+                    states = States.SwitchRoom;
+                    isMoving = false;
+                    isNotChasing = true; // Enable CommandToMove when not chasing
+                    agent.SetDestination(lastSeenTargetLocation);
+                }
+            }
+            
         }
     }
 
@@ -260,7 +290,7 @@ public class Hunter_Basic : MonoBehaviour
         {
             randomIndex = UnityEngine.Random.Range(0, closestRoom.patrolPoint.Length);
             bugFix += 1;
-            
+
         } while (closestRoom.patrolPoint[randomIndex].GetComponent<PatrolPoints>().isChecked && bugFix < closestRoom.patrolPoint.Length);
         Debug.Log($"RandomIndex {(randomIndex)}");
 
@@ -306,4 +336,7 @@ public class Hunter_Basic : MonoBehaviour
             point.ResetCheckStatus();
         }
     }
+
+    //GIZMO DRAWING
+
 }

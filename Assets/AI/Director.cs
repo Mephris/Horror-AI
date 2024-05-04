@@ -10,9 +10,11 @@ public class Director : MonoBehaviour
 {
     // Tension is a variable which will decide which command will be issued to the Hunter AI
     [Header("Tension Meter")]
+    [Range(0, 100)]
     public float tension;
 
     private float calculationElapsedTime = 0f;
+    [Range(1, 3)]
     [SerializeField]private float calculationTime;
     public static float calculationInterval; // Delay, so that calculations on Tension arent done on each frame. 
 
@@ -134,7 +136,7 @@ public class Director : MonoBehaviour
 
     private void GiveCommandToMove()
     {
-        if (PreviousState != CurrentState)
+        if (PreviousState != CurrentState && CurrentState != Commands.Observe || CurrentState == Commands.HighPriorityDecreaseTension)
         {
             Endpoint.transform.position = EndpointPos;
             Actions.CommandToMove(Endpoint.position);
