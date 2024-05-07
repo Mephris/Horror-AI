@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.AI;
 
 namespace MimicSpace
 {
@@ -53,8 +54,11 @@ namespace MimicSpace
         [Tooltip("This must be updates as the Mimin moves to assure great leg placement")]
         public Vector3 velocity;
 
+        private NavMeshAgent agent;
+
         void Start()
         {
+            agent = GetComponent<NavMeshAgent>();
             ResetMimic();
         }
 
@@ -91,6 +95,8 @@ namespace MimicSpace
         // Update is called once per frame
         void Update()
         {
+            velocity = agent.velocity;
+
             if (!canCreateLeg)
                 return;
 

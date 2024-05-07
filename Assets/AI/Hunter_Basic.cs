@@ -9,6 +9,8 @@ public class Hunter_Basic : MonoBehaviour
 
     private NavMeshAgent agent;
 
+    
+
     private bool isMoving = false;
     private bool isNotChasing = true;
 
