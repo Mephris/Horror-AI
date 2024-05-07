@@ -112,7 +112,7 @@ public class Hunter_Basic : MonoBehaviour
 
                 case States.ExecuteHPOrder:
 
-                    agent.speed = 3.5f;
+                    agent.speed = 4.5f;
                     isMoving = true;
                     previousState = states;
                     if (!isNotChasing)
@@ -137,30 +137,53 @@ public class Hunter_Basic : MonoBehaviour
     private Room ClosestRoom()
     {
         Room currentRoom = null;
-        float closestDistance = Mathf.Infinity;
+        float closestPathLength = Mathf.Infinity;
         Room closestRoomCandidate = null;
-        float closestDistanceCandidate = Mathf.Infinity;
+        float closestPathLengthCandidate = Mathf.Infinity;
 
         foreach (Room room in rooms)
         {
-            float distance = Vector3.Distance(transform.position, room.transform.position);
-            if (distance < closestDistance && !AllPointsChecked(room))
+            // Calculate the path from the current position to the room
+            NavMeshPath path = new NavMeshPath();
+            if (NavMesh.CalculatePath(transform.position, room.transform.position, NavMesh.AllAreas, path))
             {
-                closestDistanceCandidate = closestDistance;
-                closestRoomCandidate = currentRoom;
+                // Get the length of the path
+                float pathLength = CalculatePathLength(path);
 
-                closestDistance = distance;
-                currentRoom = room;
-            }
-            else if (distance < closestDistanceCandidate && !AllPointsChecked(room))
-            {
-                closestDistanceCandidate = distance;
-                closestRoomCandidate = room;
+                // Check if this room has a shorter path length
+                if (pathLength < closestPathLength && !AllPointsChecked(room))
+                {
+                    closestPathLengthCandidate = closestPathLength;
+                    closestRoomCandidate = currentRoom;
+
+                    closestPathLength = pathLength;
+                    currentRoom = room;
+                }
+                else if (pathLength < closestPathLengthCandidate && !AllPointsChecked(room))
+                {
+                    closestPathLengthCandidate = pathLength;
+                    closestRoomCandidate = room;
+                }
             }
         }
         closestRoom = currentRoom;
         return closestRoomCandidate;
     }
+
+    // Helper method to calculate the length of a NavMesh path
+    private float CalculatePathLength(NavMeshPath path)
+    {
+        float length = 0f;
+
+        // Sum up the lengths of each segment in the path
+        for (int i = 1; i < path.corners.Length; i++)
+        {
+            length += Vector3.Distance(path.corners[i - 1], path.corners[i]);
+        }
+
+        return length;
+    }
+
 
     private Room CurrentRoom()
     {

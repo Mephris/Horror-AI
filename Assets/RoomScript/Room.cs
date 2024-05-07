@@ -6,10 +6,13 @@ public class Room : MonoBehaviour
 {
     public PatrolPoints[] patrolPoint;
 
+    public bool isNearbyPlayer;
+
     private void Awake()
     {
         patrolPoint = GetComponentsInChildren<PatrolPoints>();
     }
+
 
     private void OnDrawGizmos()
     {

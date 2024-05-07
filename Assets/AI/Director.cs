@@ -88,10 +88,10 @@ public class Director : MonoBehaviour
     private void StateHandler()
     {
         // Changing Hunter Command which will be sent to the Hunter AI
-        CurrentState = tension < 10 ? Commands.HighPriorityIncreaseTension :
-                       tension > 90 ? Commands.HighPriorityDecreaseTension :
-                       tension < 30 ? Commands.IncreaseTension :
-                       tension > 60 ? Commands.DecreaseTension :
+        CurrentState = tension < 15 ? Commands.HighPriorityIncreaseTension :
+                       tension > 85 ? Commands.HighPriorityDecreaseTension :
+                       tension < 35 ? Commands.IncreaseTension :
+                       tension > 70 ? Commands.DecreaseTension :
                        Commands.Observe;
 
         
@@ -139,7 +139,16 @@ public class Director : MonoBehaviour
         if (PreviousState != CurrentState && CurrentState != Commands.Observe || CurrentState == Commands.HighPriorityDecreaseTension)
         {
             Endpoint.transform.position = EndpointPos;
-            Actions.CommandToMove(Endpoint.position);
+            
+            if(CurrentState == Commands.HighPriorityIncreaseTension || CurrentState == Commands.HighPriorityDecreaseTension)
+            {
+                Actions.HighPriorityCommandToMove(Endpoint.position);
+            }
+            else
+            {
+                Actions.CommandToMove(Endpoint.position);
+            }
+            
             PreviousState = CurrentState;
         }
     }

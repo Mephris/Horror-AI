@@ -13,6 +13,44 @@ public class Rooms : MonoBehaviour
         rooms = GetComponentsInChildren<Room>();
     }
 
+    private void Update()
+    {
+        UpdateRoomProximity();
+    }
+
+    private void UpdateRoomProximity()
+    {
+        // Get player's position
+        Vector3 playerPosition = GameObject.FindGameObjectWithTag("Player").transform.position;
+
+        // Iterate through each room
+        foreach (Room room in rooms)
+        {
+            // Calculate the path from player to the room
+            NavMeshPath path = new NavMeshPath();
+            NavMesh.CalculatePath(playerPosition, room.transform.position, NavMesh.AllAreas, path);
+
+            // Calculate the cost of the path
+            float pathCost = CalculatePathCost(path);
+
+            // If the path cost is less than or equal to 50, set isNearby to true
+            room.isNearbyPlayer = (pathCost <= 40f);
+        }
+    }
+
+    public float CalculatePathCost(NavMeshPath path)
+    {
+        float cost = 0f;
+
+        // Sum up the cost of each corner in the path
+        for (int i = 1; i < path.corners.Length; i++)
+        {
+            cost += Vector3.Distance(path.corners[i - 1], path.corners[i]);
+        }
+
+        return cost;
+    }
+
     public Room GetFurthest(Vector3 agentLocation)
     {
         float maxDistance = float.MinValue;
@@ -20,11 +58,14 @@ public class Rooms : MonoBehaviour
 
         foreach (Room room in rooms)
         {
-            float roomDistance = Vector3.Distance(room.transform.position, agentLocation);
-            if (roomDistance > maxDistance)
+            if (room.isNearbyPlayer) // Check if the room is nearby the player
             {
-                maxDistance = roomDistance;
-                furthestRoom = room;
+                float roomDistance = Vector3.Distance(room.transform.position, agentLocation);
+                if (roomDistance > maxDistance)
+                {
+                    maxDistance = roomDistance;
+                    furthestRoom = room;
+                }
             }
         }
 
@@ -41,26 +82,29 @@ public class Rooms : MonoBehaviour
 
         foreach (Room room in rooms)
         {
-            float roomDistance = Vector3.Distance(room.transform.position, agentLocation);
-
-            if (roomDistance < closestDistance)
+            if (room.isNearbyPlayer) // Check if the room is nearby the player
             {
-                secondClosestRoom = closestRoom;
-                secondClosestDistance = closestDistance;
+                float roomDistance = Vector3.Distance(room.transform.position, agentLocation);
 
-                closestRoom = room;
-                closestDistance = roomDistance;
-            }
-            else if (roomDistance < secondClosestDistance)
-            {
-                secondClosestRoom = room;
-                secondClosestDistance = roomDistance;
+                if (roomDistance < closestDistance)
+                {
+                    secondClosestRoom = closestRoom;
+                    secondClosestDistance = closestDistance;
+
+                    closestRoom = room;
+                    closestDistance = roomDistance;
+                }
+                else if (roomDistance < secondClosestDistance)
+                {
+                    secondClosestRoom = room;
+                    secondClosestDistance = roomDistance;
+                }
             }
         }
 
         return secondClosestRoom;
     }
-    // Agent = Enemy, target = player
+
     public Room LeastCostMovement(Vector3 agentLocation, Vector3 targetLocation)
     {
         Room roomWithLowestCost = GetFurthest(agentLocation);
@@ -71,37 +115,40 @@ public class Rooms : MonoBehaviour
 
         foreach (Room room in rooms)
         {
-            float distanceToTarget = Vector3.Distance(room.transform.position, targetLocation);
-            if (distanceToTarget < 20f)
+            if (room.isNearbyPlayer) // Check if the room is nearby the player
             {
-                // Calculate the path
-                NavMeshPath path = new NavMeshPath();
-                NavMesh.CalculatePath(agentLocation, room.transform.position, NavMesh.AllAreas, path);
-
-                // Check if the path is valid
-                if (path.status == NavMeshPathStatus.PathComplete)
+                float distanceToTarget = Vector3.Distance(room.transform.position, targetLocation);
+                if (distanceToTarget < 20f)
                 {
-                    // Calculate the cost of the path
-                    float pathCost = CalculatePathCost(path);
+                    // Calculate the path
+                    NavMeshPath path = new NavMeshPath();
+                    NavMesh.CalculatePath(agentLocation, room.transform.position, NavMesh.AllAreas, path);
 
-                    // Update the highest cost and room if needed
-                    if (pathCost < leastCost)
+                    // Check if the path is valid
+                    if (path.status == NavMeshPathStatus.PathComplete)
                     {
-                        secondLeastCost = leastCost;
-                        roomWithSecondLowestCost = roomWithLowestCost;
+                        // Calculate the cost of the path
+                        float pathCost = CalculatePathCostFOR(path);
 
-                        leastCost = pathCost;
-                        roomWithLowestCost = room;
+                        // Update the highest cost and room if needed
+                        if (pathCost < leastCost)
+                        {
+                            secondLeastCost = leastCost;
+                            roomWithSecondLowestCost = roomWithLowestCost;
+
+                            leastCost = pathCost;
+                            roomWithLowestCost = room;
+                        }
+                        else if (pathCost < secondLeastCost)
+                        {
+                            secondLeastCost = leastCost;
+                            roomWithSecondLowestCost = roomWithLowestCost;
+                        }
                     }
-                    else if(pathCost < secondLeastCost)
+                    else
                     {
-                        secondLeastCost = leastCost;
-                        roomWithSecondLowestCost = roomWithLowestCost;
+                        Debug.LogError("Failed to calculate path to " + room.name + "!");
                     }
-                }
-                else
-                {
-                    Debug.LogError("Failed to calculate path to " + room.name + "!");
                 }
             }
         }
@@ -116,17 +163,20 @@ public class Rooms : MonoBehaviour
 
         foreach (Room room in rooms)
         {
-            NavMeshPath path = new NavMeshPath();
-            NavMesh.CalculatePath(agentLocation, room.transform.position, NavMesh.AllAreas, path);
-
-            if (path.status == NavMeshPathStatus.PathComplete)
+            if (room.isNearbyPlayer) // Check if the room is nearby the player
             {
-                float pathCost = CalculatePathCost(path);
+                NavMeshPath path = new NavMeshPath();
+                NavMesh.CalculatePath(agentLocation, room.transform.position, NavMesh.AllAreas, path);
 
-                if (pathCost > highestCost)
+                if (path.status == NavMeshPathStatus.PathComplete)
                 {
-                    highestCost = pathCost;
-                    roomWithHighestCost = room;
+                    float pathCost = CalculatePathCostFOR(path);
+
+                    if (pathCost > highestCost)
+                    {
+                        highestCost = pathCost;
+                        roomWithHighestCost = room;
+                    }
                 }
             }
         }
@@ -134,7 +184,7 @@ public class Rooms : MonoBehaviour
         return roomWithHighestCost;
     }
 
-    private float CalculatePathCost(NavMeshPath path)
+    private float CalculatePathCostFOR(NavMeshPath path)
     {
         float cost = 0f;
 
