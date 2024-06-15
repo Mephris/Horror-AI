@@ -15,7 +15,7 @@ D:/GameDev/Unity Hub/Projects/Horror-AI
 -logFile
 Logs/AssetImportWorker0.log
 -srvPort
-59122
+59216
 Successfully changed project path to: D:/GameDev/Unity Hub/Projects/Horror-AI
 D:/GameDev/Unity Hub/Projects/Horror-AI
 [UnityMemory] Configuration Parameters - Can be set up in boot.config
@@ -49,12 +49,12 @@ D:/GameDev/Unity Hub/Projects/Horror-AI
     "memorysetup-temp-allocator-size-cloud-worker=32768"
     "memorysetup-temp-allocator-size-gi-baking-worker=262144"
     "memorysetup-temp-allocator-size-gfx=262144"
-Player connection [23856] Host "[IP] 192.168.18.58 [Port] 0 [Flags] 2 [Guid] 309746402 [EditorId] 309746402 [Version] 1048832 [Id] WindowsEditor(7,DESKTOP-2AR35LE) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor" joined multi-casting on [225.0.0.222:54997]...
+Player connection [24176] Host "[IP] 192.168.18.58 [Port] 0 [Flags] 2 [Guid] 957429125 [EditorId] 957429125 [Version] 1048832 [Id] WindowsEditor(7,DESKTOP-2AR35LE) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor" joined multi-casting on [225.0.0.222:54997]...
 
-Player connection [23856] Host "[IP] 192.168.18.58 [Port] 0 [Flags] 2 [Guid] 309746402 [EditorId] 309746402 [Version] 1048832 [Id] WindowsEditor(7,DESKTOP-2AR35LE) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor" joined alternative multi-casting on [225.0.0.222:34997]...
+Player connection [24176] Host "[IP] 192.168.18.58 [Port] 0 [Flags] 2 [Guid] 957429125 [EditorId] 957429125 [Version] 1048832 [Id] WindowsEditor(7,DESKTOP-2AR35LE) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor" joined alternative multi-casting on [225.0.0.222:34997]...
 
 [Physics::Module] Initialized MultithreadedJobDispatcher with 5 workers.
-Refreshing native plugins compatible for Editor in 6.18 ms, found 1 plugins.
+Refreshing native plugins compatible for Editor in 6.09 ms, found 1 plugins.
 Preloading 0 native plugins for Editor in 0.00 ms.
 Initialize engine version: 2022.3.20f1 (61c2feb0970d)
 [Subsystems] Discovering subsystems at path D:/GameDev/Unity Hub/Unity Instalation Folder/2022.3.20f1/Editor/Data/Resources/UnitySubsystems
@@ -70,46 +70,46 @@ Initialize mono
 Mono path[0] = 'D:/GameDev/Unity Hub/Unity Instalation Folder/2022.3.20f1/Editor/Data/Managed'
 Mono path[1] = 'D:/GameDev/Unity Hub/Unity Instalation Folder/2022.3.20f1/Editor/Data/MonoBleedingEdge/lib/mono/unityjit-win32'
 Mono config path = 'D:/GameDev/Unity Hub/Unity Instalation Folder/2022.3.20f1/Editor/Data/MonoBleedingEdge/etc'
-Using monoOptions --debugger-agent=transport=dt_socket,embedding=1,server=y,suspend=n,address=127.0.0.1:56560
+Using monoOptions --debugger-agent=transport=dt_socket,embedding=1,server=y,suspend=n,address=127.0.0.1:56604
 Begin MonoManager ReloadAssembly
 Registering precompiled unity dll's ...
 Register platform support module: D:/GameDev/Unity Hub/Unity Instalation Folder/2022.3.20f1/Editor/Data/PlaybackEngines/WebGLSupport/UnityEditor.WebGL.Extensions.dll
 Register platform support module: D:/GameDev/Unity Hub/Unity Instalation Folder/2022.3.20f1/Editor/Data/PlaybackEngines/WindowsStandaloneSupport/UnityEditor.WindowsStandalone.Extensions.dll
-Registered in 0.007417 seconds.
-- Loaded All Assemblies, in  0.409 seconds
+Registered in 0.007488 seconds.
+- Loaded All Assemblies, in  0.396 seconds
 Native extension for WindowsStandalone target not found
 Native extension for WebGL target not found
 Mono: successfully reloaded assembly
-- Finished resetting the current domain, in  0.301 seconds
-Domain Reload Profiling: 710ms
-	BeginReloadAssembly (135ms)
+- Finished resetting the current domain, in  0.288 seconds
+Domain Reload Profiling: 683ms
+	BeginReloadAssembly (136ms)
 		ExecutionOrderSort (0ms)
 		DisableScriptedObjects (0ms)
 		BackupInstance (0ms)
 		ReleaseScriptingObjects (0ms)
 		CreateAndSetChildDomain (1ms)
-	RebuildCommonClasses (39ms)
+	RebuildCommonClasses (37ms)
 	RebuildNativeTypeToScriptingClass (12ms)
-	initialDomainReloadingComplete (58ms)
-	LoadAllAssembliesAndSetupDomain (165ms)
-		LoadAssemblies (136ms)
+	initialDomainReloadingComplete (56ms)
+	LoadAllAssembliesAndSetupDomain (154ms)
+		LoadAssemblies (137ms)
 		RebuildTransferFunctionScriptingTraits (0ms)
-		AnalyzeDomain (161ms)
-			TypeCache.Refresh (160ms)
-				TypeCache.ScanAssembly (145ms)
+		AnalyzeDomain (151ms)
+			TypeCache.Refresh (150ms)
+				TypeCache.ScanAssembly (135ms)
 			ScanForSourceGeneratedMonoScriptInfo (0ms)
-			ResolveRequiredComponents (1ms)
-	FinalizeReload (302ms)
+			ResolveRequiredComponents (0ms)
+	FinalizeReload (288ms)
 		ReleaseScriptCaches (0ms)
 		RebuildScriptCaches (0ms)
-		SetupLoadedEditorAssemblies (238ms)
+		SetupLoadedEditorAssemblies (226ms)
 			LogAssemblyErrors (0ms)
 			InitializePlatformSupportModulesInManaged (10ms)
-			SetLoadedEditorAssemblies (7ms)
+			SetLoadedEditorAssemblies (6ms)
 			RefreshPlugins (0ms)
 			BeforeProcessingInitializeOnLoad (2ms)
-			ProcessInitializeOnLoadAttributes (167ms)
-			ProcessInitializeOnLoadMethodAttributes (52ms)
+			ProcessInitializeOnLoadAttributes (159ms)
+			ProcessInitializeOnLoadMethodAttributes (49ms)
 			AfterProcessingInitializeOnLoad (0ms)
 			EditorAssembliesLoaded (0ms)
 		ExecutionOrderSort2 (0ms)
@@ -117,52 +117,52 @@ Domain Reload Profiling: 710ms
 ========================================================================
 Worker process is ready to serve import requests
 Begin MonoManager ReloadAssembly
-- Loaded All Assemblies, in  0.588 seconds
-Refreshing native plugins compatible for Editor in 2.02 ms, found 1 plugins.
+- Loaded All Assemblies, in  0.570 seconds
+Refreshing native plugins compatible for Editor in 1.83 ms, found 1 plugins.
 Native extension for WindowsStandalone target not found
 Native extension for WebGL target not found
 Mono: successfully reloaded assembly
-- Finished resetting the current domain, in  0.484 seconds
-Domain Reload Profiling: 1072ms
-	BeginReloadAssembly (178ms)
+- Finished resetting the current domain, in  0.455 seconds
+Domain Reload Profiling: 1025ms
+	BeginReloadAssembly (173ms)
 		ExecutionOrderSort (0ms)
 		DisableScriptedObjects (6ms)
 		BackupInstance (0ms)
 		ReleaseScriptingObjects (0ms)
 		CreateAndSetChildDomain (21ms)
-	RebuildCommonClasses (38ms)
-	RebuildNativeTypeToScriptingClass (13ms)
-	initialDomainReloadingComplete (40ms)
-	LoadAllAssembliesAndSetupDomain (318ms)
-		LoadAssemblies (283ms)
+	RebuildCommonClasses (37ms)
+	RebuildNativeTypeToScriptingClass (14ms)
+	initialDomainReloadingComplete (38ms)
+	LoadAllAssembliesAndSetupDomain (307ms)
+		LoadAssemblies (276ms)
 		RebuildTransferFunctionScriptingTraits (0ms)
-		AnalyzeDomain (150ms)
-			TypeCache.Refresh (127ms)
-				TypeCache.ScanAssembly (115ms)
-			ScanForSourceGeneratedMonoScriptInfo (16ms)
+		AnalyzeDomain (142ms)
+			TypeCache.Refresh (121ms)
+				TypeCache.ScanAssembly (110ms)
+			ScanForSourceGeneratedMonoScriptInfo (15ms)
 			ResolveRequiredComponents (5ms)
-	FinalizeReload (484ms)
+	FinalizeReload (456ms)
 		ReleaseScriptCaches (0ms)
 		RebuildScriptCaches (0ms)
-		SetupLoadedEditorAssemblies (317ms)
+		SetupLoadedEditorAssemblies (304ms)
 			LogAssemblyErrors (0ms)
-			InitializePlatformSupportModulesInManaged (7ms)
+			InitializePlatformSupportModulesInManaged (6ms)
 			SetLoadedEditorAssemblies (5ms)
 			RefreshPlugins (0ms)
-			BeforeProcessingInitializeOnLoad (62ms)
-			ProcessInitializeOnLoadAttributes (216ms)
+			BeforeProcessingInitializeOnLoad (58ms)
+			ProcessInitializeOnLoadAttributes (206ms)
 			ProcessInitializeOnLoadMethodAttributes (25ms)
 			AfterProcessingInitializeOnLoad (3ms)
 			EditorAssembliesLoaded (0ms)
 		ExecutionOrderSort2 (0ms)
-		AwakeInstancesAfterBackupRestoration (8ms)
+		AwakeInstancesAfterBackupRestoration (7ms)
 Launched and connected shader compiler UnityShaderCompiler.exe after 0.04 seconds
-Refreshing native plugins compatible for Editor in 1.83 ms, found 1 plugins.
+Refreshing native plugins compatible for Editor in 1.84 ms, found 1 plugins.
 Preloading 0 native plugins for Editor in 0.00 ms.
 Unloading 2943 Unused Serialized files (Serialized files now loaded: 0)
 Unloading 27 unused Assets / (0.6 MB). Loaded Objects now: 3431.
 Memory consumption went from 139.3 MB to 138.7 MB.
-Total: 2.598800 ms (FindLiveObjects: 0.228300 ms CreateObjectMapping: 0.171800 ms MarkObjects: 1.946300 ms  DeleteObjects: 0.251600 ms)
+Total: 3.410000 ms (FindLiveObjects: 0.245100 ms CreateObjectMapping: 0.345700 ms MarkObjects: 2.557200 ms  DeleteObjects: 0.261100 ms)
 
 AssetImportParameters requested are different than current active one (requested -> active):
   custom:video-decoder-webm-vp8: 9c59270c3fd7afecdb556c50c9e8de78 -> 
@@ -179,137 +179,17 @@ AssetImportParameters requested are different than current active one (requested
   custom:container-muxer-webm: aa71ff27fc2769a1b78a27578f13a17b -> 
 ========================================================================
 Received Import Request.
-  Time since last request: 178930.775258 seconds.
-  path: Assets/Flooded_Grounds/Content/Meshes/mBuildings/mVilla1/Villa1_Base_Cor_A.fbx
-  artifactKey: Guid(b3455d6da5e02d44280a92b0464d7580) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
-Start importing Assets/Flooded_Grounds/Content/Meshes/mBuildings/mVilla1/Villa1_Base_Cor_A.fbx using Guid(b3455d6da5e02d44280a92b0464d7580) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: 'b1b4f9814e68b0a65fdc804a488f11d7') in 0.122039 seconds
-Number of updated asset objects reloaded before import = 0
-Number of asset objects unloaded after import = 7
-========================================================================
-Received Import Request.
-  Time since last request: 0.000029 seconds.
-  path: Assets/Flooded_Grounds/Content/Meshes/mBuildings/mVilla1/Villa1_Base_Mid_A.fbx
-  artifactKey: Guid(abb38988e3920b34b8694fa4e1f0193c) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
-Start importing Assets/Flooded_Grounds/Content/Meshes/mBuildings/mVilla1/Villa1_Base_Mid_A.fbx using Guid(abb38988e3920b34b8694fa4e1f0193c) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '1cbbe78ef826e61fd524c64878e33128') in 0.008762 seconds
-Number of updated asset objects reloaded before import = 0
-Number of asset objects unloaded after import = 7
-========================================================================
-Received Import Request.
-  Time since last request: 6.571392 seconds.
-  path: Assets/Flooded_Grounds/Content/Meshes/mBuildings/mVilla1/Villa1_Deco_Deco_Beam_A.fbx
-  artifactKey: Guid(aff3a4c3ec4f85946aec6f79aa265e8b) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
-Start importing Assets/Flooded_Grounds/Content/Meshes/mBuildings/mVilla1/Villa1_Deco_Deco_Beam_A.fbx using Guid(aff3a4c3ec4f85946aec6f79aa265e8b) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: 'ca482d06cea5d4585c950493b9ac2cb5') in 0.009050 seconds
-Number of updated asset objects reloaded before import = 0
-Number of asset objects unloaded after import = 7
-========================================================================
-Received Import Request.
-  Time since last request: 6.752972 seconds.
-  path: Assets/Flooded_Grounds/Content/Meshes/mBuildings/mVilla1/Villa1_Deco_WindowGlass_B.fbx
-  artifactKey: Guid(2fb8692a37585c547af0e7d90026381d) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
-Start importing Assets/Flooded_Grounds/Content/Meshes/mBuildings/mVilla1/Villa1_Deco_WindowGlass_B.fbx using Guid(2fb8692a37585c547af0e7d90026381d) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '3c135ced115f3f38ffa6dafc97030da2') in 0.017191 seconds
-Number of updated asset objects reloaded before import = 0
-Number of asset objects unloaded after import = 7
-========================================================================
-Received Import Request.
-  Time since last request: 12.406755 seconds.
-  path: Assets/Flooded_Grounds/Content/Meshes/mBuildings/mVilla1/Villa1_Top_Mid_A.fbx
-  artifactKey: Guid(1ea5ad505437e9a4f802fb6a24c402cf) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
-Start importing Assets/Flooded_Grounds/Content/Meshes/mBuildings/mVilla1/Villa1_Top_Mid_A.fbx using Guid(1ea5ad505437e9a4f802fb6a24c402cf) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '6c717c0e5c67d55c853a9e90ee865d38') in 0.013943 seconds
-Number of updated asset objects reloaded before import = 0
-Number of asset objects unloaded after import = 7
-========================================================================
-Received Import Request.
-  Time since last request: 135.096163 seconds.
-  path: Assets/Flooded_Grounds/Content/Meshes/mNature/mBushes
-  artifactKey: Guid(955d649fb90c8e14a984ef31f97a97b8) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
-Start importing Assets/Flooded_Grounds/Content/Meshes/mNature/mBushes using Guid(955d649fb90c8e14a984ef31f97a97b8) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: 'f1bbafa49435597fd37b8983474e7ca5') in 0.000504 seconds
+  Time since last request: 179515.572594 seconds.
+  path: Assets/Flooded_Grounds/Content/Meshes/mProps/lo_Prop_Boat_A.fbm
+  artifactKey: Guid(c21e28822ce12cb40beff84295a81fb8) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Flooded_Grounds/Content/Meshes/mProps/lo_Prop_Boat_A.fbm using Guid(c21e28822ce12cb40beff84295a81fb8) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: 'ba04eb311582309d8ab940268a1ac7a7') in 0.002716 seconds
 Number of updated asset objects reloaded before import = 0
 Number of asset objects unloaded after import = 0
 ========================================================================
 Received Import Request.
-  Time since last request: 7.598834 seconds.
-  path: Assets/Flooded_Grounds/Content/Meshes/mNature/mRocks
-  artifactKey: Guid(2ff0ecb814f70f74c9c4840ed06c51a3) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
-Start importing Assets/Flooded_Grounds/Content/Meshes/mNature/mRocks using Guid(2ff0ecb814f70f74c9c4840ed06c51a3) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: 'caa9a8a0594704248d092b6ba102912e') in 0.000484 seconds
-Number of updated asset objects reloaded before import = 0
-Number of asset objects unloaded after import = 0
-========================================================================
-Received Import Request.
-  Time since last request: 12.189986 seconds.
-  path: Assets/Flooded_Grounds/Content/Meshes/mNature/mGrass
-  artifactKey: Guid(c2d4970322c6dc64a9f42acfcfb9629c) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
-Start importing Assets/Flooded_Grounds/Content/Meshes/mNature/mGrass using Guid(c2d4970322c6dc64a9f42acfcfb9629c) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: 'a8526f672de90c30676c77fc49081901') in 0.000402 seconds
-Number of updated asset objects reloaded before import = 0
-Number of asset objects unloaded after import = 0
-========================================================================
-Received Import Request.
-  Time since last request: 11.526397 seconds.
-  path: Assets/Flooded_Grounds/Content/Meshes/mNature/mGrass/Grass_Med_B.fbx
-  artifactKey: Guid(f23a21e2be3dd86449dff81261bf83a5) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
-Start importing Assets/Flooded_Grounds/Content/Meshes/mNature/mGrass/Grass_Med_B.fbx using Guid(f23a21e2be3dd86449dff81261bf83a5) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: 'e88178487225afe8c83c94f11b1ef433') in 0.043263 seconds
-Number of updated asset objects reloaded before import = 0
-Number of asset objects unloaded after import = 7
-========================================================================
-Received Import Request.
-  Time since last request: 0.375465 seconds.
-  path: Assets/Flooded_Grounds/Content/Meshes/mNature/mGrass/Grass_Small_A.fbx
-  artifactKey: Guid(07482563e336d994abdc831e53431ccb) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
-Start importing Assets/Flooded_Grounds/Content/Meshes/mNature/mGrass/Grass_Small_A.fbx using Guid(07482563e336d994abdc831e53431ccb) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: 'cce85e5d68b767d0df38faa4ed45a7f9') in 0.018419 seconds
-Number of updated asset objects reloaded before import = 0
-Number of asset objects unloaded after import = 7
-========================================================================
-Received Import Request.
-  Time since last request: 0.317675 seconds.
-  path: Assets/Flooded_Grounds/Content/Meshes/mNature/mGrass/Grass_Small_D.fbx
-  artifactKey: Guid(0b1eadd50210bbf489ee17d6376699a3) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
-Start importing Assets/Flooded_Grounds/Content/Meshes/mNature/mGrass/Grass_Small_D.fbx using Guid(0b1eadd50210bbf489ee17d6376699a3) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '92446a56a7a854905351596fe89c59d9') in 0.015688 seconds
-Number of updated asset objects reloaded before import = 0
-Number of asset objects unloaded after import = 7
-========================================================================
-Received Import Request.
-  Time since last request: 0.519807 seconds.
-  path: Assets/Flooded_Grounds/Content/Meshes/mNature/mGrass/Grass_Tall_C.fbx
-  artifactKey: Guid(b88efc51f73550a428a72844ccd19b72) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
-Start importing Assets/Flooded_Grounds/Content/Meshes/mNature/mGrass/Grass_Tall_C.fbx using Guid(b88efc51f73550a428a72844ccd19b72) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '535b60fc61e4bfbc16a681e68f50db9a') in 0.016198 seconds
-Number of updated asset objects reloaded before import = 0
-Number of asset objects unloaded after import = 7
-========================================================================
-Received Import Request.
-  Time since last request: 30.808925 seconds.
-  path: Assets/Flooded_Grounds/Content/Meshes/mNature/mGrass/Grass_Tall_B.fbx
-  artifactKey: Guid(5502328da92d24740a90a78763d613d8) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
-Start importing Assets/Flooded_Grounds/Content/Meshes/mNature/mGrass/Grass_Tall_B.fbx using Guid(5502328da92d24740a90a78763d613d8) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '6248d327a0f548204535dddcfc406389') in 0.014007 seconds
-Number of updated asset objects reloaded before import = 0
-Number of asset objects unloaded after import = 7
-========================================================================
-Received Import Request.
-  Time since last request: 21.602592 seconds.
-  path: Assets/Flooded_Grounds/Content/Meshes
-  artifactKey: Guid(b0c2362a8da0821488cf6e1395a8d047) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
-Start importing Assets/Flooded_Grounds/Content/Meshes using Guid(b0c2362a8da0821488cf6e1395a8d047) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '360b4f4388edb245e49366436a35ab00') in 0.000567 seconds
-Number of updated asset objects reloaded before import = 0
-Number of asset objects unloaded after import = 0
-========================================================================
-Received Import Request.
-  Time since last request: 1.518877 seconds.
-  path: Assets/Flooded_Grounds/Content/Meshes/mBackgrounds
-  artifactKey: Guid(38e0dead2d8f22f498d240e92119a181) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
-Start importing Assets/Flooded_Grounds/Content/Meshes/mBackgrounds using Guid(38e0dead2d8f22f498d240e92119a181) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '3a20ad2ff4c5d1adfab3b979eac08ad7') in 0.000368 seconds
-Number of updated asset objects reloaded before import = 0
-Number of asset objects unloaded after import = 0
-========================================================================
-Received Import Request.
-  Time since last request: 6.363501 seconds.
-  path: Assets/Flooded_Grounds/Content/Meshes/mNature
-  artifactKey: Guid(e4b84be99c335444384c2ebdf9e8c224) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
-Start importing Assets/Flooded_Grounds/Content/Meshes/mNature using Guid(e4b84be99c335444384c2ebdf9e8c224) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '65180c340a6873736afe14eeb5634b63') in 0.000394 seconds
-Number of updated asset objects reloaded before import = 0
-Number of asset objects unloaded after import = 0
-========================================================================
-Received Import Request.
-  Time since last request: 9.968310 seconds.
-  path: Assets/Flooded_Grounds/Content/Meshes/mProps
-  artifactKey: Guid(bb4c96927a933c048b9235d29b6b187e) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
-Start importing Assets/Flooded_Grounds/Content/Meshes/mProps using Guid(bb4c96927a933c048b9235d29b6b187e) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '1aa551bba355b3f886036af581dfc73a') in 0.000438 seconds
+  Time since last request: 102.196099 seconds.
+  path: Assets/Flooded_Grounds/Content/Meshes/mBuildings/mVilla1
+  artifactKey: Guid(67b7d11740af83840882b83ae782badc) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Flooded_Grounds/Content/Meshes/mBuildings/mVilla1 using Guid(67b7d11740af83840882b83ae782badc) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: 'b1ba5fb8ec737f0399f407f396ddb534') in 0.000512 seconds
 Number of updated asset objects reloaded before import = 0
 Number of asset objects unloaded after import = 0
