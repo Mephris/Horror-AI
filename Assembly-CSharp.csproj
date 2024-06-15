@@ -129,7 +129,6 @@
     <None Include="Assets\Flooded_Grounds\PostProcessing\Resources\Shaders\GrainGen.shader" />
     <None Include="Assets\Flooded_Grounds\PostProcessing\Resources\Shaders\FXAA3.cginc" />
     <None Include="Assets\Flooded_Grounds\PostProcessing\Resources\Shaders\EyeAdaptation.shader" />
-    <None Include="Assets\Flooded_Grounds\PostProcessing\Utilities\CustomMotionTexture\Shaders\CustomMotionVectorTexture.shader" />
     <None Include="Assets\Flooded_Grounds\PostProcessing\Resources\Shaders\BuiltinDebugViews.shader" />
     <None Include="Assets\Flooded_Grounds\PostProcessing\Resources\Shaders\EyeAdaptation.cginc" />
     <None Include="Assets\Flooded_Grounds\PostProcessing\Resources\Shaders\LutGen.shader" />
@@ -137,9 +136,7 @@
     <None Include="Assets\Flooded_Grounds\PostProcessing\Resources\Shaders\TAA.cginc" />
     <None Include="Assets\Mimic\README.txt" />
     <None Include="Assets\Flooded_Grounds\PostProcessing\Resources\Shaders\AmbientOcclusion.cginc" />
-    <None Include="Assets\Mimic\Materials\Shaders\SimplexNoise3D.hlsl" />
     <None Include="Assets\Flooded_Grounds\Resources\TreeCreator\TreeCreatorBark.shader" />
-    <None Include="Assets\Mimic\Materials\Shaders\NoiseUtils.hlsl" />
     <None Include="Assets\Flooded_Grounds\PostProcessing\Resources\Shaders\ColorGrading.cginc" />
     <None Include="Assets\Flooded_Grounds\Resources\TreeCreator\TreeCreatorLeavesOptimized.shader" />
     <None Include="Assets\Flooded_Grounds\PostProcessing\Resources\Shaders\UberSecondPass.cginc" />
@@ -150,7 +147,6 @@
     <None Include="Assets\Flooded_Grounds\PostProcessing\Resources\Shaders\FXAA.shader" />
     <None Include="Assets\Flooded_Grounds\PostProcessing\Resources\Shaders\ScreenSpaceRaytrace.cginc" />
     <None Include="Assets\Flooded_Grounds\PostProcessing\Resources\Shaders\Tonemapping.cginc" />
-    <None Include="Assets\Flooded_Grounds\Content\Shaders\FG_PBR_TopBlend.shader" />
     <None Include="Assets\Flooded_Grounds\PostProcessing\Resources\Shaders\Fog.shader" />
     <None Include="Assets\Flooded_Grounds\PostProcessing\Resources\Shaders\MotionBlur.shader" />
     <None Include="Assets\Flooded_Grounds\PostProcessing\Resources\Shaders\DiskKernels.cginc" />
@@ -166,9 +162,7 @@
     <None Include="Assets\Flooded_Grounds\PostProcessing\Resources\Shaders\Blit.shader" />
     <None Include="Assets\Flooded_Grounds\PostProcessing\Resources\Shaders\Bloom.cginc" />
     <None Include="Assets\Flooded_Grounds\PostProcessing\Resources\Shaders\DepthOfField.cginc" />
-    <None Include="Assets\Flooded_Grounds\Content\Shaders\FG_Triplanar_BumpSpec.shader" />
     <None Include="Assets\Flooded_Grounds\Content\Shaders\FG_Skybox_Rotating.shader" />
-    <None Include="Assets\Flooded_Grounds\Content\Shaders\FG_PBR_Water.shader" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="UnityEngine">
