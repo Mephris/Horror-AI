@@ -26,11 +26,11 @@ public class Rooms : MonoBehaviour
         // Iterate through each room
         foreach (Room room in rooms)
         {
-            // Calculate the path from player to the room
+            // Create a path from player to room
             NavMeshPath path = new NavMeshPath();
             NavMesh.CalculatePath(playerPosition, room.transform.position, NavMesh.AllAreas, path);
 
-            // Calculate the cost of the path
+            // Calculate the cost of the created path
             float pathCost = CalculatePathCost(path);
 
             // If the path cost is less than or equal to 50, set isNearby to true

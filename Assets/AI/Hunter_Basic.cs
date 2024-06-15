@@ -25,7 +25,6 @@ public class Hunter_Basic : MonoBehaviour
         Patrol,
         SwitchRoom,
         Chase,
-        Listen,
         ExecuteOrder,
         ExecuteHPOrder
     }
@@ -93,10 +92,6 @@ public class Hunter_Basic : MonoBehaviour
 
                 case States.Chase:
                     agent.speed = 3.5f;
-                    break;
-
-                case States.Listen:
-
                     break;
 
                 case States.ExecuteOrder:

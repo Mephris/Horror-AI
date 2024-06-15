@@ -8,7 +8,7 @@ using UnityEngine.AI;
 
 public class Director : MonoBehaviour
 {
-    // Tension is a variable which will decide which command will be issued to the Hunter AI
+    // Tension is a variable which posseses current state of atmosphere 
     [Header("Tension Meter")]
     [Range(0, 100)]
     public float tension;
@@ -37,7 +37,7 @@ public class Director : MonoBehaviour
 
     //Command time interval so that the command isnt sent out constantly, you can say its an interval in which every x seconds a command is sent to hunter
 
-    //Hunter commands is a simple state machine that we will use, States will switch according to tension Meter
+    //Finite State machine which changes according to the current "tension"
     [Header("Current State/Task")]
     public Commands CurrentState;
     private Commands PreviousState;
@@ -96,38 +96,33 @@ public class Director : MonoBehaviour
 
         
 
-        // Depending on state, send the  chosen command to Hunter AI
+        // Depending on state, send the chosen command to Hunter AI
         switch (CurrentState)
         {
+            //Send Hunter to
             case Commands.IncreaseTension:
-
-                SecondClosestRoom();
+                //to closest room
+                ClosestRoom();
                 break;
 
             case Commands.DecreaseTension:
-
+                //entrance to the furthest viable room
                 PosFarFromPlayer();
                 break;
 
             case Commands.HighPriorityDecreaseTension:
-
+                //furthest viable room
                 FurthestRoom();
                 break;
 
             case Commands.HighPriorityIncreaseTension:
-
+                //last turn between player and enemy in pathfinding
                 PosNearPlayer();
                 break;
 
             case Commands.Observe:
 
-                //Maybe some little events? Tweaks to Hunter Perception?
-                
-                break;
 
-            default:
-
-                //CHILLLLLLLLL DO NOTHING MAAAAAN
                 break;
 
         }
@@ -154,7 +149,7 @@ public class Director : MonoBehaviour
     }
 
     //---------------------
-    //TENSION CALCULATIONS
+    //TENSION CYCLE
     //---------------------
     private void TensionCalculation()
     {
@@ -167,7 +162,7 @@ public class Director : MonoBehaviour
         }
     }
     //---------------------------
-    //EVENTS TRIGGERED BY ACTIONS
+    //TENSION CHANGING EVENTS
     //---------------------------
     private void OnPlayerCanSeeHunter(bool obj)
     {
@@ -190,13 +185,14 @@ public class Director : MonoBehaviour
         NavMeshPath path = new NavMeshPath();
         if (hunterAgent.CalculatePath(player.position, path))
         {
-
-            if (path.corners.Length > 1) // Ensure there is more than one corner
+            // Make sure there is more than one corner
+            if (path.corners.Length > 1) 
             {
                 // The second-to-last corner is the new endpoint
                 EndpointPos = path.corners[path.corners.Length - 2];
             }
-            else if (path.corners.Length == 1) // If there's only one corner, use it as the endpoint
+            // If there's only one corner, use it as the endpoint
+            else if (path.corners.Length == 1) 
             {
                 EndpointPos = path.corners[0];
             }
@@ -226,7 +222,7 @@ public class Director : MonoBehaviour
         EndpointPos = targetRoom.transform.position;
     }
 
-    private void SecondClosestRoom()
+    private void ClosestRoom()
     {
         Room targetRoom = this.roomToTarget.LeastCostMovement(hunter.position, player.position);
         EndpointPos = targetRoom.transform.position;
