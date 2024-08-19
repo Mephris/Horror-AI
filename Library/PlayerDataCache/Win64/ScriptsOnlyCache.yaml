@@ -4,13 +4,14 @@ ScriptsOnlyBuild:
     - Director
     - FieldOfView
     - Hunter_Basic
+    - MimicSpace.Leg
+    - MimicSpace.Mimic
     - MoveCamera
+    - PatrolPoints
     - PlayerCamera
     - PlayerMovement
     - Room
     - Rooms
-    Unity.PlasticSCM.Editor.dll:
-    - Unity.PlasticSCM.Editor.PlasticWindow
     Unity.Rider.Editor.dll:
     - Packages.Rider.Editor.UnitTesting.CallbackData
     UnityEditor.TestRunner.dll:
@@ -20,7 +21,7 @@ ScriptsOnlyBuild:
   serializedClasses: {}
   methodsToPreserve: []
   sceneClasses:
-    Assets/Scenes/SampleScene.unity:
+    Assets/Scenes/Trial Map.unity:
     - Class: 1
       Script: {instanceID: 0}
     - Class: 4
@@ -39,11 +40,21 @@ ScriptsOnlyBuild:
       Script: {instanceID: 0}
     - Class: 48
       Script: {instanceID: 0}
+    - Class: 49
+      Script: {instanceID: 0}
     - Class: 54
+      Script: {instanceID: 0}
+    - Class: 64
       Script: {instanceID: 0}
     - Class: 65
       Script: {instanceID: 0}
+    - Class: 72
+      Script: {instanceID: 0}
     - Class: 81
+      Script: {instanceID: 0}
+    - Class: 82
+      Script: {instanceID: 0}
+    - Class: 83
       Script: {instanceID: 0}
     - Class: 89
       Script: {instanceID: 0}
@@ -52,22 +63,30 @@ ScriptsOnlyBuild:
     - Class: 108
       Script: {instanceID: 0}
     - Class: 114
-      Script: {instanceID: 2536}
+      Script: {instanceID: 1624}
     - Class: 114
-      Script: {instanceID: 3634}
+      Script: {instanceID: 2500}
     - Class: 114
-      Script: {instanceID: 3680}
+      Script: {instanceID: 3526}
     - Class: 114
-      Script: {instanceID: 4492}
+      Script: {instanceID: 3566}
     - Class: 114
-      Script: {instanceID: 4720}
+      Script: {instanceID: 3572}
     - Class: 114
-      Script: {instanceID: 4868}
+      Script: {instanceID: 3934}
     - Class: 114
-      Script: {instanceID: 7006}
+      Script: {instanceID: 4314}
     - Class: 114
-      Script: {instanceID: 7578}
+      Script: {instanceID: 4522}
+    - Class: 114
+      Script: {instanceID: 4660}
+    - Class: 114
+      Script: {instanceID: 6662}
+    - Class: 114
+      Script: {instanceID: 7186}
     - Class: 115
+      Script: {instanceID: 0}
+    - Class: 120
       Script: {instanceID: 0}
     - Class: 136
       Script: {instanceID: 0}
@@ -92,6 +111,12 @@ ScriptsOnlyBuild:
     assemblyName: UnityEngine.UI
     namespaceName: UnityEngine.UI
     className: Image
+  - hash:
+      serializedVersion: 2
+      Hash: 6a342adec3b4e7e37033fa3b0474a8d7
+    assemblyName: Assembly-CSharp
+    namespaceName: MimicSpace
+    className: Leg
   - hash:
       serializedVersion: 2
       Hash: f45600bcc886206dd55a3208474aad61
@@ -184,10 +209,16 @@ ScriptsOnlyBuild:
     className: UnityOnBecameVisibleMessageListener
   - hash:
       serializedVersion: 2
-      Hash: 1d0697900dd6d07283c8b5e4aeca1b25
+      Hash: 2b832cfd0b83f91037202568e93fc540
     assemblyName: Assembly-CSharp
     namespaceName: 
     className: PlayerMovement
+  - hash:
+      serializedVersion: 2
+      Hash: b162d9639b8075221c6663955676bc94
+    assemblyName: Assembly-CSharp
+    namespaceName: MimicSpace
+    className: Movement
   - hash:
       serializedVersion: 2
       Hash: e987953190eb4c12cf19df790566dc2c
@@ -224,6 +255,12 @@ ScriptsOnlyBuild:
     assemblyName: Unity.VisualScripting.Core
     namespaceName: Unity.VisualScripting
     className: UnityMessageListener
+  - hash:
+      serializedVersion: 2
+      Hash: 57aeca56c4cd4e9299b6fb9467355e0b
+    assemblyName: Assembly-CSharp
+    namespaceName: UnityEngine.PostProcessing
+    className: PostProcessingProfile
   - hash:
       serializedVersion: 2
       Hash: fce9b835d1e8b08e7ecea8da19f21986
@@ -340,6 +377,12 @@ ScriptsOnlyBuild:
     className: VariablesAsset
   - hash:
       serializedVersion: 2
+      Hash: 4aae247232b4290cde4b43a351a65cce
+    assemblyName: Assembly-CSharp
+    namespaceName: 
+    className: CharController_Motor
+  - hash:
+      serializedVersion: 2
       Hash: 7bdff9e91edfd9600f92a185def7e34a
     assemblyName: Unity.VisualScripting.Flow
     namespaceName: Unity.VisualScripting
@@ -350,6 +393,12 @@ ScriptsOnlyBuild:
     assemblyName: Unity.VisualScripting.Core
     namespaceName: Unity.VisualScripting
     className: UnityOnSelectMessageListener
+  - hash:
+      serializedVersion: 2
+      Hash: cfbe2ce1c6dee4aead109f4a1da0695f
+    assemblyName: Assembly-CSharp
+    namespaceName: MimicSpace
+    className: CylinderMesh
   - hash:
       serializedVersion: 2
       Hash: 5b8b7230ad968399f6726aa1269dcdcb
@@ -388,7 +437,7 @@ ScriptsOnlyBuild:
     className: UnityOnCollisionExit2DMessageListener
   - hash:
       serializedVersion: 2
-      Hash: 4f1be577133222e212ebb818a82dc8ac
+      Hash: 4275ee764a0e6a317d6bac93391f1aaa
     assemblyName: Assembly-CSharp
     namespaceName: 
     className: Hunter_Basic
@@ -404,6 +453,12 @@ ScriptsOnlyBuild:
     assemblyName: Assembly-CSharp
     namespaceName: 
     className: PlayerCamera
+  - hash:
+      serializedVersion: 2
+      Hash: d6c506be4d12f5fa38994a663118186c
+    assemblyName: Assembly-CSharp
+    namespaceName: MimicSpace
+    className: Mimic
   - hash:
       serializedVersion: 2
       Hash: fb79e95da8891fc7ac6c36ca6967af23
@@ -472,10 +527,22 @@ ScriptsOnlyBuild:
     className: TMP_Settings
   - hash:
       serializedVersion: 2
+      Hash: c46257dfa07d14393d1de06d744be7fa
+    assemblyName: Assembly-CSharp
+    namespaceName: 
+    className: PatrolPoints
+  - hash:
+      serializedVersion: 2
       Hash: ca7965796a6fc0e5baad4cb19f5b5ded
     assemblyName: Unity.VisualScripting.Core
     namespaceName: Unity.VisualScripting
     className: UnityOnJointBreak2DMessageListener
+  - hash:
+      serializedVersion: 2
+      Hash: d32b0c9fe30d6f56241a2af861358955
+    assemblyName: Assembly-CSharp
+    namespaceName: 
+    className: DisableRenderer
   - hash:
       serializedVersion: 2
       Hash: 9ebc0a3016506a0cbb7e0306dfcb9497
@@ -502,7 +569,7 @@ ScriptsOnlyBuild:
     className: UnityOnCancelMessageListener
   - hash:
       serializedVersion: 2
-      Hash: 280157e2b3fc37f83b6f642ad9135b74
+      Hash: 3c9929a50c7e3dc9f295e9f934f72a04
     assemblyName: Assembly-CSharp
     namespaceName: 
     className: Room
@@ -538,7 +605,7 @@ ScriptsOnlyBuild:
     className: GridLayoutGroup
   - hash:
       serializedVersion: 2
-      Hash: a25708fe617c506327a1c0ec7549163c
+      Hash: cf83de2459792f80001b9608abb04601
     assemblyName: Assembly-CSharp
     namespaceName: 
     className: FieldOfView
@@ -676,10 +743,22 @@ ScriptsOnlyBuild:
     className: Text
   - hash:
       serializedVersion: 2
+      Hash: 9a3d95ff5a46a82160d3c0c6b921bc9e
+    assemblyName: Assembly-CSharp
+    namespaceName: UnityEngine.PostProcessing
+    className: PostProcessingBehaviour
+  - hash:
+      serializedVersion: 2
       Hash: 1ce63d97d1ca25cba2d91d5f32fd5f79
     assemblyName: Unity.VisualScripting.State
     namespaceName: Unity.VisualScripting
     className: StateGraphAsset
+  - hash:
+      serializedVersion: 2
+      Hash: baad29b1d62bd6957aab949f64791e72
+    assemblyName: Assembly-CSharp
+    namespaceName: 
+    className: ExampleWheelController
   - hash:
       serializedVersion: 2
       Hash: 540882762544409cc4530e60db00e951
@@ -734,6 +813,12 @@ ScriptsOnlyBuild:
     assemblyName: Unity.TextMeshPro
     namespaceName: TMPro
     className: TMP_SubMesh
+  - hash:
+      serializedVersion: 2
+      Hash: 725da833d3d51d533bc7c852a492b02d
+    assemblyName: Assembly-CSharp
+    namespaceName: 
+    className: WaterFloat
   - hash:
       serializedVersion: 2
       Hash: febcfbf0a0d85e37808a3740e3c2c6fa
@@ -874,7 +959,7 @@ ScriptsOnlyBuild:
     className: SignalTrack
   - hash:
       serializedVersion: 2
-      Hash: 09a79b199931d63308abfff6d0e078c3
+      Hash: 3b6b7fd9def1cc5544b1601c060f1f55
     assemblyName: Assembly-CSharp
     namespaceName: 
     className: Director
@@ -940,6 +1025,12 @@ ScriptsOnlyBuild:
     className: Rooms
   - hash:
       serializedVersion: 2
+      Hash: 78459304daf691c795ae550ffd5f283c
+    assemblyName: Assembly-CSharp
+    namespaceName: 
+    className: FPSDisplay
+  - hash:
+      serializedVersion: 2
       Hash: ff76cf6cf52b4db7b95af6ffadca9288
     assemblyName: Unity.Timeline
     namespaceName: UnityEngine.Timeline
@@ -976,5 +1067,5 @@ ScriptsOnlyBuild:
     className: UnityOnSliderValueChangedMessageListener
   platform: 19
   scenePathNames:
-  - Assets/Scenes/SampleScene.unity
-  playerPath: D:/GameDev/Unity Hub/Projects/Horror-AI/!GameExe/Horror_Game_Ai.exe
+  - Assets/Scenes/Trial Map.unity
+  playerPath: D:/GameDev/Unity Hub/Projects/AI w Horrorze.exe

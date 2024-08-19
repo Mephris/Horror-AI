@@ -26,8 +26,8 @@ public class Director : MonoBehaviour
     //[SerializeField] private float pathfindingDelay = 20.0f;
 
     [Header("Enemy Information")]
-    [SerializeField] private Transform hunter;
-    private NavMeshAgent hunterAgent;
+    [SerializeField]private Transform hunter;
+    [SerializeField]private NavMeshAgent hunterAgent;
 
     //We will use seperate NavMeshAgent in order to create a position which hunter will be able to take.
     private Transform Endpoint;
@@ -40,7 +40,7 @@ public class Director : MonoBehaviour
     //Finite State machine which changes according to the current "tension"
     [Header("Current State/Task")]
     public Commands CurrentState;
-    private Commands PreviousState;
+    [SerializeField]private Commands PreviousState;
     public enum Commands
     {
         HighPriorityIncreaseTension,
@@ -54,10 +54,10 @@ public class Director : MonoBehaviour
     void Start()
     {
         //Subscribing to events 
-        Actions.PlayerCanSeeHunter += OnPlayerCanSeeHunter;
-        Actions.HunterCanSeePlayer += OnHunterCanSeePlayer;
+        Actions.PlayerCanSeeHunter += OnPlayerCanSeeHunter; // sub do wydarzenia PlayerCanSeeHunter
+        Actions.HunterCanSeePlayer += OnHunterCanSeePlayer; // sub do wydarzenia HunterCanSeePlayer
 
-        calculationInterval = calculationTime;
+        calculationInterval = calculationTime; // Setting up Calculation interval
 
         Rooms rooms = FindObjectOfType<Rooms>();
         roomToTarget = rooms;
@@ -68,9 +68,15 @@ public class Director : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        TensionCalculation();
-        StateHandler();
+        
+        TensionCalculation(); // Cykliczna zmiana zmiennej tension
+        StateHandler(); // zmiana stanu maszymy stanowej Command 
 
+    }
+
+    private void FixedUpdate()
+    {
+        
     }
 
     private void Awake()
@@ -131,38 +137,41 @@ public class Director : MonoBehaviour
 
     private void GiveCommandToMove()
     {
-        if (PreviousState != CurrentState && CurrentState != Commands.Observe || CurrentState == Commands.HighPriorityDecreaseTension)
+        if (PreviousState != CurrentState || CurrentState == Commands.HighPriorityDecreaseTension)
         {
-            Endpoint.transform.position = EndpointPos;
-            
-            if(CurrentState == Commands.HighPriorityIncreaseTension || CurrentState == Commands.HighPriorityDecreaseTension)
+            if(CurrentState != Commands.Observe)
             {
-                Actions.HighPriorityCommandToMove(Endpoint.position);
+                Endpoint.transform.position = EndpointPos;
+
+                if (CurrentState == Commands.HighPriorityIncreaseTension || CurrentState == Commands.HighPriorityDecreaseTension)
+                {
+                    Actions.HighPriorityCommandToMove(Endpoint.position);
+                }
+                else
+                {
+                    Actions.CommandToMove(Endpoint.position);
+                }
             }
-            else
-            {
-                Actions.CommandToMove(Endpoint.position);
-            }
-            
             PreviousState = CurrentState;
         }
     }
-
+    
     //---------------------
-    //TENSION CYCLE
+    // TENSION CYCLE
     //---------------------
     private void TensionCalculation()
     {
         if (Time.time - calculationElapsedTime >= calculationInterval)
         {
-            tension += Vector3.Distance(player.position, hunter.position) < 10f ? 1 :
+            tension += Vector3.Distance(player.position, hunter.position) < 12f ? 1 :
                        Vector3.Distance(player.position, hunter.position) > 12f ? -1 : 0;
 
+            
             calculationElapsedTime = Time.time;
         }
     }
     //---------------------------
-    //TENSION CHANGING EVENTS
+    // TENSION CHANGING EVENTS
     //---------------------------
     private void OnPlayerCanSeeHunter(bool obj)
     {

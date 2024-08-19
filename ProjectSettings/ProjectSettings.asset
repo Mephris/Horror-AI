@@ -12,8 +12,8 @@ PlayerSettings:
   targetDevice: 2
   useOnDemandResources: 0
   accelerometerFrequency: 60
-  companyName: DefaultCompany
-  productName: Horror_Game_Ai
+  companyName: Ulatowski Jonatan
+  productName: AI w Horrorze
   defaultCursor: {fileID: 0}
   cursorHotspot: {x: 0, y: 0}
   m_SplashScreenBackgroundColor: {r: 0.13725491, g: 0.12156863, b: 0.1254902, a: 1}
@@ -161,7 +161,7 @@ PlayerSettings:
   androidSupportedAspectRatio: 1
   androidMaxAspectRatio: 2.1
   applicationIdentifier:
-    Standalone: com.DefaultCompany.Horror-Game-Ai
+    Standalone: com.Ulatowski-Jonatan.Wykorzystanie-sztucznej-inteligencji-do-regulowania-atmosfery-grozy-w-grze-komputerowej
   buildNumber:
     Standalone: 0
     VisionOS: 0
@@ -761,11 +761,11 @@ PlayerSettings:
   apiCompatibilityLevel: 6
   activeInputHandler: 0
   windowsGamepadBackendHint: 0
-  cloudProjectId: 
+  cloudProjectId: cb3eada7-8369-4a7a-b600-4d8153f038ec
   framebufferDepthMemorylessMode: 0
   qualitySettingsNames: []
-  projectName: 
-  organizationId: 
+  projectName: Pliki_projektowe
+  organizationId: ulatowskijonathan
   cloudEnabled: 0
   legacyClampBlendShapeWeights: 0
   hmiLoadingImage: {fileID: 0}

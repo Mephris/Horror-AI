@@ -2010,6 +2010,30 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 6a62bff5fa244c447b5f2c5eea538a98, type: 3}
+--- !u!1 &212287408 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5759611476620292139, guid: 6536b8c1a9f0ada4aa3994bb0aad4c64, type: 3}
+  m_PrefabInstance: {fileID: 999500943}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &212287410
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 212287408}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 60f147fabefe77b40b738ce0434f1883, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  tension: 51.4
+  calculationTime: 1.5
+  player: {fileID: 1041680239}
+  hunter: {fileID: 1165612971}
+  hunterAgent: {fileID: 1165612966}
+  CurrentState: 4
+  PreviousState: 0
 --- !u!1001 &213117107
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2908,7 +2932,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 163093178018177616, guid: b84d2f8a2574e16459c3c7610a0dafec, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.01000309
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 163093178018177616, guid: b84d2f8a2574e16459c3c7610a0dafec, type: 3}
       propertyPath: m_LocalPosition.z
@@ -9983,16 +10007,23 @@ PrefabInstance:
       objectReference: {fileID: 1041680239}
     - target: {fileID: 6900775993020497551, guid: 6536b8c1a9f0ada4aa3994bb0aad4c64, type: 3}
       propertyPath: tension
-      value: 68.6
+      value: 47.7
+      objectReference: {fileID: 0}
+    - target: {fileID: 6900775993020497551, guid: 6536b8c1a9f0ada4aa3994bb0aad4c64, type: 3}
+      propertyPath: CurrentState
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 6900775993020497551, guid: 6536b8c1a9f0ada4aa3994bb0aad4c64, type: 3}
       propertyPath: calculationTime
-      value: 2.2
+      value: 1.5
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 5759611476620292139, guid: 6536b8c1a9f0ada4aa3994bb0aad4c64, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 212287410}
   m_SourcePrefab: {fileID: 100100000, guid: 6536b8c1a9f0ada4aa3994bb0aad4c64, type: 3}
 --- !u!4 &999500944 stripped
 Transform:

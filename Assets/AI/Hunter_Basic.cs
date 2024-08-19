@@ -9,8 +9,6 @@ public class Hunter_Basic : MonoBehaviour
 
     private NavMeshAgent agent;
 
-    
-
     private bool isMoving = false;
     private bool isNotChasing = true;
 
@@ -73,6 +71,7 @@ public class Hunter_Basic : MonoBehaviour
                 case States.Patrol:
                     agent.speed = 2.0f;
                     Patrol();
+                    
                     break;
 
                 case States.SwitchRoom:
@@ -87,10 +86,11 @@ public class Hunter_Basic : MonoBehaviour
                         isMoving = false;
                         states = States.Patrol;
                     }
-
+                    Debug.Log($"Hoonter Switched Room");
                     break;
 
                 case States.Chase:
+                    
                     agent.speed = 3.5f;
                     break;
 
@@ -222,7 +222,7 @@ public class Hunter_Basic : MonoBehaviour
                 }
                 else
                 {
-                    if (AllPointsChecked(closestRoom) && previousState != States.ExecuteHPOrder)
+                    if (AllPointsChecked(closestRoom))
                         states = States.SwitchRoom;
                 }
             }
@@ -266,7 +266,7 @@ public class Hunter_Basic : MonoBehaviour
             }
             else if (!isNotChasing)
             {
-                if (Vector3.Distance(transform.position, lastSeenTargetLocation) < 0.3f)
+                if (Vector3.Distance(transform.position, lastSeenTargetLocation) < 1.0f)
                 {
                     agent.speed = 3f;
                     states = States.SwitchRoom;
@@ -324,7 +324,7 @@ public class Hunter_Basic : MonoBehaviour
 
     private bool AllPointsChecked(Room room)
     {
-        foreach (var point in room.patrolPoint)
+        foreach (PatrolPoints point in room.patrolPoint)
         {
             if (!point.GetComponent<PatrolPoints>().isChecked)
             {

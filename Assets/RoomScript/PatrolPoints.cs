@@ -31,7 +31,16 @@ public class PatrolPoints : MonoBehaviour
 
     private void OnDrawGizmos()
     {
-        Gizmos.color = Color.blue;
+        
+        if(isChecked)
+        {
+            Gizmos.color = Color.green;
+        }
+        else
+        {
+            Gizmos.color = Color.red;
+        }
+
         Gizmos.DrawCube(transform.position, Vector3.one * 0.2f);
     }
 }
