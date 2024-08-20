@@ -55,6 +55,10 @@ public class Rooms : MonoBehaviour
         return cost;
     }
 
+    //------------------------------------------------
+    // LOCATION CALCULATIONS \ WHERE SHOULD HUNTER GO
+    //------------------------------------------------
+
     public Room GetFurthest(Vector3 agentLocation)
     {
         float maxDistance = float.MinValue;
