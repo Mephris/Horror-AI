@@ -26,8 +26,8 @@ public class Director : MonoBehaviour
     //[SerializeField] private float pathfindingDelay = 20.0f;
 
     [Header("Enemy Information")]
-    [SerializeField]private Transform hunter;
-    [SerializeField]private NavMeshAgent hunterAgent;
+    public Transform hunter;
+    public NavMeshAgent hunterAgent;
 
     //We will use seperate NavMeshAgent in order to create a position which hunter will be able to take.
     private Transform Endpoint;
@@ -99,8 +99,7 @@ public class Director : MonoBehaviour
                        tension < 35 ? Commands.IncreaseTension :
                        tension > 70 ? Commands.DecreaseTension :
                        Commands.Observe;
-
-        
+        Rooms roomsLogic = GetComponent<Rooms>();
 
         // Depending on state, send the chosen command to Hunter AI
         switch (CurrentState)
@@ -108,22 +107,22 @@ public class Director : MonoBehaviour
             //Send Hunter to
             case Commands.IncreaseTension:
                 //to closest room
-                ClosestRoom();
+                EndpointPos = roomsLogic.ClosestRoom();
                 break;
 
             case Commands.DecreaseTension:
                 //entrance to the furthest viable room
-                PosFarFromPlayer();
+                EndpointPos = roomsLogic.PosFarFromPlayer();
                 break;
 
             case Commands.HighPriorityDecreaseTension:
                 //furthest viable room
-                FurthestRoom();
+                EndpointPos = roomsLogic.FurthestRoom();
                 break;
 
             case Commands.HighPriorityIncreaseTension:
                 //last turn between player and enemy in pathfinding
-                PosNearPlayer();
+                EndpointPos = roomsLogic.PosNearPlayer();
                 break;
 
             case Commands.Observe:
@@ -185,55 +184,4 @@ public class Director : MonoBehaviour
             tension += 1;
     }
 
-    //------------------------------------------------
-    // LOCATION CALCULATIONS \ WHERE SHOULD HUNTER GO
-    //------------------------------------------------
-    private void PosNearPlayer()
-    {
-
-        NavMeshPath path = new NavMeshPath();
-        if (hunterAgent.CalculatePath(player.position, path))
-        {
-            // Make sure there is more than one corner
-            if (path.corners.Length > 1) 
-            {
-                // The second-to-last corner is the new endpoint
-                EndpointPos = path.corners[path.corners.Length - 2];
-            }
-            // If there's only one corner, use it as the endpoint
-            else if (path.corners.Length == 1) 
-            {
-                EndpointPos = path.corners[0];
-            }
-        }
-    }
-    private void PosFarFromPlayer()
-    {
-        Room targetRoom = this.roomToTarget.MostCostMovement(player.position);
-        NavMeshPath path = new NavMeshPath();
-        if (hunterAgent.CalculatePath(targetRoom.transform.position, path))
-        {
-
-            if (path.corners.Length > 1) // Ensure there is more than one corner
-            {
-                // The second-to-last corner is the new endpoint
-                EndpointPos = path.corners[path.corners.Length - 2];
-            }
-            else if (path.corners.Length == 1) // If there's only one corner, use it as the endpoint
-            {
-                EndpointPos = path.corners[0];
-            }
-        }
-    }
-    private void FurthestRoom()
-    {
-        Room targetRoom = this.roomToTarget.MostCostMovement(player.position);
-        EndpointPos = targetRoom.transform.position;
-    }
-
-    private void ClosestRoom()
-    {
-        Room targetRoom = this.roomToTarget.LeastCostMovement(hunter.position, player.position);
-        EndpointPos = targetRoom.transform.position;
-    }
 }
