@@ -3,12 +3,12 @@
   "WorkspaceRootPath": "D:\\GameDev\\Unity Hub\\Projects\\Horror-AI\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{2D8488E7-17F8-6686-0040-96FE997E9F3D}|Assembly-CSharp.csproj|d:\\gamedev\\unity hub\\projects\\horror-ai\\assets\\roomscript\\rooms.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2D8488E7-17F8-6686-0040-96FE997E9F3D}|Assembly-CSharp.csproj|solutionrelative:assets\\roomscript\\rooms.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{2D8488E7-17F8-6686-0040-96FE997E9F3D}|Assembly-CSharp.csproj|D:\\GameDev\\Unity Hub\\Projects\\Horror-AI\\assets\\ai\\director.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{2D8488E7-17F8-6686-0040-96FE997E9F3D}|Assembly-CSharp.csproj|solutionrelative:assets\\ai\\director.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{2D8488E7-17F8-6686-0040-96FE997E9F3D}|Assembly-CSharp.csproj|d:\\gamedev\\unity hub\\projects\\horror-ai\\assets\\roomscript\\rooms.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{2D8488E7-17F8-6686-0040-96FE997E9F3D}|Assembly-CSharp.csproj|solutionrelative:assets\\roomscript\\rooms.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{2D8488E7-17F8-6686-0040-96FE997E9F3D}|Assembly-CSharp.csproj|D:\\GameDev\\Unity Hub\\Projects\\Horror-AI\\assets\\roomscript\\room.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
@@ -38,17 +38,17 @@
       "DocumentGroups": [
         {
           "DockedWidth": 365,
-          "SelectedChildIndex": 4,
+          "SelectedChildIndex": 0,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 0,
               "Title": "Director.cs",
               "DocumentMoniker": "D:\\GameDev\\Unity Hub\\Projects\\Horror-AI\\Assets\\AI\\Director.cs",
               "RelativeDocumentMoniker": "Assets\\AI\\Director.cs",
               "ToolTip": "D:\\GameDev\\Unity Hub\\Projects\\Horror-AI\\Assets\\AI\\Director.cs",
               "RelativeToolTip": "Assets\\AI\\Director.cs",
-              "ViewState": "AQIAALIAAAAAAAAAAAAAwLsAAAAAAAAA",
+              "ViewState": "AQIAAFgAAAAAAAAAAAAMwHwAAAAfAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2024-03-27T09:10:06.309Z",
               "IsPinned": true,
@@ -77,8 +77,7 @@
               "RelativeToolTip": "Assets\\AI\\FieldOfView.cs",
               "ViewState": "AQIAAAAAAAAAAAAAAAAAAA0AAAAiAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2024-05-28T22:03:23.488Z",
-              "EditorCaption": ""
+              "WhenOpened": "2024-05-28T22:03:23.488Z"
             },
             {
               "$type": "Document",
@@ -90,18 +89,17 @@
               "RelativeToolTip": "Assets\\AI\\Hunter_Basic.cs",
               "ViewState": "AQIAAAAAAAAAAAAAAAAAAOQAAAAJAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2024-05-27T11:49:26.699Z",
-              "EditorCaption": ""
+              "WhenOpened": "2024-05-27T11:49:26.699Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 1,
               "Title": "Rooms.cs",
               "DocumentMoniker": "D:\\GameDev\\Unity Hub\\Projects\\Horror-AI\\Assets\\RoomScript\\Rooms.cs",
               "RelativeDocumentMoniker": "Assets\\RoomScript\\Rooms.cs",
               "ToolTip": "D:\\GameDev\\Unity Hub\\Projects\\Horror-AI\\Assets\\RoomScript\\Rooms.cs",
               "RelativeToolTip": "Assets\\RoomScript\\Rooms.cs",
-              "ViewState": "AQIAADIAAAAAAAAAAAAIwDcAAAA2AAAA",
+              "ViewState": "AQIAADIAAAAAAAAAAAAIwDcAAAAFAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2024-03-27T09:12:49.451Z",
               "EditorCaption": ""
@@ -116,8 +114,7 @@
               "RelativeToolTip": "Assets\\RoomScript\\Room.cs",
               "ViewState": "AQIAAAAAAAAAAAAAAAAAAAgAAAAeAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2024-03-27T09:12:48.89Z",
-              "EditorCaption": ""
+              "WhenOpened": "2024-03-27T09:12:48.89Z"
             },
             {
               "$type": "Document",
@@ -129,8 +126,7 @@
               "RelativeToolTip": "Assets\\RoomScript\\PatrolPoints.cs",
               "ViewState": "AQIAAAAAAAAAAAAAAAAAAA4AAAAAAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2024-03-27T18:09:13.933Z",
-              "EditorCaption": ""
+              "WhenOpened": "2024-03-27T18:09:13.933Z"
             }
           ]
         }
