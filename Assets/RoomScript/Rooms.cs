@@ -2,15 +2,19 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
+using static UnityEditor.Experimental.AssetDatabaseExperimental.AssetDatabaseCounters;
 
 public class Rooms : MonoBehaviour
 {
 
     private Room[] rooms;
+    private GameObject player;
+
 
     private void Awake()
     {
         rooms = GetComponentsInChildren<Room>();
+        player = GameObject.FindGameObjectWithTag("Player");
     }
 
     private void Update()
@@ -21,7 +25,7 @@ public class Rooms : MonoBehaviour
     private void UpdateRoomProximity()
     {
         // Get player's position
-        Vector3 playerPosition = GameObject.FindGameObjectWithTag("Player").transform.position;
+        Vector3 playerPosition = player.transform.position;
 
         // Iterate through each room
         foreach (Room room in rooms)
@@ -200,4 +204,60 @@ public class Rooms : MonoBehaviour
 
         return cost;
     }
+
+
+    //------------------------------------------------
+    // LOCATION CALCULATIONS \ WHERE SHOULD HUNTER GO
+    //------------------------------------------------
+    public Vector3 PosNearPlayer()
+    {
+
+        NavMeshPath path = new NavMeshPath();
+        if (GetComponent<Director>().hunterAgent.CalculatePath(player.transform.position, path))
+        {
+            // Make sure there is more than one corner
+            if (path.corners.Length > 1)
+            {
+                // The second-to-last corner is the new endpoint
+                return path.corners[path.corners.Length - 2];
+            }
+            // If there's only one corner, use it as the endpoint
+            else if (path.corners.Length == 1)
+            {
+                return path.corners[0];
+            }
+        }
+        return Vector3.zero;
+    }
+    public Vector3 PosFarFromPlayer()
+    {
+        Room targetRoom = MostCostMovement(player.transform.position);
+        NavMeshPath path = new NavMeshPath();
+        if (GetComponent<Director>().hunterAgent.CalculatePath(targetRoom.transform.position, path))
+        {
+
+            if (path.corners.Length > 1) // Ensure there is more than one corner
+            {
+                // The second-to-last corner is the new endpoint
+                return path.corners[path.corners.Length - 2];
+            }
+            else if (path.corners.Length == 1) // If there's only one corner, use it as the endpoint
+            {
+                return path.corners[0];
+            }
+        }
+
+        return Vector3.zero;
+    }
+    public Vector3 FurthestRoom()
+    {
+        return MostCostMovement(player.transform.position).transform.position;
+    }
+
+    public Vector3 ClosestRoom()
+    {
+        Room targetRoom = LeastCostMovement(GetComponent<Director>().hunter.position, player.transform.position);
+        return targetRoom.transform.position;
+    }
+
 }
