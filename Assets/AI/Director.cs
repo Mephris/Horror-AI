@@ -39,9 +39,9 @@ public class Director : MonoBehaviour
 
     //Finite State machine which changes according to the current "tension"
     [Header("Current State/Task")]
-    public Commands CurrentState;
-    [SerializeField]private Commands PreviousState;
-    public enum Commands
+    public DirectorStates CurrentState;
+    [SerializeField]private DirectorStates PreviousState;
+    public enum DirectorStates
     {
         HighPriorityIncreaseTension,
         HighPriorityDecreaseTension,
@@ -94,39 +94,39 @@ public class Director : MonoBehaviour
     private void StateHandler()
     {
         // Changing Hunter Command which will be sent to the Hunter AI
-        CurrentState = tension < 15 ? Commands.HighPriorityIncreaseTension :
-                       tension > 85 ? Commands.HighPriorityDecreaseTension :
-                       tension < 35 ? Commands.IncreaseTension :
-                       tension > 70 ? Commands.DecreaseTension :
-                       Commands.Observe;
-        Rooms roomsLogic = GetComponent<Rooms>();
+        CurrentState = tension < 15 ? DirectorStates.HighPriorityIncreaseTension :
+                       tension > 85 ? DirectorStates.HighPriorityDecreaseTension :
+                       tension < 35 ? DirectorStates.IncreaseTension :
+                       tension > 70 ? DirectorStates.DecreaseTension :
+                       DirectorStates.Observe;
 
+        //Debug.Log(FindObjectOfType<Rooms>());
         // Depending on state, send the chosen command to Hunter AI
         switch (CurrentState)
         {
             //Send Hunter to
-            case Commands.IncreaseTension:
+            case DirectorStates.IncreaseTension:
                 //to closest room
-                EndpointPos = roomsLogic.ClosestRoom();
+                EndpointPos = FindObjectOfType<Rooms>().ClosestRoom();
                 break;
 
-            case Commands.DecreaseTension:
+            case DirectorStates.DecreaseTension:
                 //entrance to the furthest viable room
-                EndpointPos = roomsLogic.PosFarFromPlayer();
+                EndpointPos = FindObjectOfType<Rooms>().PosFarFromPlayer();
                 break;
 
-            case Commands.HighPriorityDecreaseTension:
+            case DirectorStates.HighPriorityDecreaseTension:
                 //furthest viable room
-                EndpointPos = roomsLogic.FurthestRoom();
+                EndpointPos = FindObjectOfType<Rooms>().FurthestRoom();
                 break;
 
-            case Commands.HighPriorityIncreaseTension:
+            case DirectorStates.HighPriorityIncreaseTension:
                 //last turn between player and enemy in pathfinding
-                Vector3 PosVec3 = roomsLogic.PosNearPlayer();
+                Vector3 PosVec3 = FindObjectOfType<Rooms>().PosNearPlayer();
                 EndpointPos = PosVec3;
                 break;
 
-            case Commands.Observe:
+            case DirectorStates.Observe:
 
 
                 break;
@@ -137,13 +137,13 @@ public class Director : MonoBehaviour
 
     private void GiveCommandToMove()
     {
-        if (PreviousState != CurrentState || CurrentState == Commands.HighPriorityDecreaseTension)
+        if (PreviousState != CurrentState || CurrentState == DirectorStates.HighPriorityDecreaseTension)
         {
-            if(CurrentState != Commands.Observe)
+            if(CurrentState != DirectorStates.Observe)
             {
                 Endpoint.transform.position = EndpointPos;
 
-                if (CurrentState == Commands.HighPriorityIncreaseTension || CurrentState == Commands.HighPriorityDecreaseTension)
+                if (CurrentState == DirectorStates.HighPriorityIncreaseTension || CurrentState == DirectorStates.HighPriorityDecreaseTension)
                 {
                     Actions.HighPriorityCommandToMove(Endpoint.position);
                 }

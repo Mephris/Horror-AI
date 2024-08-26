@@ -233,7 +233,7 @@ public class Rooms : MonoBehaviour
     {
         Room targetRoom = MostCostMovement(player.transform.position);
         NavMeshPath path = new NavMeshPath();
-        if (GetComponent<Director>().hunterAgent.CalculatePath(targetRoom.transform.position, path))
+        if (FindObjectOfType<Director>().hunterAgent.CalculatePath(targetRoom.transform.position, path))
         {
 
             if (path.corners.Length > 1) // Ensure there is more than one corner
@@ -256,7 +256,7 @@ public class Rooms : MonoBehaviour
 
     public Vector3 ClosestRoom()
     {
-        return LeastCostMovement(GetComponent<Director>().hunter.position, player.transform.position).transform.position;
+        return LeastCostMovement(FindObjectOfType<Director>().hunter.position, player.transform.position).transform.position;
     }
 
 }
