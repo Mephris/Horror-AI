@@ -122,7 +122,8 @@ public class Director : MonoBehaviour
 
             case Commands.HighPriorityIncreaseTension:
                 //last turn between player and enemy in pathfinding
-                EndpointPos = roomsLogic.PosNearPlayer();
+                Vector3 PosVec3 = roomsLogic.PosNearPlayer();
+                EndpointPos = PosVec3;
                 break;
 
             case Commands.Observe:
