@@ -5,4 +5,9 @@ So instead lets make 2 changes to how the patroling behavior works and the logic
 1. Change the static table taken from the map table onto a dynamic/static(to be decided) table instead, with patrol points being added onto it as the Hunter sees it. 
 2. Change logic of searching though the patrol point onto a "seen node = visited node". 
 
-Ideas: Create rooms and base player probability in the node/room be based on the patrol points 
+Ideas: Create rooms and base player probability in the node/room be based on the patrol points visited. Maybe if Hunter sees a room they will get all the nodes in the room or neighboring Patrol points to the seen patrol point. 
+
+
+[[changes instructions | Instructions for the next changes for the patrol points]]
+
+
