@@ -8,6 +8,6 @@ So instead lets make 2 changes to how the patroling behavior works and the logic
 Ideas: Create rooms and base player probability in the node/room be based on the patrol points visited. Maybe if Hunter sees a room they will get all the nodes in the room or neighboring Patrol points to the seen patrol point. 
 
 
-[[changes instructions | Instructions for the next changes for the patrol points]]
+[[changes instructions - patrol points| Instructions for the next changes for the patrol points]]
 
 
