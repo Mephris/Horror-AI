@@ -11,7 +11,7 @@ public class Director : MonoBehaviour
     // Tension is a variable which posseses current state of atmosphere 
     [Header("Tension Meter")]
     [Range(0, 100)]
-    public float tension;
+    public double tension;
 
     private float calculationElapsedTime = 0f;
     [Range(1, 3)]
@@ -164,7 +164,7 @@ public class Director : MonoBehaviour
         if (Time.time - calculationElapsedTime >= calculationInterval)
         {
             tension += Vector3.Distance(player.position, hunter.position) < 12f ? 1 :
-                       Vector3.Distance(player.position, hunter.position) > 12f ? -1 : 0;
+                        Vector3.Distance(player.position, hunter.position) > 12f ? -1 : 0;
 
             
             calculationElapsedTime = Time.time;
@@ -176,13 +176,18 @@ public class Director : MonoBehaviour
     private void OnPlayerCanSeeHunter(bool obj)
     {
         if (obj == true)
-            tension += 1;
+            tension += 0.5;
+
+        // !!! Change how High Priority Increase Tension works !!!
+        // Change it to a timer based on how long is Hunter seen by Player. If seen for 15 seconds, then give high priority order. 
     }
 
     private void OnHunterCanSeePlayer(bool obj, Vector3 lastPlayerLocation)
     {
         if (obj == true)
             tension += 1;
+        // Same here, but maybe rather then limit the time Hunter chases player and then fucks off, make it so that if Hunter loses sight of player for more then x seconds, it gives up chase.
+        // This will probably require changes to Hunter AI rather then Director tho.
     }
 
 }

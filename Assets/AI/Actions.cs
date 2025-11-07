@@ -12,4 +12,5 @@ public static class Actions
     //Events which are happening
     public static Action<bool> PlayerCanSeeHunter;
     public static Action<bool, Vector3> HunterCanSeePlayer;
+    public static Action<bool> HunterCanSeePatrolPoint;
 }

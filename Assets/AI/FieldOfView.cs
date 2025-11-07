@@ -21,34 +21,36 @@ public class FieldOfView : MonoBehaviour
     public bool canSeeTarget;
     public Vector3 lastSeenTargetLocation;
 
-    private void Start()
-    {
-        StartCoroutine(FOVRoutine());
-    }
+    private void Start() => StartCoroutine(FOVRoutine());
 
     private IEnumerator FOVRoutine()
     {
         WaitForSeconds wait = new WaitForSeconds(0.5f);
-        while(true)
+        while (true)
         {
             yield return wait;
-            FieldOfViewCheck();
-
-            if (targetObjRef.CompareTag("Enemy"))
+            if (this.gameObject.CompareTag("Player"))
             {
-                Actions.PlayerCanSeeHunter(canSeeTarget);
+                if (targetObjRef.CompareTag("Enemy"))
+                {
+                    Actions.PlayerCanSeeHunter(canSeeTarget);
+                }
             }
-            else if(targetObjRef.CompareTag("Player"))
+            else if (this.gameObject.CompareTag("Enemy"))
             {
-                if (canSeeTarget)
+                if (targetObjRef.CompareTag("Player") && canSeeTarget)
+                {
                     lastSeenTargetLocation = targetObjRef.transform.position;
-
-                Actions.HunterCanSeePlayer(canSeeTarget, lastSeenTargetLocation);
+                    Actions.HunterCanSeePlayer(canSeeTarget, lastSeenTargetLocation);
+                }
+                else if (targetObjRef.CompareTag("PatrolPoint") && canSeeTarget)
+                {
+                    Actions.HunterCanSeePatrolPoint(canSeeTarget);
+                }
             }
-
-            
         }
     }
+
 
     private void FieldOfViewCheck()
     {

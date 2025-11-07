@@ -1,11 +1,24 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 
 
+[System.Serializable]
+public class HunterPatrolMemory
+{
+    public Transform patrolpointTransform;
+    public float lastPatrolTime = 0f;
+    public float playerProbability = 0f; // a value from 0 to 1 indicating likelihood of player presence, (base it on data given by the director in order to make the enemy walk closer rather then constantly further from the player).
+}
+
 public class Hunter_Basic : MonoBehaviour
 {
 
+
     [SerializeField] private Transform targetPos;
+
+  
+    private Dictionary<Transform, HunterPatrolMemory> patrolPointData = new Dictionary<Transform, HunterPatrolMemory>(); // A dictionary to store all patrol point data
 
     private NavMeshAgent agent;
 
@@ -38,6 +51,14 @@ public class Hunter_Basic : MonoBehaviour
         agent = GetComponent<NavMeshAgent>();
         rooms = FindObjectsOfType<Room>();
 
+        // Find all the patrol points in the scene and initialize their memory. 
+        GameObject[] allPatrolPoints = GameObject.FindGameObjectsWithTag("PatrolPoint");
+        foreach (GameObject patrolPointObject in allPatrolPoints)
+        {
+            HunterPatrolMemory memory = new HunterPatrolMemory();
+            memory.patrolpointTransform = patrolPointObject.transform;
+            patrolPointData.Add(patrolPointObject.transform, memory);
+        }
 
         ClosestRoom();
 
