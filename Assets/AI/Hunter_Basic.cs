@@ -10,8 +10,6 @@ public class HunterPatrolMemory
     public float lastPatrolTime = 0f;
     public float playerProbability = 0f; // a value from 0 to 1 indicating likelihood of player presence, (base it on data given by the director in order to make the enemy walk closer rather then constantly further from the player).
 
-    
-    
 }
 
 public class Hunter_Basic : MonoBehaviour
@@ -261,7 +259,7 @@ public class Hunter_Basic : MonoBehaviour
         return currentRoom;
     }
 
-    private void Patrol()
+    /*private void Patrol()
     {
         if (!isMoving)
         {
@@ -296,6 +294,30 @@ public class Hunter_Basic : MonoBehaviour
                 // Reset the flag once the agent reaches the patrol point
                 isMoving = false;
             }
+        }
+    }
+    */
+
+
+    private void Patrol()
+    {
+        if(isMoving && agent.remainingDistance <= 0.3f)
+        {
+            // Reached the patrol point
+            isMoving = false;
+
+            // Mark the patrol point as checked
+            if (currentPatrolTarget != null && patrolPointData.ContainsKey(currentPatrolTarget))
+            {
+                patrolPointData[currentPatrolTarget].lastPatrolTime = Time.time;
+                currentPatrolTarget.GetComponent<PatrolPoints>().ToggleCheckStatus();
+
+                patrolPointData[currentPatrolTarget].playerProbability = 0f; // Reset probability after visiting
+            }
+        }
+        if (!isMoving)
+        {
+            SelectNextPatrolPoint();
         }
     }
 
