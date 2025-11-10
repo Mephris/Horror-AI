@@ -286,7 +286,7 @@ public class Hunter_Basic : MonoBehaviour
 
         // TASKS
         var chasePlayer = new PlaceholderTask("Chase Player");
-        var movePatrol = new PlaceholderTask("Move to Patrol Point");
+        var movePatrol = new HunterBehaviorNodes.MoveToPatrolPoint(btContext);
         var wanderAround = new HunterBehaviorNodes.WanderLocally(btContext);
 
         // ----------------------------------------------------------------------
@@ -312,8 +312,6 @@ public class Hunter_Basic : MonoBehaviour
 
         return root;
     }
-
-    // --- In Hunter_Basic.cs (Add this method) ---
 
     // --- NEW CORE BT LOGIC: GetBestPatrolPoint ---
     public Transform GetBestPatrolPoint()
