@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.AI;
+using static Node; // Allows you to use NodeState directly (SUCCESS, FAILURE, RUNNING)
 
 
 [System.Serializable]
@@ -28,6 +29,10 @@ public class HunterPatrolMemory
 
 public class Hunter_Basic : MonoBehaviour
 {
+    // --- In Hunter_Basic.cs (inside the Hunter_Basic class) ---
+    private HunterBehaviorNodes btContext;
+
+    // --- Navigation & Hunter Tags ---
     private NavMeshAgent agent;
 
     private bool isMoving = false;
@@ -87,6 +92,7 @@ public class Hunter_Basic : MonoBehaviour
         StartCoroutine(DecayProbabilitiesRoutine());
 
         // 5. Initialize the Behavior Tree (Requires SetupBehaviorTree method)
+        btContext = new HunterBehaviorNodes(this, agent);
         rootNode = SetupBehaviorTree();
 
         // 6. Subscription to Actions (Updated to include OnPatrolPointSeen)
@@ -129,17 +135,44 @@ public class Hunter_Basic : MonoBehaviour
     }
 
 
-    // ----------------------------------------------------
-    // REQUIRED HELPER: Behavior Tree Setup (Placeholder)
-    // ----------------------------------------------------
+    // --- Updated SetupBehaviorTree() in Hunter_Basic.cs ---
     private Node SetupBehaviorTree()
     {
-        // *** NOTE: You must define the Node, Selector, and Sequence classes ***
-        // (As provided in the previous step, or use a proper BT asset)
+        // ----------------------------------------------------------------------
+        // Step 1: Define all the Leaf Nodes using the BT Context
+        // ----------------------------------------------------------------------
 
-        // For now, return a placeholder root that immediately succeeds
-        // In a later step, you will fill this with your Chase/Investigate/Patrol/Wander logic.
-        return new Selector(new List<Node> { new PlaceholderCondition("BT Initialized") });
+        // CONDITIONS
+        var isPlayerSeen = new HunterBehaviorNodes.IsPlayerSeen(btContext);
+        var isAtDestination = new HunterBehaviorNodes.IsAtDestination(btContext);
+
+        // TASKS
+        var chasePlayer = new PlaceholderTask("Chase Player"); // You'll write this next
+        var movePatrol = new PlaceholderTask("Move to Patrol Point"); // You'll write this next
+        var wanderAround = new HunterBehaviorNodes.WanderLocally(btContext);
+
+        // ----------------------------------------------------------------------
+        // Step 2: Build the Main Branches (Sequences and Selectors)
+        // ----------------------------------------------------------------------
+
+        // Priority 1: Chase -> IF Player Seen THEN Chase
+        var chaseBranch = new Sequence(new List<Node> { isPlayerSeen, chasePlayer });
+
+        // Priority 3: Patrol/Roam Loop
+        // IF At Destination THEN Wander (Gives the Hunter the roaming behavior)
+        var roamCheck = new Sequence(new List<Node> { isAtDestination, wanderAround });
+
+        // Standard patrol: Try roaming first, otherwise move to next point.
+        var patrolAndWander = new Selector(new List<Node> { roamCheck, movePatrol });
+
+        // ----------------------------------------------------------------------
+        // Step 3: Define the Root Selector (Highest Priority Check)
+        // ----------------------------------------------------------------------
+
+        // Priority Top-level: Chase > Patrol/Roam
+        var root = new Selector(new List<Node> { chaseBranch, patrolAndWander });
+
+        return root;
     }
 
     // ----------------------------------------------------
@@ -686,4 +719,28 @@ public class Hunter_Basic : MonoBehaviour
 
     //GIZMO DRAWING
 
+    // --- Add these classes inside the Hunter_Basic class or at the bottom of the file ---
+    private class PlaceholderTask : Node
+    {
+        private string taskName;
+        public PlaceholderTask(string name) { taskName = name; }
+        public override NodeState Evaluate()
+        {
+            // Debug.Log($"Running Task: {taskName}");
+            // Return RUNNING if the task takes time (like movement), SUCCESS if it completes immediately.
+            return NodeState.SUCCESS;
+        }
+    }
+
+    private class PlaceholderCondition : Node
+    {
+        private string conditionName;
+        public PlaceholderCondition(string name) { conditionName = name; }
+        public override NodeState Evaluate()
+        {
+            // Debug.Log($"Checking Condition: {conditionName}");
+            // Your actual condition check (e.g., check FOV script)
+            return NodeState.FAILURE; // Default to Failure so the Selector moves on
+        }
+    }
 }
