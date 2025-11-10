@@ -1,1 +1,1 @@
-Change the current Hunter behavior system working as State machine onto a behavior tree system instead. 
+1. Created a foundation for the behavior tree and fixed the initial compilation errors due to old FSM (Fixed State Machine) removal. 

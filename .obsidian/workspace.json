@@ -55,12 +55,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "notes/Patrol Points.md",
+                "file": "notes/Hunter Behavior system changes.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Patrol Points"
+              "title": "Hunter Behavior system changes"
             }
           }
         ],
@@ -137,7 +137,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "notes/Patrol Points.md",
+                "file": "notes/Hunter Behavior system changes.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -147,7 +147,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Backlinks for Patrol Points"
+              "title": "Backlinks for Hunter Behavior system changes"
             }
           },
           {
@@ -212,6 +212,8 @@
   },
   "active": "b734a1dd89401601",
   "lastOpenFiles": [
+    "notes/Director.md",
+    "notes/Patrol Points.md",
     "Library/Search/propertyAliases.db_87a79f60641b44079c4dcf77d452c819_temp",
     "Library/Bee/TundraBuildState.state",
     "Temp/ADB-Refresh2198b0861d8d2b8429fb632e71f7e219",
@@ -222,9 +224,7 @@
     "Library/Artifacts/80/8008dea32d7162ce91a127aed0d080ee",
     "Assets/AI/HunterBehaviorNodes.cs.meta",
     "Assets/AI/HunterBehaviorNodes.cs",
-    "Library/Artifacts/4f/4fca8c805797a0b9497de5622c1f22c1",
     "notes/Hunter.md",
-    "notes/Patrol Points.md",
     "notes/changes instructions - patrol points.md",
     "README.md",
     "notes/Hunter Behavior system changes.md",
