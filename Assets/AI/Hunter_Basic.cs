@@ -9,11 +9,14 @@ public class HunterPatrolMemory
     public Transform patrolpointTransform;
     public float lastPatrolTime = 0f;
     public float playerProbability = 0f; // a value from 0 to 1 indicating likelihood of player presence, (base it on data given by the director in order to make the enemy walk closer rather then constantly further from the player).
+
+    
+    
 }
 
 public class Hunter_Basic : MonoBehaviour
 {
-
+    [SerializeField]private Transform currentPatrolTarget = null;
 
     [SerializeField] private Transform targetPos;
 
@@ -151,6 +154,43 @@ public class Hunter_Basic : MonoBehaviour
         }
     }
 
+    private void SelectNextPatrolPoint()
+    {
+        HunterPatrolMemory bestPatrolMemory = null;
+        float bestScore = -1f;
+
+        // Iterate through all the patrol points in our memory
+        foreach (var kvp in patrolPointData)
+        {
+            HunterPatrolMemory memory = kvp.Value;
+
+        // --- Your decision-making logic goes here ---`
+        // For example, prioritize points that haven't been patrolled in a long time.`
+        float timeSincePatrolled = Time.time - memory.lastPatrolTime;
+
+        // A simple score could be just the time since last patrol, or a combination with probability.`
+        float currentScore = timeSincePatrolled + (memory.playerProbability * 100); // Probability has a higher weight
+
+            if (currentScore > bestScore)
+            {
+                bestScore = currentScore;
+                bestPatrolMemory = memory;
+            }
+        }
+
+        // If we found a point to patrol`
+        if (bestPatrolMemory != null)
+        {
+            currentPatrolTarget = bestPatrolMemory.patrolpointTransform;
+            agent.SetDestination(currentPatrolTarget.position);
+            isMoving = true;
+        }
+        // Handle the case where all points have been patrolled very recently (e.g., states = States.SwitchRoom)`
+        else
+        {
+            // This is where you might implement your "SwitchRoom" logic if there are no good points left`
+        }
+    }
 
     private Room ClosestRoom()
     {

@@ -198,6 +198,7 @@
   },
   "active": "44e18676906f0f21",
   "lastOpenFiles": [
+    "Library/Search/propertyAliases.db_c9ff9b4078c04ded9e2acfb07bff2117_temp",
     "Temp/bin/Debug",
     "Temp/bin",
     "Library/TempArtifacts/Extra/a1c584e0363a840498fd6c7b5245fe4a.info",
@@ -208,7 +209,6 @@
     "Logs/AssetImportWorker0.log",
     "Temp/ProcessJobs",
     "Library/EditorInstance.json",
-    "Logs/shadercompiler-UnityShaderCompiler.exe0.log",
     "README.md",
     "notes/changes instructions - patrol points.md",
     "notes/Hunter.md",
