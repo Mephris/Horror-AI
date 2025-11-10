@@ -83,7 +83,7 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "ForNextDay-AI.md",
+                "file": "notes/ForNextDay-AI.md",
                 "mode": "source",
                 "source": false
               },
@@ -165,7 +165,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "ForNextDay-AI.md",
+                "file": "notes/ForNextDay-AI.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -238,10 +238,10 @@
       "obsidian-git:Open Git source control": false
     }
   },
-  "active": "3ac973581d2f9c41",
+  "active": "e9aafda490291d63",
   "lastOpenFiles": [
     "notes/Patrol/Patrol Points.md",
-    "ForNextDay-AI.md",
+    "notes/ForNextDay-AI.md",
     "notes/Hunter.md",
     "notes/Director.md",
     "notes/Patrol/Roam System.md",

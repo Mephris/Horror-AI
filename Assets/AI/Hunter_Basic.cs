@@ -45,6 +45,10 @@ public class Hunter_Basic : MonoBehaviour
     private Room closestRoom;
     private Dictionary<Transform, HunterPatrolMemory> patrolPointData = new Dictionary<Transform, HunterPatrolMemory>();
 
+    [Header("Patrol Memory Settings")]
+    [Tooltip("Rate at which patrol point probability decays per second (e.g., 0.01 = 1% decrease per second).")]
+    [SerializeField] private float memoryDecayRate = 0.01f;
+
     // --- Decay & Wander Settings ---
     [Header("Probability Settings")]
     [Tooltip("How much probability decays per second (e.g., 0.01 = 1% per second).")]
@@ -55,8 +59,8 @@ public class Hunter_Basic : MonoBehaviour
     [SerializeField] private float wanderRange = 5f; // Used by GetRandomWanderPoint
     private WaitForSeconds decayWait;
 
-    // --- In Hunter_Basic.cs (Add these fields) ---
 
+    // --- Chase Settings ---
     [Header("Chase Settings")]
     [Tooltip("Time (in seconds) the Hunter continues to investigate the last known location after losing sight.")]
     [SerializeField] public float chaseInvestigationTime = 7.0f;
@@ -123,6 +127,8 @@ public class Hunter_Basic : MonoBehaviour
             // Only increment the timer when we are actively in the Chase branch
             timeSinceLastSeen += Time.deltaTime;
         }
+
+        DecayPatrolMemory();
     }
 
 
@@ -436,6 +442,32 @@ public class Hunter_Basic : MonoBehaviour
             patrolPointData[closestPointTransform] = memory;
 
             Debug.Log($"Director Command: Modified memory at **{closestPointTransform.name}**. New Prob: {memory.playerProbability:F2}. Tip: {setDirectorTip}");
+        }
+    }
+
+    private void DecayPatrolMemory()
+    {
+        // Create a temporary list to hold the modified memory structs
+        List<Transform> keysToUpdate = new List<Transform>(patrolPointData.Keys);
+
+        foreach (Transform pointTransform in keysToUpdate)
+        {
+            HunterPatrolMemory memory = patrolPointData[pointTransform];
+
+            // 1. Decay the player probability over time
+            memory.playerProbability -= memoryDecayRate * Time.deltaTime;
+
+            // 2. Clamp the probability to ensure it never goes below 0
+            memory.playerProbability = Mathf.Max(0f, memory.playerProbability);
+
+            // 3. Clear the Director Tip flag if probability is very low
+            if (memory.playerProbability < 0.1f)
+            {
+                memory.hasDirectorTip = false;
+            }
+
+            // 4. Update the dictionary with the modified struct
+            patrolPointData[pointTransform] = memory;
         }
     }
 
