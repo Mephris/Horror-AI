@@ -1,1 +1,2 @@
-1. Created a foundation for the behavior tree and fixed the initial compilation errors due to old FSM (Fixed State Machine) removal. 
+1. Created a foundation for the behavior tree, FSM removal and creating Behavior tree scripts. 
+2. Added [[Patrol/Roam System]] Logic

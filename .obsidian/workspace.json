@@ -55,12 +55,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "notes/Hunter Behavior system changes.md",
+                "file": "notes/Director.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Hunter Behavior system changes"
+              "title": "Director"
             }
           }
         ],
@@ -137,7 +137,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "notes/Hunter Behavior system changes.md",
+                "file": "notes/Director.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -147,7 +147,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Backlinks for Hunter Behavior system changes"
+              "title": "Backlinks for Director"
             }
           },
           {
@@ -212,6 +212,9 @@
   },
   "active": "b734a1dd89401601",
   "lastOpenFiles": [
+    "Patrol/Roam System.md",
+    "notes/Hunter Behavior system changes.md",
+    "Patrol",
     "notes/Director.md",
     "notes/Patrol Points.md",
     "Library/Search/propertyAliases.db_87a79f60641b44079c4dcf77d452c819_temp",
@@ -223,11 +226,9 @@
     "Library/Artifacts/b5/b50d0b753a8d181bd7bc79dfe3ca84b1",
     "Library/Artifacts/80/8008dea32d7162ce91a127aed0d080ee",
     "Assets/AI/HunterBehaviorNodes.cs.meta",
-    "Assets/AI/HunterBehaviorNodes.cs",
     "notes/Hunter.md",
     "notes/changes instructions - patrol points.md",
     "README.md",
-    "notes/Hunter Behavior system changes.md",
     "notes/Patroling behavior changes.md"
   ]
 }
