@@ -1,0 +1,1 @@
+Points for the AI and Director to see if AI has recently patrolled each point. 
