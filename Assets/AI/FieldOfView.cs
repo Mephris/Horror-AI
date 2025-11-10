@@ -61,17 +61,17 @@ public class FieldOfView : MonoBehaviour
         }
     }
 
+    // This is a suggested robust version of FieldOfViewCheck
     private void FieldOfViewCheck()
     {
-        Collider[] rangeChecks = Physics.OverlapSphere(transform.position, radius, targetMask);
-
-        // Reset player visibility before checking
         bool playerWasSeenThisFrame = false;
+
+        // Check for both the Player's Layer and the PatrolPointLayer
+        Collider[] rangeChecks = Physics.OverlapSphere(transform.position, radius, targetMask);
 
         if (rangeChecks.Length != 0)
         {
-            // --- FIX 2: Loop through ALL objects in range, not just [0] ---
-            foreach (Collider col in rangeChecks)
+            foreach (Collider col in rangeChecks) // *** LOOP through ALL nearby colliders ***
             {
                 Transform target = col.transform;
                 Vector3 directionToTarget = (target.position - transform.position).normalized;
@@ -84,17 +84,15 @@ public class FieldOfView : MonoBehaviour
                     {
                         // --- We have line of sight to *something* ---
 
-                        // Check if it's our main target (the Player)
+                        // 1. Check if it's our main target (the Player)
                         if (target.gameObject == targetObjRef)
                         {
                             playerWasSeenThisFrame = true;
                         }
 
-                        // Check if it's a Patrol Point and we are the Enemy
+                        // 2. Check if it's a Patrol Point and we are the Enemy
                         if (this.gameObject.CompareTag("Enemy") && target.CompareTag("PatrolPoint"))
                         {
-                            // --- THIS IS YOUR NEW LOGIC ---
-                            // Fire the action with the specific patrol point's transform
                             Actions.HunterSawPatrolPoint?.Invoke(target);
                         }
                     }
