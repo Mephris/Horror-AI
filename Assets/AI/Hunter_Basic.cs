@@ -142,17 +142,18 @@ public class Hunter_Basic : MonoBehaviour
         {
             if (targetPos == null)
             {
+                // You might want to instantiate the Transform once in Start() 
+                // and simply enable/disable it or reuse it instead of instantiating here.
                 targetPos = new GameObject("PlayerChaseTarget").transform;
             }
             targetPos.position = lastPlayerLocation;
         }
-        else if (targetPos != null && targetPos.name.Contains("PlayerChaseTarget"))
+        else // isVisible == false (Hunter lost sight)
         {
-            // Optional: If the player is lost, you might clear the target or set a temporary investigation point.
-            // For now, let the chase sequence in the BT handle the loss of target.
+            // When the Hunter loses sight, the targetPos *should remain set* // to the last known position so the ChasePlayer task can continue the chase/investigation.
+            // The BT's IsPlayerSeen condition handles the final decision to stop chasing.
         }
     }
-
     private void OnPatrolPointSeen(Transform seenPointTransform)
     {
         if (patrolPointData.ContainsKey(seenPointTransform))

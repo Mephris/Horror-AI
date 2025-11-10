@@ -136,8 +136,6 @@ public class HunterBehaviorNodes
         }
     }
 
-    // --- In HunterBehaviorNodes.cs (Add this class) ---
-
     // =================================================================
     // 4. TASK: Move to Patrol Point (Finds a new point and moves there)
     // =================================================================
@@ -174,6 +172,63 @@ public class HunterBehaviorNodes
 
             // If no valid patrol point could be found (e.g., all points checked)
             nodeState = NodeState.FAILURE;
+            return nodeState;
+        }
+    }
+
+    // =================================================================
+    // 5. TASK: Chase Player (High Priority Action)
+    // =================================================================
+    public class ChasePlayer : HunterTask
+    {
+        // How long the Hunter will investigate the last known location after losing sight
+        private float investigationTimeLimit = 5.0f;
+        private float chaseStartTime = 0f; // Stores when the chase started (or target was set)
+        private float acceptableDistance = 0.5f; // How close is "close enough"
+
+        public ChasePlayer(HunterBehaviorNodes context) : base(context) { }
+
+        public override NodeState Evaluate()
+        {
+            NavMeshAgent agent = context.agent;
+            Transform targetTransform = context.hunter.targetPos;
+
+            // --- Step 1: Check if we have a valid target to chase ---
+            if (targetTransform == null)
+            {
+                // This should ideally never happen because IsPlayerSeen checks targetPos,
+                // but it's a safety check.
+                return NodeState.FAILURE;
+            }
+
+            // --- Step 2: Set or Maintain Destination ---
+            // Always set the destination to the current targetPos's location. 
+            // This handles cases where OnSeePlayer updates the position every 0.5s.
+            agent.SetDestination(targetTransform.position);
+
+
+            // --- Step 3: Check for Completion/Failure (Loss of Target) ---
+
+            // Check 3A: If we are close to the target location
+            bool hasArrived = agent.remainingDistance <= acceptableDistance && !agent.pathPending;
+
+            // The IsPlayerSeen condition in the BT (Selector) will check for actual line of sight.
+            // We need an internal check to see if we're done with the chase command.
+
+            // If the Hunter has arrived at the last known location...
+            if (hasArrived)
+            {
+                // ... AND the Hunter hasn't seen the player for the investigation limit...
+                // You will need to add a timer mechanism to Hunter_Basic to track "time since last seen"
+
+                // Temporary Logic: For now, if we arrive at the static targetPos and can't see the player, we fail.
+                // This assumes IsPlayerSeen fails when the player is out of sight.
+                nodeState = NodeState.FAILURE;
+                return nodeState;
+            }
+
+            // --- Step 4: Chase is Running ---
+            nodeState = NodeState.RUNNING;
             return nodeState;
         }
     }
