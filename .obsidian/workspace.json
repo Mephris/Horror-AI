@@ -41,12 +41,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "README.md",
+                "file": "notes/changes instructions - patrol points.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "README"
+              "title": "changes instructions - patrol points"
             }
           }
         ],
@@ -123,7 +123,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "README.md",
+                "file": "notes/changes instructions - patrol points.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -133,7 +133,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Backlinks for README"
+              "title": "Backlinks for changes instructions - patrol points"
             }
           },
           {
@@ -198,10 +198,19 @@
   },
   "active": "44e18676906f0f21",
   "lastOpenFiles": [
+    "Library/TempArtifacts/Extra/a1c584e0363a840498fd6c7b5245fe4a.info",
+    "Logs/shadercompiler-AssetImportWorker0.log",
+    "Temp/FSTimeGet-112442833bd21574f88975425e93ae5c",
+    "Temp/FSTimeGet-5678b2d2f0926704ea1e215d45d399ae",
+    "Logs/AssetImportWorker1.log",
+    "Logs/AssetImportWorker0.log",
+    "Temp/ProcessJobs",
+    "Library/EditorInstance.json",
+    "Logs/shadercompiler-UnityShaderCompiler.exe0.log",
+    "README.md",
     "notes/changes instructions - patrol points.md",
     "notes/Hunter.md",
     "notes/Hunter Behavior system changes.md",
-    "notes/Patroling behavior changes.md",
-    "README.md"
+    "notes/Patroling behavior changes.md"
   ]
 }
