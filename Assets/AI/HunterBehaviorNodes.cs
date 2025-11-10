@@ -1,6 +1,5 @@
 using UnityEngine;
 using UnityEngine.AI;
-// This 'using static' works because the 'Node' class is defined in BehaviorTree.cs
 using static Node;
 
 // Note: You must ensure this script has access to the Hunter_Basic component!
