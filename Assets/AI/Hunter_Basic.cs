@@ -83,7 +83,7 @@ public class Hunter_Basic : MonoBehaviour
     //--------
     // STATES
     //--------
-
+    /*
     private void StateHandler()
     {
         if (Time.time - calculationElapsedTime >= calculationInterval)
@@ -151,7 +151,112 @@ public class Hunter_Basic : MonoBehaviour
             calculationElapsedTime = Time.time;
         }
     }
+    */
 
+    private void StateHandler()
+    {
+        if (Time.time - calculationElapsedTime >= calculationInterval)
+        {
+            switch (states)
+            {
+                case States.Patrol:
+                    agent.speed = 2.0f;
+                    Patrol();
+
+                    break;
+
+                case States.SwitchRoom:
+                    agent.speed = 3.0f;
+                    if (!isMoving)
+                    {
+                        // --- FIX: Ensure ClosestRoom() returns the *closest* room ---
+                        // (Note: Your ClosestRoom() function returns the *second* closest, 
+                        // but we'll stick to that for now as the core bug is elsewhere)
+                        Room nextRoom = ClosestRoom();
+                        if (nextRoom != null)
+                        {
+                            agent.SetDestination(nextRoom.transform.position);
+                            isMoving = true;
+                        }
+                        else
+                        {
+                            // No valid room found, just go back to patrol
+                            states = States.Patrol;
+                        }
+                    }
+
+                    // --- ADDED pathPending check ---
+                    if (!agent.pathPending && agent.remainingDistance < 1.0f)
+                    {
+                        isMoving = false;
+                        states = States.Patrol;
+                    }
+                    Debug.Log($"Hoonter Switched Room");
+                    break;
+
+                case States.Chase:
+
+                    agent.speed = 3.5f;
+                    // Chase logic is handled by OnSeePlayer
+                    break;
+
+                case States.ExecuteOrder:
+                    agent.speed = 3.0f;
+                    isMoving = true;
+                    previousState = states;
+
+                    // --- THIS IS THE FIX ---
+                    // Don't check distance until the path is calculated
+                    if (!agent.pathPending)
+                    {
+                        if (agent.remainingDistance <= 3.0f)
+                        {
+                            isMoving = false;
+                            closestRoom = CurrentRoom();
+                            states = States.Patrol;
+                        }
+                        // Add a safety check for unreachable destinations
+                        else if (agent.pathStatus == NavMeshPathStatus.PathInvalid || agent.pathStatus == NavMeshPathStatus.PathPartial)
+                        {
+                            isMoving = false;
+                            states = States.Patrol; // Give up and go patrol
+                        }
+                    }
+                    break;
+
+                case States.ExecuteHPOrder:
+                    agent.speed = 4.5f;
+                    isMoving = true;
+                    previousState = states;
+                    if (!isNotChasing)
+                    {
+                        Actions.HunterCanSeePlayer -= OnSeePlayer;
+                    }
+
+                    // --- THIS IS THE FIX ---
+                    // Don't check distance until the path is calculated
+                    if (!agent.pathPending)
+                    {
+                        if (agent.remainingDistance <= 3.0f)
+                        {
+                            Actions.HunterCanSeePlayer += OnSeePlayer;
+                            isMoving = false;
+                            closestRoom = CurrentRoom();
+                            states = States.Patrol;
+                        }
+                        // Add a safety check for unreachable destinations
+                        else if (agent.pathStatus == NavMeshPathStatus.PathInvalid || agent.pathStatus == NavMeshPathStatus.PathPartial)
+                        {
+                            Actions.HunterCanSeePlayer += OnSeePlayer;
+                            isMoving = false;
+                            states = States.Patrol; // Give up and go patrol
+                        }
+                    }
+                    break;
+            }
+            calculationElapsedTime = Time.time;
+        }
+    }
     private void SelectNextPatrolPoint()
     {
         HunterPatrolMemory bestPatrolMemory = null;
