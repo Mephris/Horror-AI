@@ -4,19 +4,19 @@ using UnityEngine;
 
 public class PatrolPoints : MonoBehaviour
 {
-    public bool isChecked = false;
+    public bool HasBeenVisited = false;
 
     public void ToggleCheckStatus()
     {
-        isChecked = true;
-        Debug.Log($"Patrol point is {(isChecked ? "checked" : "unchecked")}");
+        HasBeenVisited = true;
+        Debug.Log($"Patrol point is {(HasBeenVisited ? "checked" : "unchecked")}");
         StartCoroutine(ResetCheckStatusAfterDelay(50));
     }
 
     public void ResetCheckStatus()
     {
-        isChecked = false;
-        Debug.Log($"Patrol point is {(isChecked ? "checked" : "unchecked")} after reset");
+        HasBeenVisited = false;
+        Debug.Log($"Patrol point is {(HasBeenVisited ? "checked" : "unchecked")} after reset");
     }
 
     private IEnumerator ResetCheckStatusAfterDelay(float delay)
@@ -24,15 +24,15 @@ public class PatrolPoints : MonoBehaviour
         // Wait for the specified delay
         yield return new WaitForSeconds(delay);
 
-        // Reset isChecked to false after the delay
-        isChecked = false;
-        Debug.Log($"Patrol point is {(isChecked ? "checked" : "unchecked")} after delay");
+        // Reset HasBeenVisited to false after the delay
+        HasBeenVisited = false;
+        Debug.Log($"Patrol point is {(HasBeenVisited ? "checked" : "unchecked")} after delay");
     }
 
     private void OnDrawGizmos()
     {
         
-        if(isChecked)
+        if(HasBeenVisited)
         {
             Gizmos.color = Color.green;
         }

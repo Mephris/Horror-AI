@@ -8,8 +8,20 @@ public class HunterPatrolMemory
 {
     public Transform patrolpointTransform;
     public float lastPatrolTime = 0f;
-    public float playerProbability = 0f; // a value from 0 to 1 indicating likelihood of player presence, (base it on data given by the director in order to make the enemy walk closer rather then constantly further from the player).
 
+    // THE CORE PROBABILITY SCORE (0.0=Clear to 1.0=Likely Here)
+    public float playerProbability = 0f;
+
+    // NEW DISCRETE MEMORY TAGS (Set by events, cleared upon investigation)
+    public bool hasHeardNoise = false;
+    public bool hasSeenDisturbance = false;
+    public bool hasDirectorTip = false;
+
+    // Quick Check for BT to decide if this point is a high priority detour
+    public bool IsWorthyOfInvestigation => hasHeardNoise || hasSeenDisturbance || hasDirectorTip || playerProbability > 0.5f;
+
+    // The final value the BT will use to compare this point against all others.
+    public float calculatedPriorityScore = 0f;
 }
 
 public class Hunter_Basic : MonoBehaviour
@@ -370,7 +382,7 @@ public class Hunter_Basic : MonoBehaviour
         {
             foreach (PatrolPoints point in closestRoom.patrolPoint)
             {
-                if (!point.isChecked)
+                if (!point.HasBeenVisited)
                 {
                     // Set the flag to indicate that the agent is moving to a patrol point
                     isMoving = true;
@@ -547,7 +559,7 @@ public class Hunter_Basic : MonoBehaviour
             randomIndex = UnityEngine.Random.Range(0, closestRoom.patrolPoint.Length);
             bugFix += 1;
 
-        } while (closestRoom.patrolPoint[randomIndex].GetComponent<PatrolPoints>().isChecked && bugFix < closestRoom.patrolPoint.Length);
+        } while (closestRoom.patrolPoint[randomIndex].GetComponent<PatrolPoints>().HasBeenVisited && bugFix < closestRoom.patrolPoint.Length);
         Debug.Log($"RandomIndex {(randomIndex)}");
 
         if (!AllPointsChecked(closestRoom))
@@ -562,7 +574,7 @@ public class Hunter_Basic : MonoBehaviour
     {
         foreach (PatrolPoints point in room.patrolPoint)
         {
-            if (!point.GetComponent<PatrolPoints>().isChecked)
+            if (!point.GetComponent<PatrolPoints>().HasBeenVisited)
             {
                 return false;
             }
