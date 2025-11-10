@@ -534,7 +534,7 @@ public class Hunter_Basic : MonoBehaviour
             memory.playerProbability = Mathf.Clamp01(memory.playerProbability + 0.25f);
 
             // Optional: Log for debugging
-            // Debug.Log($"Hunter saw {patrolPointTransform.name}, probability is now {memory.playerProbability}");
+            Debug.Log($"Hunter saw {patrolPointTransform.name}, probability is now {memory.playerProbability}");
         }
     }
 
