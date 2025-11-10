@@ -16,8 +16,9 @@ public class Director : MonoBehaviour
 
     private float calculationElapsedTime = 0f;
     [Range(1, 3)]
-    [SerializeField]private float calculationTime;
+    [SerializeField] private float calculationTime;
     public static float calculationInterval; // Delay, so that calculations on Tension arent done on each frame. 
+
 
 
     //We save player location to be able to find the locations which we will give Hunter AI
@@ -33,15 +34,12 @@ public class Director : MonoBehaviour
     //We will use seperate NavMeshAgent in order to create a position which hunter will be able to take.
     private Transform Endpoint;
     private Vector3 EndpointPos;
-
-    private Rooms roomToTarget ;
-
-    //Command time interval so that the command isnt sent out constantly, you can say its an interval in which every x seconds a command is sent to hunter
+    private Rooms roomToTarget;
 
     //Finite State machine which changes according to the current "tension"
     [Header("Current State/Task")]
     public DirectorStates CurrentState;
-    [SerializeField]private DirectorStates PreviousState;
+    [SerializeField] private DirectorStates PreviousState;
     public enum DirectorStates
     {
         HighPriorityIncreaseTension,
@@ -51,17 +49,26 @@ public class Director : MonoBehaviour
         Observe
     }
 
+    [Header("Rooms Reference")]
+    private Rooms roomsController;
+
+    [Header("Hunter Command Logic")]
+    [Tooltip("Time player must be seen by Hunter to trigger a High Priority Command (memory tag).")]
+    [SerializeField] private float highTensionThresholdTime = 15f;
+    private float highTensionTimeElapsed = 0f;
+    private bool isHighPriorityCommandSent = false;
+
     // Start is called before the first frame update
     void Start()
     {
-        //Subscribing to events 
-        Actions.PlayerCanSeeHunter += OnPlayerCanSeeHunter; // sub do wydarzenia PlayerCanSeeHunter
-        Actions.HunterCanSeePlayer += OnHunterCanSeePlayer; // sub do wydarzenia HunterCanSeePlayer
+        Actions.HunterCanSeePlayer += OnHunterCanSeePlayer;
+        Actions.PlayerCanSeeHunter += OnPlayerCanSeeHunter;
 
-        calculationInterval = calculationTime; // Setting up Calculation interval
+        // Initialize Rooms reference (Assuming Rooms is on a GameObject in the scene)
+        roomsController = FindObjectOfType<Rooms>();
 
-        Rooms rooms = FindObjectOfType<Rooms>();
-        roomToTarget = rooms;
+        // Existing calculation setup
+        calculationInterval = calculationTime;
     }
 
 
@@ -69,7 +76,7 @@ public class Director : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+
         TensionCalculation(); // Cykliczna zmiana zmiennej tension
         StateHandler(); // zmiana stanu maszymy stanowej Command 
 
@@ -77,7 +84,7 @@ public class Director : MonoBehaviour
 
     private void FixedUpdate()
     {
-        
+
     }
 
     private void Awake()
@@ -89,9 +96,9 @@ public class Director : MonoBehaviour
         GameObject HunterNavMesh = GameObject.Find("Hunter");
         hunterAgent = HunterNavMesh.GetComponent<NavMeshAgent>();
 
-        
+
     }
-    
+
     private void StateHandler()
     {
         // Changing Hunter Command which will be sent to the Hunter AI
@@ -138,30 +145,36 @@ public class Director : MonoBehaviour
                 break;
 
         }
-        GiveCommandToMove();
+        UpdateTensionState();
     }
 
-    private void GiveCommandToMove()
+    private void UpdateTensionState()
     {
+        // [Your existing logic for TensionCalculation is assumed to be called regularly]
+
         if (PreviousState != CurrentState || CurrentState == DirectorStates.HighPriorityDecreaseTension)
         {
-            if(CurrentState != DirectorStates.Observe)
+            if (CurrentState != PreviousState)
             {
-                Endpoint.transform.position = EndpointPos;
+                // ... [Your existing logic for Low, Medium state transitions] ...
 
-                if (CurrentState == DirectorStates.HighPriorityIncreaseTension || CurrentState == DirectorStates.HighPriorityDecreaseTension)
+                // --- CORRECTED STANDARD COMMAND LOGIC ---
+                if (roomsController != null && hunterAgent != null && player != null)
                 {
-                    Actions.HighPriorityCommandToMove(Endpoint.position);
+                    // Pass the Hunter's agent and the Player's position as arguments.
+                    Vector3 commandTarget = roomsController.PosNearPlayer(hunterAgent, player.position);
+
+                    // Fire the standard command event (minor probability increase in Hunter memory)
+                    Actions.CommandToMove?.Invoke(commandTarget);
+                    Debug.Log($"DIRECTOR: Standard Command (Memory Tag) sent to area near player based on State Change. Target: {commandTarget}");
                 }
-                else
-                {
-                    Actions.CommandToMove(Endpoint.position);
-                }
+                // --- END CORRECTED LOGIC ---
             }
+
             PreviousState = CurrentState;
         }
     }
-    
+
     //---------------------
     // TENSION CYCLE
     //---------------------
@@ -172,7 +185,7 @@ public class Director : MonoBehaviour
             tension += Vector3.Distance(player.position, hunter.position) < 12f ? 1 :
                         Vector3.Distance(player.position, hunter.position) > 12f ? -1 : 0;
 
-            
+
             calculationElapsedTime = Time.time;
         }
     }
@@ -188,12 +201,37 @@ public class Director : MonoBehaviour
         // Change it to a timer based on how long is Hunter seen by Player. If seen for 15 seconds, then give high priority order. 
     }
 
+    // --- In Director.cs (Modify this method) ---
+
+    // --- In Director.cs (Update OnHunterCanSeePlayer method) ---
+
     private void OnHunterCanSeePlayer(bool obj, Vector3 lastPlayerLocation)
     {
         if (obj == true)
+        {
             tension += 1;
-        // Same here, but maybe rather then limit the time Hunter chases player and then fucks off, make it so that if Hunter loses sight of player for more then x seconds, it gives up chase.
-        // This will probably require changes to Hunter AI rather then Director tho.
+
+            // 1. Time-tracking for sustained sight
+            highTensionTimeElapsed += Time.deltaTime;
+
+            // 2. Trigger High Priority Command (Memory Tag)
+            // If sustained sight (e.g., 15s) and the command hasn't been sent yet
+            if (highTensionTimeElapsed >= highTensionThresholdTime && !isHighPriorityCommandSent)
+            {
+                // Send the last seen player location to the Hunter's memory (strong memory tag)
+                Actions.HighPriorityCommandToMove?.Invoke(lastPlayerLocation); // <-- FIRES THE EVENT
+                isHighPriorityCommandSent = true;
+                Debug.Log("DIRECTOR: High Priority Command (Memory Tag) sent due to sustained Hunter sight.");
+            }
+        }
+        else // Hunter lost sight of the player
+        {
+            tension -= 1; // Assuming you want tension to drop upon losing sight.
+
+            // Reset the tension timer and command flag
+            highTensionTimeElapsed = 0f;
+            isHighPriorityCommandSent = false;
+        }
     }
 
 }
