@@ -38,7 +38,7 @@ public class HunterBehaviorNodes
     }
 
     // =================================================================
-    // 1. CONDITION: Is Player Visible? (Checks the public targetPos)
+    // 1. CONDITION: Is Player Visible or Hunter is currently Investigating?
     // =================================================================
     public class IsPlayerSeen : HunterCondition
     {
@@ -46,13 +46,26 @@ public class HunterBehaviorNodes
 
         public override NodeState Evaluate()
         {
-            // FIX 1: Now works because targetPos is public in Hunter_Basic
-            if (context.hunter.targetPos != null)
+            // 1. Check for **Active Sight** (highest priority)
+            // We assume the FieldOfView updates the targetPos and the isChasingPlayer flag via the event handler.
+            if (context.hunter.timeSinceLastSeen == 0.0f)
+            {
+                // If the timeSinceLastSeen is 0.0, the player was just seen this frame.
+                nodeState = NodeState.SUCCESS;
+                return nodeState;
+            }
+
+            // 2. Check for **Investigation** (intermediate priority)
+            // If we are currently chasing/investigating AND we haven't exceeded the time limit.
+            if (context.hunter.isChasingPlayer &&
+                context.hunter.timeSinceLastSeen < context.hunter.chaseInvestigationTime)
             {
                 nodeState = NodeState.SUCCESS;
                 return nodeState;
             }
 
+            // If neither condition is met, the Hunter is not chasing, and the chase branch fails.
+            context.hunter.isChasingPlayer = false; // Cleanup flag upon failure
             nodeState = NodeState.FAILURE;
             return nodeState;
         }
@@ -178,12 +191,10 @@ public class HunterBehaviorNodes
     // =================================================================
     // 5. TASK: Chase Player (High Priority Action)
     // =================================================================
+
     public class ChasePlayer : HunterTask
     {
-        // How long the Hunter will investigate the last known location after losing sight
-        private float investigationTimeLimit = 5.0f;
-        private float chaseStartTime = 0f; // Stores when the chase started (or target was set)
-        private float acceptableDistance = 0.5f; // How close is "close enough"
+        private float acceptableDistance = 0.5f;
 
         public ChasePlayer(HunterBehaviorNodes context) : base(context) { }
 
@@ -192,41 +203,33 @@ public class HunterBehaviorNodes
             NavMeshAgent agent = context.agent;
             Transform targetTransform = context.hunter.targetPos;
 
-            // --- Step 1: Check if we have a valid target to chase ---
             if (targetTransform == null)
             {
-                // This should ideally never happen because IsPlayerSeen checks targetPos,
-                // but it's a safety check.
                 return NodeState.FAILURE;
             }
 
-            // --- Step 2: Set or Maintain Destination ---
-            // Always set the destination to the current targetPos's location. 
-            // This handles cases where OnSeePlayer updates the position every 0.5s.
+            // Set or Maintain Destination
             agent.SetDestination(targetTransform.position);
 
-
-            // --- Step 3: Check for Completion/Failure (Loss of Target) ---
-
-            // Check 3A: If we are close to the target location
+            // Check for Arrival
             bool hasArrived = agent.remainingDistance <= acceptableDistance && !agent.pathPending;
 
-            // The IsPlayerSeen condition in the BT (Selector) will check for actual line of sight.
-            // We need an internal check to see if we're done with the chase command.
-
-            // If the Hunter has arrived at the last known location...
             if (hasArrived)
             {
-                // ... AND the Hunter hasn't seen the player for the investigation limit...
-                // You will need to add a timer mechanism to Hunter_Basic to track "time since last seen"
+                // IMPORTANT: Return SUCCESS. The Hunter is done moving, but is NOT done 
+                // with the chase branch. The parent condition (IsPlayerSeen) handles the timer.
+                agent.isStopped = true;
 
-                // Temporary Logic: For now, if we arrive at the static targetPos and can't see the player, we fail.
-                // This assumes IsPlayerSeen fails when the player is out of sight.
-                nodeState = NodeState.FAILURE;
+                nodeState = NodeState.SUCCESS;
                 return nodeState;
             }
+            else
+            {
+                // If we are still moving, ensure the agent is active
+                agent.isStopped = false;
+            }
 
-            // --- Step 4: Chase is Running ---
+            // Chase is Running (still moving to the last known spot)
             nodeState = NodeState.RUNNING;
             return nodeState;
         }
