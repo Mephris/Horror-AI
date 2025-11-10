@@ -1967,7 +1967,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   tension: 51.4
-  calculationTime: 1.5
+  calculationTime: 3
   player: {fileID: 1041680239}
   hunter: {fileID: 1165612971}
   hunterAgent: {fileID: 1165612966}

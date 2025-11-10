@@ -98,7 +98,7 @@ public class FieldOfView : MonoBehaviour
                         {
                             // Fire the action with the specific patrol point's transform
                             Actions.HunterSawPatrolPoint?.Invoke(target);
-                            // Optional: Add a Debug.Log here to confirm it fires!
+                            Debug.Log($"Patrol point is seen");
                             // Debug.Log($"Hunter saw Patrol Point: {target.name}"); 
                         }
                     }
