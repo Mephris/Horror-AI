@@ -49,19 +49,6 @@ public class Hunter_Basic : MonoBehaviour
     [SerializeField] private float decayUpdateInterval = 1f;
     private WaitForSeconds decayWait;
 
-
-    [Header("Current Task Priority")]
-    public States states;
-    private States previousState;
-    public enum States
-    {
-        Patrol,
-        SwitchRoom,
-        Chase,
-        ExecuteOrder,
-        ExecuteHPOrder
-    }
-
     //PatrolPoint Locations
     private Room[] rooms;
     private Room closestRoom;
