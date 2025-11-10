@@ -90,7 +90,7 @@ public class Director : MonoBehaviour
 
         
     }
-
+    
     private void StateHandler()
     {
         // Changing Hunter Command which will be sent to the Hunter AI
@@ -121,8 +121,13 @@ public class Director : MonoBehaviour
                 break;
 
             case DirectorStates.HighPriorityIncreaseTension:
-                //last turn between player and enemy in pathfinding
-                Vector3 PosVec3 = FindObjectOfType<Rooms>().PosNearPlayer();
+                // 1. Check that our references are valid before we use them
+                if (hunterAgent == null) Debug.LogError("Director's hunterAgent is NOT assigned in the Inspector!");
+                if (player == null) Debug.LogError("Director's player is NOT assigned in the Inspector!");
+
+                // 2. Pass the agent and player.position to the method
+                Vector3 PosVec3 = FindObjectOfType<Rooms>().PosNearPlayer(hunterAgent, player.position);
+
                 EndpointPos = PosVec3;
                 break;
 

@@ -7,7 +7,7 @@ using static UnityEditor.Experimental.AssetDatabaseExperimental.AssetDatabaseCou
 public class Rooms : MonoBehaviour
 {
 
-    [SerializeField]private Room[] rooms;
+    [SerializeField] private Room[] rooms;
     private GameObject player;
 
 
@@ -209,11 +209,20 @@ public class Rooms : MonoBehaviour
     //------------------------------------------------
     // LOCATION CALCULATIONS \ WHERE SHOULD HUNTER GO
     //------------------------------------------------
-    public Vector3 PosNearPlayer()
-    {
 
+    public Vector3 PosNearPlayer(NavMeshAgent agent, Vector3 playerPosition)
+    {
         NavMeshPath path = new NavMeshPath();
-        if (GetComponent<Director>().hunterAgent.CalculatePath(player.transform.position, path))
+
+        // Check for nulls passed in by the Director
+        if (agent == null)
+        {
+            Debug.LogError("PosNearPlayer was given a null NavMeshAgent!");
+            return Vector3.zero;
+        }
+
+        // Use the agent and playerPosition that were passed in
+        if (agent.CalculatePath(playerPosition, path))
         {
             // Make sure there is more than one corner
             if (path.corners.Length > 1)
