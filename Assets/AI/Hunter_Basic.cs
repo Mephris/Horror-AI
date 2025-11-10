@@ -14,11 +14,11 @@ public class HunterPatrolMemory
 
 public class Hunter_Basic : MonoBehaviour
 {
-    [SerializeField]private Transform currentPatrolTarget = null;
+    [SerializeField] private Transform currentPatrolTarget = null;
 
     [SerializeField] private Transform targetPos;
 
-  
+
     private Dictionary<Transform, HunterPatrolMemory> patrolPointData = new Dictionary<Transform, HunterPatrolMemory>(); // A dictionary to store all patrol point data
 
     private NavMeshAgent agent;
@@ -66,7 +66,7 @@ public class Hunter_Basic : MonoBehaviour
         Actions.HighPriorityCommandToMove += OnHighPriorityCommandToMove;
         Actions.CommandToMove += OnCommandToMove;
         Actions.HunterCanSeePlayer += OnSeePlayer;
-
+        Actions.HunterSawPatrolPoint += OnHunterSawPatrolPoint;
 
         calculationInterval = Director.calculationInterval / 5.0f;
 
@@ -93,7 +93,7 @@ public class Hunter_Basic : MonoBehaviour
                 case States.Patrol:
                     agent.speed = 2.0f;
                     Patrol();
-                    
+
                     break;
 
                 case States.SwitchRoom:
@@ -112,7 +112,7 @@ public class Hunter_Basic : MonoBehaviour
                     break;
 
                 case States.Chase:
-                    
+
                     agent.speed = 3.5f;
                     break;
 
@@ -162,12 +162,12 @@ public class Hunter_Basic : MonoBehaviour
         {
             HunterPatrolMemory memory = kvp.Value;
 
-        // --- Your decision-making logic goes here ---`
-        // For example, prioritize points that haven't been patrolled in a long time.`
-        float timeSincePatrolled = Time.time - memory.lastPatrolTime;
+            // --- Your decision-making logic goes here ---`
+            // For example, prioritize points that haven't been patrolled in a long time.`
+            float timeSincePatrolled = Time.time - memory.lastPatrolTime;
 
-        // A simple score could be just the time since last patrol, or a combination with probability.`
-        float currentScore = timeSincePatrolled + (memory.playerProbability * 100); // Probability has a higher weight
+            // A simple score could be just the time since last patrol, or a combination with probability.`
+            float currentScore = timeSincePatrolled + (memory.playerProbability * 100); // Probability has a higher weight
 
             if (currentScore > bestScore)
             {
@@ -301,7 +301,7 @@ public class Hunter_Basic : MonoBehaviour
 
     private void Patrol()
     {
-        if(isMoving && agent.remainingDistance <= 0.3f)
+        if (isMoving && agent.remainingDistance <= 0.3f)
         {
             // Reached the patrol point
             isMoving = false;
@@ -358,7 +358,7 @@ public class Hunter_Basic : MonoBehaviour
                     agent.SetDestination(lastSeenTargetLocation);
                 }
             }
-            
+
         }
     }
 
@@ -366,17 +366,34 @@ public class Hunter_Basic : MonoBehaviour
     {
         if (!isNotChasing)
             return;
-        ResetRoomPatrolPoints(FindRoom_Command(target));
-        agent.SetDestination(targetPos.position);
+
+        // Find room and reset points
+        Room targetRoom = FindRoom_Command(target);
+        if (targetRoom != null)
+            ResetRoomPatrolPoints(targetRoom);
+
+        // --- FIX: Use 'target' directly, not 'targetPos.position' ---
+        agent.SetDestination(target);
         states = States.ExecuteOrder;
 
+        // --- NEW: Update probabilities near the director's command location ---
+        UpdateProbabilitiesNearLocation(target, 0.5f); // Boost probability by 0.5
     }
 
+    // --- REPLACE your existing OnHighPriorityCommandToMove ---
     private void OnHighPriorityCommandToMove(Vector3 target)
     {
-        ResetRoomPatrolPoints(FindRoom_Command(target));
-        agent.SetDestination(targetPos.position);
+        // Find room and reset points
+        Room targetRoom = FindRoom_Command(target);
+        if (targetRoom != null)
+            ResetRoomPatrolPoints(targetRoom);
+
+        // --- FIX: Use 'target' directly, not 'targetPos.position' ---
+        agent.SetDestination(target);
         states = States.ExecuteHPOrder;
+
+        // --- NEW: Update probabilities with a high boost ---
+        UpdateProbabilitiesNearLocation(target, 0.75f); // Boost probability by 0.75
     }
 
 
@@ -384,6 +401,37 @@ public class Hunter_Basic : MonoBehaviour
     //PATROL POINT MANAGING
     //---------------------
 
+    // --- ADD THIS ENTIRE METHOD ---
+    private void UpdateProbabilitiesNearLocation(Vector3 location, float probabilityBump)
+    {
+        const float radius = 10f; // Check for patrol points within 10 units of the location
+
+        foreach (var kvp in patrolPointData)
+        {
+            Transform patrolPoint = kvp.Key;
+            HunterPatrolMemory memory = kvp.Value;
+
+            if (Vector3.Distance(patrolPoint.position, location) <= radius)
+            {
+                memory.playerProbability = Mathf.Clamp01(memory.playerProbability + probabilityBump);
+                // Debug.Log($"Boosting probability for {patrolPoint.name} due to Director command.");
+            }
+        }
+    }
+
+    private void OnHunterSawPatrolPoint(Transform patrolPointTransform)
+    {
+        if (patrolPointData.ContainsKey(patrolPointTransform))
+        {
+            // Increase the probability for the specific point the Hunter saw
+            // You can tune this value (e.g., +0.25f)
+            var memory = patrolPointData[patrolPointTransform];
+            memory.playerProbability = Mathf.Clamp01(memory.playerProbability + 0.25f);
+
+            // Optional: Log for debugging
+            // Debug.Log($"Hunter saw {patrolPointTransform.name}, probability is now {memory.playerProbability}");
+        }
+    }
 
     private int GetRandomUncheckedPointIndex()
     {

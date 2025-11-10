@@ -105,3 +105,4 @@ public class FieldOfView : MonoBehaviour
         // Update the main 'canSeeTarget' flag after checking all objects
         canSeeTarget = playerWasSeenThisFrame;
     }
+}
