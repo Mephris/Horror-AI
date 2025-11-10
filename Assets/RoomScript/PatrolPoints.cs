@@ -1,38 +1,38 @@
+// --- PatrolPoints.cs ---
+
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class PatrolPoints : MonoBehaviour
 {
+    // RENAMED
     public bool HasBeenVisited = false;
 
     public void ToggleCheckStatus()
     {
         HasBeenVisited = true;
-        Debug.Log($"Patrol point is {(HasBeenVisited ? "checked" : "unchecked")}");
+        Debug.Log($"Patrol point is {(HasBeenVisited ? "visited" : "unvisited")}");
         StartCoroutine(ResetCheckStatusAfterDelay(50));
     }
 
     public void ResetCheckStatus()
     {
         HasBeenVisited = false;
-        Debug.Log($"Patrol point is {(HasBeenVisited ? "checked" : "unchecked")} after reset");
+        Debug.Log($"Patrol point is {(HasBeenVisited ? "visited" : "unvisited")} after reset");
     }
 
     private IEnumerator ResetCheckStatusAfterDelay(float delay)
     {
-        // Wait for the specified delay
         yield return new WaitForSeconds(delay);
-
-        // Reset HasBeenVisited to false after the delay
         HasBeenVisited = false;
-        Debug.Log($"Patrol point is {(HasBeenVisited ? "checked" : "unchecked")} after delay");
+        Debug.Log($"Patrol point is {(HasBeenVisited ? "visited" : "unvisited")} after delay");
     }
 
     private void OnDrawGizmos()
     {
-        
-        if(HasBeenVisited)
+        // Use HasBeenVisited for Gizmos
+        if (HasBeenVisited)
         {
             Gizmos.color = Color.green;
         }
