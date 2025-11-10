@@ -7,7 +7,7 @@ using static UnityEditor.Experimental.AssetDatabaseExperimental.AssetDatabaseCou
 public class Rooms : MonoBehaviour
 {
 
-    private Room[] rooms;
+    [SerializeField]private Room[] rooms;
     private GameObject player;
 
 
