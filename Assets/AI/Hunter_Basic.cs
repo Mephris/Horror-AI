@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.AI;
-using static Node; // Allows you to use NodeState directly (SUCCESS, FAILURE, RUNNING)
+
 
 
 [System.Serializable]
@@ -30,6 +30,7 @@ public class HunterPatrolMemory
 public class Hunter_Basic : MonoBehaviour
 {
     // --- In Hunter_Basic.cs (inside the Hunter_Basic class) ---
+    private Node rootNode;
     private HunterBehaviorNodes btContext;
 
     // --- Navigation & Hunter Tags ---
@@ -41,8 +42,8 @@ public class Hunter_Basic : MonoBehaviour
     private float calculationInterval;
     private float calculationElapsedTime = 0f;
 
-    [SerializeField] private Transform currentPatrolTarget = null;
-    [SerializeField] private Transform targetPos;
+    [SerializeField] public Transform currentPatrolTarget = null;
+    [SerializeField] public Transform targetPos;
 
     private Dictionary<Transform, HunterPatrolMemory> patrolPointData = new Dictionary<Transform, HunterPatrolMemory>(); // A dictionary to store all patrol point data
 
@@ -53,6 +54,10 @@ public class Hunter_Basic : MonoBehaviour
     [SerializeField] private float baseUncertainty = 0.2f;
     [SerializeField] private float decayUpdateInterval = 1f;
     private WaitForSeconds decayWait;
+
+    [Tooltip("The range within which the Hunter will wander around its current position.")]
+    [SerializeField] private float wanderRange = 5f;
+
 
     //PatrolPoint Locations
     private Room[] rooms;
@@ -742,5 +747,19 @@ public class Hunter_Basic : MonoBehaviour
             // Your actual condition check (e.g., check FOV script)
             return NodeState.FAILURE; // Default to Failure so the Selector moves on
         }
+    }
+
+
+
+    public Vector3 GetRandomWanderPoint(Vector3 center, float range)
+    {
+        Vector3 randomPoint = center + UnityEngine.Random.insideUnitSphere * range;
+        NavMeshHit hit;
+
+        if (UnityEngine.AI.NavMesh.SamplePosition(randomPoint, out hit, range, UnityEngine.AI.NavMesh.AllAreas))
+        {
+            return hit.position;
+        }
+        return Vector3.zero; // Return zero if a valid point is not found
     }
 }
