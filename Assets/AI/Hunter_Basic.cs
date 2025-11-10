@@ -1,4 +1,6 @@
+using System.Collections;
 using System.Collections.Generic;
+using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -26,13 +28,6 @@ public class HunterPatrolMemory
 
 public class Hunter_Basic : MonoBehaviour
 {
-    [SerializeField] private Transform currentPatrolTarget = null;
-
-    [SerializeField] private Transform targetPos;
-
-
-    private Dictionary<Transform, HunterPatrolMemory> patrolPointData = new Dictionary<Transform, HunterPatrolMemory>(); // A dictionary to store all patrol point data
-
     private NavMeshAgent agent;
 
     private bool isMoving = false;
@@ -40,6 +35,20 @@ public class Hunter_Basic : MonoBehaviour
 
     private float calculationInterval;
     private float calculationElapsedTime = 0f;
+
+    [SerializeField] private Transform currentPatrolTarget = null;
+    [SerializeField] private Transform targetPos;
+
+    private Dictionary<Transform, HunterPatrolMemory> patrolPointData = new Dictionary<Transform, HunterPatrolMemory>(); // A dictionary to store all patrol point data
+
+    [Header("Probability Settings")]
+    [Tooltip("How much probability decays per second (e.g., 0.01 = 1% per second).")]
+    [SerializeField] private float probabilityDecayRate = 0.01f;
+    [Tooltip("The minimum probability a point can decay to (baseline uncertainty).")]
+    [SerializeField] private float baseUncertainty = 0.2f;
+    [SerializeField] private float decayUpdateInterval = 1f;
+    private WaitForSeconds decayWait;
+
 
     [Header("Current Task Priority")]
     public States states;
@@ -64,26 +73,108 @@ public class Hunter_Basic : MonoBehaviour
         agent = GetComponent<NavMeshAgent>();
         rooms = FindObjectsOfType<Room>();
 
-        // Find all the patrol points in the scene and initialize their memory. 
-        GameObject[] allPatrolPoints = GameObject.FindGameObjectsWithTag("PatrolPoint");
-        foreach (GameObject patrolPointObject in allPatrolPoints)
+        // 1. Initialize decay timer
+        decayWait = new WaitForSeconds(decayUpdateInterval);
+
+        // 2. Initialize memory for all patrol points in the scene
+        // This uses the Room array to ensure it initializes points from Room components
+        foreach (Room room in rooms)
         {
-            HunterPatrolMemory memory = new HunterPatrolMemory();
-            memory.patrolpointTransform = patrolPointObject.transform;
-            patrolPointData.Add(patrolPointObject.transform, memory);
+            foreach (PatrolPoints point in room.patrolPoint)
+            {
+                if (!patrolPointData.ContainsKey(point.transform))
+                {
+                    patrolPointData.Add(point.transform, new HunterPatrolMemory
+                    {
+                        patrolpointTransform = point.transform,
+                        playerProbability = baseUncertainty // Start with a baseline of uncertainty (0.2)
+                    });
+                }
+            }
         }
 
+        // 3. Set the initial closest room (kept your existing logic)
         ClosestRoom();
 
+        // 4. Start the continuous probability decay
+        StartCoroutine(DecayProbabilitiesRoutine());
+
+        // 5. Initialize the Behavior Tree (Requires SetupBehaviorTree method)
+        rootNode = SetupBehaviorTree();
+
+        // 6. Subscription to Actions (Updated to include OnPatrolPointSeen)
         Actions.HighPriorityCommandToMove += OnHighPriorityCommandToMove;
         Actions.CommandToMove += OnCommandToMove;
         Actions.HunterCanSeePlayer += OnSeePlayer;
-        Actions.HunterSawPatrolPoint += OnHunterSawPatrolPoint;
+        Actions.HunterSawPatrolPoint += OnPatrolPointSeen;
 
-        calculationInterval = Director.calculationInterval / 5.0f;
+        // 7. Remaining initialization
+        // The calculationInterval is a static variable from Director (assuming you handle its definition)
+        // calculationInterval = Director.calculationInterval / 5.0f;
+    }
+
+    // ----------------------------------------------------
+    // REQUIRED HELPER: Probability Decay Routine
+    // ----------------------------------------------------
+    private IEnumerator DecayProbabilitiesRoutine()
+    {
+        while (true)
+        {
+            yield return decayWait;
+
+            // Use Keys to avoid modifying the dictionary while iterating
+            List<Transform> keys = new List<Transform>(patrolPointData.Keys);
+            foreach (Transform key in keys)
+            {
+                HunterPatrolMemory memory = patrolPointData[key];
+
+                // Decay logic: Probability slowly returns down to the baseline uncertainty (0.2)
+                if (memory.playerProbability > baseUncertainty)
+                {
+                    // Decay amount is calculated over the time interval
+                    float decayAmount = probabilityDecayRate * decayUpdateInterval;
+                    memory.playerProbability = Mathf.Max(baseUncertainty, memory.playerProbability - decayAmount);
+                }
+
+                patrolPointData[key] = memory; // Re-assign the struct to update the dictionary
+            }
+        }
+    }
 
 
+    // ----------------------------------------------------
+    // REQUIRED HELPER: Behavior Tree Setup (Placeholder)
+    // ----------------------------------------------------
+    private Node SetupBehaviorTree()
+    {
+        // *** NOTE: You must define the Node, Selector, and Sequence classes ***
+        // (As provided in the previous step, or use a proper BT asset)
 
+        // For now, return a placeholder root that immediately succeeds
+        // In a later step, you will fill this with your Chase/Investigate/Patrol/Wander logic.
+        return new Selector(new List<Node> { new PlaceholderCondition("BT Initialized") });
+    }
+
+    // ----------------------------------------------------
+    // REQUIRED HELPER: OnPatrolPointSeen Handler
+    // ----------------------------------------------------
+    private void OnPatrolPointSeen(Transform seenPointTransform)
+    {
+        if (patrolPointData.ContainsKey(seenPointTransform))
+        {
+            HunterPatrolMemory memory = patrolPointData[seenPointTransform];
+
+            // DECREASE probability because the Hunter cleared the area with sight (e.g., by 0.1)
+            float clearAmount = 0.1f;
+            memory.playerProbability = Mathf.Max(0f, memory.playerProbability - clearAmount);
+
+            // Also clear any memory tags that would be resolved by sight
+            memory.hasSeenDisturbance = false;
+
+            patrolPointData[seenPointTransform] = memory;
+
+            Debug.Log($"Hunter saw {seenPointTransform.name}. Probability REDUCED to: {memory.playerProbability}");
+        }
     }
 
     // Update is called once per frame
@@ -91,6 +182,7 @@ public class Hunter_Basic : MonoBehaviour
     {
         StateHandler();
     }
+
 
     //--------
     // STATES
