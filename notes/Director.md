@@ -3,7 +3,7 @@ An overseer ai which sends out commands to the hunter and controls events.
 Currently Director is able to send out commands to the Hunter in order to manipulate their decisionmaking by changing the base player probability for each patrol point that the Hunter has in its memory. 
 
 
-
+##### Director Changelog 
 ```Director Changelog
 - **Direct Command Nodes Deleted:** The `IsHPCommandTarget` condition and `ExecuteHPCommand` task were removed from the BT.
     
@@ -15,3 +15,4 @@ Currently Director is able to send out commands to the Hunter in order to manipu
         
 - **Organic Movement:** The **`MoveToPatrolPoint`** task naturally selects the now high-scoring, commanded location, making the AI's response feel organic rather than forced.
 ```
+
