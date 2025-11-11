@@ -131,13 +131,14 @@ public class HunterBehaviorNodes
             {
                 if (agent.remainingDistance <= acceptableDistance)
                 {
-                    // FIX 3: Now works because currentPatrolTarget is public in Hunter_Basic
                     if (context.hunter.currentPatrolTarget != null)
                     {
-                        // In the future, you'll call a method here to mark the point as visited
-                        // context.hunter.ArrivedAtPatrolPoint(); 
+                        // The Agent has arrived. Inform the Hunter_Basic component.
+                        context.hunter.ArrivedAtPatrolPoint();
                     }
 
+                    // Returning SUCCESS allows the parent Sequence/Selector to move to the next step,
+                    // which is usually a Wait/Pause node before the next patrol begins.
                     nodeState = NodeState.SUCCESS;
                     return nodeState;
                 }
@@ -174,6 +175,7 @@ public class HunterBehaviorNodes
             {
                 // Update the Hunter's current target variable
                 context.hunter.currentPatrolTarget = bestPatrolPoint;
+                context.hunter.currentBTState = $"PATROL: Moving to {bestPatrolPoint.gameObject.name}";
 
                 // Set the new destination
                 agent.SetDestination(bestPatrolPoint.position);
@@ -181,6 +183,9 @@ public class HunterBehaviorNodes
                 nodeState = NodeState.RUNNING;
                 return nodeState;
             }
+
+            // ... (existing logic returns FAILURE if no patrol point is found)
+            context.hunter.currentBTState = "PATROL: No Points Found / Stuck";
 
             // If no valid patrol point could be found (e.g., all points checked)
             nodeState = NodeState.FAILURE;
@@ -194,7 +199,8 @@ public class HunterBehaviorNodes
 
     public class ChasePlayer : HunterTask
     {
-        private float acceptableDistance = 0.5f;
+        private float acceptableDistance = 1.0f;
+        float velocityStopThreshold = 0.1f;
 
         public ChasePlayer(HunterBehaviorNodes context) : base(context) { }
 
@@ -210,23 +216,38 @@ public class HunterBehaviorNodes
 
             // Set or Maintain Destination
             agent.SetDestination(targetTransform.position);
+            agent.isStopped = false; // Ensure movement is active
+
+            // ROBUST ARRIVAL CHECK:
+            // 1. Are we close enough? (remainingDistance)
+            bool isCloseEnough = agent.remainingDistance <= acceptableDistance;
+            // 2. Are we physically stopped? (This is the most reliable check to avoid orbiting/flickering)
+            bool isStoppedMoving = agent.velocity.sqrMagnitude < velocityStopThreshold;
+            // 3. Is the path calculation complete? (Path must not be pending)
+            bool isPathNotPending = !agent.pathPending;
 
             // Check for Arrival
-            bool hasArrived = agent.remainingDistance <= acceptableDistance && !agent.pathPending;
+            bool hasArrived = isCloseEnough && isStoppedMoving && isPathNotPending;
 
             if (hasArrived)
             {
-                // IMPORTANT: Return SUCCESS. The Hunter is done moving, but is NOT done 
-                // with the chase branch. The parent condition (IsPlayerSeen) handles the timer.
+
                 agent.isStopped = true;
 
-                nodeState = NodeState.SUCCESS;
+                // Return RUNNING to stall the BT on this node.
+                // This holds the highest-priority branch open while the Hunter waits 
+                // for the 7-second investigation timer (managed in Hunter_Basic.cs) to expire.
+                context.hunter.currentBTState = "CHASING/INVESTIGATING: Arrived, Waiting for Timer"; // Update debug state
+
+
+                nodeState = NodeState.RUNNING;
                 return nodeState;
             }
             else
             {
                 // If we are still moving, ensure the agent is active
                 agent.isStopped = false;
+                context.hunter.currentBTState = "CHASING/INVESTIGATING: Moving to Last Seen"; // Update debug state
             }
 
             // Chase is Running (still moving to the last known spot)

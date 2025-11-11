@@ -35,8 +35,8 @@ public class Hunter_Basic : MonoBehaviour
     private HunterBehaviorNodes btContext;
 
     // --- Navigation & Targets (Made public for HunterBehaviorNodes) ---
-    [SerializeField] public Transform currentPatrolTarget = null;
-    [SerializeField] public Transform targetPos; // Last known or commanded position
+    public Transform currentPatrolTarget = null;
+    public Transform targetPos; // Last known or commanded position
 
     private NavMeshAgent agent;
 
@@ -65,8 +65,13 @@ public class Hunter_Basic : MonoBehaviour
     [Tooltip("Time (in seconds) the Hunter continues to investigate the last known location after losing sight.")]
     [SerializeField] public float chaseInvestigationTime = 7.0f;
 
-    [HideInInspector] public float timeSinceLastSeen = 0.0f;
+    public float timeSinceLastSeen = 999.0f; 
     [HideInInspector] public bool isChasingPlayer = false; // Flag for the BT
+
+
+    // In Hunter_Basic.cs, add this near your other public fields:
+    [Header("BT Debug")]
+    [SerializeField] public string currentBTState = "Initializing";
 
     // Start is called before the first frame update
     void Start()
@@ -93,6 +98,13 @@ public class Hunter_Basic : MonoBehaviour
             }
         }
 
+        // Ensure targetPos is initialized
+        if (targetPos == null)
+        {
+            // Instantiating a new GameObject to hold the dynamic position.
+            targetPos = new GameObject("PlayerChaseTarget_Dynamic").transform;
+        }
+
         // 3. Set the initial closest room
         ClosestRoom();
 
@@ -115,19 +127,32 @@ public class Hunter_Basic : MonoBehaviour
 
     void Update()
     {
-        // Execute the Behavior Tree every frame
+        // Execute the Behavior Tree every frame 
         if (rootNode != null)
         {
             rootNode.Evaluate();
+            TickBT();
         }
 
-        // --- New Timer Logic ---
-        if (isChasingPlayer)
+        // 1. Increment the timer if the player is not actively seen (timeSinceLastSeen > 0).
+        // The FieldOfView event sets timeSinceLastSeen = 0.0f when seen.
+        if (timeSinceLastSeen > 0.0f)
         {
-            // Only increment the timer when we are actively in the Chase branch
             timeSinceLastSeen += Time.deltaTime;
         }
 
+        // 2. Clear the chasing state if the investigation timer expires.
+        // The chaseInvestigationTime is assumed to be defined in Hunter_Basic.
+        if (isChasingPlayer && timeSinceLastSeen >= chaseInvestigationTime)
+        {
+            // Debug.Log($"Investigation expired after {timeSinceLastSeen:F2} seconds.");
+            isChasingPlayer = false; // <--- THIS is what makes IsPlayerSeen return FAILURE.
+
+            // Safety: Reset the timer to avoid re-entering chase without seeing the player first.
+            timeSinceLastSeen = 999.0f; // Large value to indicate "not chasing"
+        }
+
+        // 3. Run Memory Decay (assuming this is called in Update or a Coroutine)
         DecayPatrolMemory();
     }
 
@@ -160,22 +185,21 @@ public class Hunter_Basic : MonoBehaviour
         // When the Hunter sees the player, update the chase target
         if (isVisible)
         {
-            if (targetPos == null)
-            {
-                // You might want to instantiate the Transform once in Start() 
-                // and simply enable/disable it or reuse it instead of instantiating here.
-                targetPos = new GameObject("PlayerChaseTarget").transform;
-            }
             targetPos.position = lastPlayerLocation;
 
             // Reset the timer and set the chasing flag
             timeSinceLastSeen = 0.0f;
-            isChasingPlayer = true;   
+            isChasingPlayer = true;
+
+            agent.isStopped = false;
         }
         else // isVisible == false (Hunter lost sight)
         {
-            // When the Hunter loses sight, the targetPos *should remain set* // to the last known position so the ChasePlayer task can continue the chase/investigation.
-            // The BT's IsPlayerSeen condition handles the final decision to stop chasing.
+            if (isChasingPlayer && timeSinceLastSeen == 0.0f)
+            {
+                timeSinceLastSeen = Time.deltaTime;
+            }
+            // NOTE: targetPos MUST NOT be updated here, it stays at the last location
         }
     }
     private void OnPatrolPointSeen(Transform seenPointTransform)
@@ -471,6 +495,32 @@ public class Hunter_Basic : MonoBehaviour
         }
     }
 
+    //Called by BT when the agent has arrived at a patrol point
+    public void ArrivedAtPatrolPoint()
+    {
+        if (currentPatrolTarget != null)
+        {
+            // 1. **Mark the Point as Arrived/Visited (Memory Update)**
+            PatrolPoints pointComponent = currentPatrolTarget.GetComponent<PatrolPoints>();
+            if (pointComponent != null)
+            {
+                // We assume the PatrolPoints component has a public property/field called HasBeenVisited
+                // The AllPointsChecked method already uses this property: point.GetComponent<PatrolPoints>().HasBeenVisited
+                pointComponent.HasBeenVisited = true; // <--- ADDED LINE
+            }
+
+            // For now, let's just log it to ensure the logic fires:
+            Debug.Log($"Hunter arrived at Patrol Point: {currentPatrolTarget.gameObject.name}. Clearing target.");
+
+            // 2. **Clear the Current Target**
+            // Clearing the target forces the next tick of MoveToPatrolPoint
+            // to call GetBestPatrolPoint() and select a new destination.
+            currentPatrolTarget = null;
+        }
+    }
+
+    // --- End Hunter_Basic.cs addition ---
+
     // --- PLACEHOLDER NODE DEFINITIONS (REQUIRED FOR COMPILATION) ---
 
     private class PlaceholderTask : Node
@@ -493,4 +543,24 @@ public class Hunter_Basic : MonoBehaviour
             return NodeState.FAILURE; // Will be replaced by your real Condition
         }
     }
+
+    public void TickBT()
+    {
+        // Evaluate the root node
+        Node.NodeState state = rootNode.Evaluate();
+
+        // Debugging: Update the state string based on the result
+        if (state == Node.NodeState.RUNNING)
+        {
+            // This is a simplistic check. A more detailed check requires checking the BT structure.
+            // For now, let's keep it simple and update it in the nodes themselves.
+        }
+        else if (state == Node.NodeState.SUCCESS)
+        {
+            // The entire BT succeeded? Unlikely for a running AI.
+        }
+
+        // The most accurate way is to update this variable inside the highest priority successful node.
+    }
+
 }
