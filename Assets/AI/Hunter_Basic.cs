@@ -687,5 +687,17 @@ public class Hunter_Basic : MonoBehaviour
         // The most accurate way is to update this variable inside the highest priority successful node.
     }
 
+    // -- GIZMO's FOR DEBUGGING --
+
+    // Helper method for gizmos visualization
+    public float GetProbabilityScore(Transform patrolPoint)
+    {
+        if (patrolPointData.TryGetValue(patrolPoint, out HunterPatrolMemory memory))
+        {
+            return memory.playerProbability;
+        }
+        return 0f; // Default to 0 (no priority) if the point is not tracked
+    }
+
 
 }
