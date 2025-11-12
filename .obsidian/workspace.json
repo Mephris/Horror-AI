@@ -109,14 +109,12 @@
             "id": "5271e6db46a9535d",
             "type": "leaf",
             "state": {
-              "type": "markdown",
+              "type": "release-notes",
               "state": {
-                "file": "notes/Changelog/12.11.2025 - AI Tuning & Emergent Behaviors.md",
-                "mode": "source",
-                "source": false
+                "currentVersion": "1.10.3"
               },
-              "icon": "lucide-file",
-              "title": "12.11.2025 - AI Tuning & Emergent Behaviors"
+              "icon": "lucide-book-up",
+              "title": "Release Notes 1.10.3"
             }
           }
         ],
@@ -193,7 +191,6 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "notes/Changelog/12.11.2025 - AI Tuning & Emergent Behaviors.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -203,7 +200,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Backlinks for 12.11.2025 - AI Tuning & Emergent Behaviors"
+              "title": "Backlinks"
             }
           },
           {
@@ -268,6 +265,8 @@
   },
   "active": "5271e6db46a9535d",
   "lastOpenFiles": [
+    "notes/Changelog/11.11.2025 - Hunter.md",
+    "notes/Changelog/12.11.2025 - AI Tuning & Emergent Behaviors.md",
     "Temp/UnityTempFile-a91642c1f178bad4b8162cd6ae2d9232",
     "Temp/ADB-Refreshb5659fbcbfc03774ba64368a69f784fa",
     "Library/ShaderCache.db-journal",
@@ -278,9 +277,6 @@
     "Temp/ADB-Refreshb34829f30d64db14682cbaf5c3bcd0fc",
     "Temp/ADB-Refresh53c89174b76e9f6418282295b8c22d23",
     "Temp/UnityTempFile-2a3474181ea3ba748b61e143254a9bf3",
-    "Temp/UnityTempFile-1cb01e8b8322fa04a911631a88b34ed8",
-    "notes/Changelog/11.11.2025 - Hunter.md",
-    "notes/Changelog/12.11.2025 - AI Tuning & Emergent Behaviors.md",
     "notes/Hunter.md",
     "notes/Changelog/7.11.2025 - Switching from FSM to BT.md",
     "notes/Director.md",
