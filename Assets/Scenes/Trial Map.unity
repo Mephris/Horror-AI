@@ -10175,11 +10175,6 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 212287410}
   m_SourcePrefab: {fileID: 100100000, guid: 6536b8c1a9f0ada4aa3994bb0aad4c64, type: 3}
---- !u!4 &999500944 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 4353597706301580488, guid: 6536b8c1a9f0ada4aa3994bb0aad4c64, type: 3}
-  m_PrefabInstance: {fileID: 999500943}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1002538580
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -12108,15 +12103,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   currentPatrolTarget: {fileID: 0}
-  targetPos: {fileID: 999500944}
+  targetPos: {fileID: 0}
   memoryDecayRate: 0.01
   probabilityDecayRate: 0.01
   baseUncertainty: 0.2
   decayUpdateInterval: 1
   wanderRange: 5
   chaseInvestigationTime: 7
-  timeSinceLastSeen: 0
+  timeSinceLastSeen: 999
   isChasingPlayer: 0
+  currentBTState: Initializing
 --- !u!4 &1165612971 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8675915457954794082, guid: 3fc537e92bf3d2449b5be72cfd6cb447, type: 3}
