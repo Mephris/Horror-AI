@@ -196,7 +196,6 @@ public class HunterBehaviorNodes
     // =================================================================
     // 5. TASK: Chase Player (High Priority Action)
     // =================================================================
-
     public class ChasePlayer : HunterTask
     {
         private float acceptableDistance = 1.0f;
@@ -255,4 +254,55 @@ public class HunterBehaviorNodes
             return nodeState;
         }
     }
+
+    // --- HunterBehaviorNodes.cs ---
+
+    // Add this new class to your HunterBehaviorNodes.cs file:
+    // This node handles the time the Hunter spends looking around the point.
+    public class InvestigatePatrolPoint : HunterTask
+    {
+        private bool hasStartedInvestigation = false;
+
+        public InvestigatePatrolPoint(HunterBehaviorNodes context) : base(context) { }
+
+        public override NodeState Evaluate()
+        {
+            // 1. Check if we have a valid target to investigate.
+            if (context.hunter.currentPatrolTarget == null)
+            {
+                hasStartedInvestigation = false;
+                context.hunter.isInvestigating = false;
+                return NodeState.FAILURE;
+            }
+
+            // 2. First evaluation: Start the investigation timer.
+            if (!hasStartedInvestigation)
+            {
+                context.hunter.StartInvestigation(context.hunter.currentPatrolTarget);
+                hasStartedInvestigation = true;
+                context.hunter.currentBTState = $"PATROL: Investigating (Duration: {context.hunter.investigationDuration:F2}s)";
+                nodeState = NodeState.RUNNING;
+                return nodeState;
+            }
+
+            // 3. Subsequent evaluations: Update the timer.
+            NodeState timerState = context.hunter.UpdateInvestigationTimer();
+
+            if (timerState == NodeState.SUCCESS)
+            {
+                // The timer expired, investigation is complete.
+                hasStartedInvestigation = false;
+                context.hunter.currentBTState = "PATROL: Investigation Complete";
+            }
+            else if (timerState == NodeState.RUNNING)
+            {
+                // Still waiting.
+                context.hunter.currentBTState = $"PATROL: Investigating ({context.hunter.investigationDuration - context.hunter.investigationTimeElapsed:F2}s left)";
+            }
+
+            nodeState = timerState;
+            return nodeState;
+        }
+    }
+
 }

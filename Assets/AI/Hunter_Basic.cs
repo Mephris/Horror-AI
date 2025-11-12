@@ -59,14 +59,22 @@ public class Hunter_Basic : MonoBehaviour
     [SerializeField] private float wanderRange = 5f; // Used by GetRandomWanderPoint
     private WaitForSeconds decayWait;
 
-    // --- Investigation Duration Settings ---
+
+
+    // --- Investigation Settings ---
+    [Header("Investigation Timer")]
+    [Tooltip("Flag set by the InvestigatePatrolPoint BT Node to track the current wait state.")]
+    public bool isInvestigating = false;
+    [HideInInspector]public float investigationTimeElapsed = 0f;
+    [HideInInspector]public float investigationDuration = 0f; // The calculated duration for the current point.
+
     [Header("Investigation Duration")]
     [Tooltip("Base time (seconds) Hunter spends investigating a patrol point.")]
     [SerializeField] private float baseInvestigationTime = 5f;
 
     [Tooltip("Maximum multiplier applied to base time based on patrol point probability (e.g., probability of 1.0 gets baseTime * maxMultiplier).")]
-    [SerializeField] private float maxProbabilityMultiplier = 2.0f;
-    // A point with probability 1.0 would have a duration of 5s * 2.0 = 10s.
+    [SerializeField] private float maxProbabilityMultiplier = 2.0f; // A point with probability 1.0 would have a duration of 5s * 2.0 = 10s.
+
 
     // --- Director Command Settings ---
     [Header("Director Command Settings")]
@@ -136,7 +144,6 @@ public class Hunter_Basic : MonoBehaviour
         // calculationInterval = Director.calculationInterval / 5.0f; // Leaving this commented out (old FSM logic)
     }
 
-
     void Update()
     {
         // Execute the Behavior Tree every frame 
@@ -169,13 +176,11 @@ public class Hunter_Basic : MonoBehaviour
     }
 
 
-
-
-    // ============================================================
+    // ===========================================
     // --- EVENT HANDLERS (Simplified for BT) ---
-    // ============================================================
+    // ===========================================
 
-    //WARNING: Right now Command to move and HighPriorityCommandToMove both modify memory only up, they do not decrease it. 
+    // WARNING: Right now Command to move and HighPriorityCommandToMove both modify memory only up, they do not decrease it. 
     // CommandToMove is now a standard, non-critical 'noise' event
     private void OnCommandToMove(Vector3 target)
     {
@@ -191,7 +196,6 @@ public class Hunter_Basic : MonoBehaviour
         ModifyMemoryNearLocation(target, 0.5f, true);
         // Note: We no longer set targetPos
     }
-
     private void OnSeePlayer(bool isVisible, Vector3 lastPlayerLocation)
     {
         // When the Hunter sees the player, update the chase target
@@ -233,7 +237,9 @@ public class Hunter_Basic : MonoBehaviour
         }
     }
 
+    // =====================================================================
     // --- WANDER LOGIC (Required by HunterBehaviorNodes.WanderLocally) ---
+    // =====================================================================
     public Vector3 GetRandomWanderPoint(Vector3 center, float range)
     {
         Vector3 randomPoint = center + UnityEngine.Random.insideUnitSphere * range;
@@ -246,9 +252,9 @@ public class Hunter_Basic : MonoBehaviour
         return Vector3.zero;
     }
 
-
+    // ======================================================
     // --- PATROL LOGIC (Updated to use HasBeenVisited) ---
-
+    // ======================================================
     // Keeps the logic that finds the closest room that isn't fully checked
     private void ClosestRoom()
     {
@@ -332,19 +338,18 @@ public class Hunter_Basic : MonoBehaviour
         }
     }
 
-    // Scales the investigation duration based on patrol point probability in the memory. 
+    // --- Investigation Methods ---
+
+    // 1. Calculates the duration based on the point's probability score.
     public float GetInvestigationDuration(Transform patrolPoint)
     {
-        // 1. Get the memory for the patrol point.
         if (patrolPointData.TryGetValue(patrolPoint, out HunterPatrolMemory memory))
         {
-            // 2. Calculate the scaled time.
-            // Final Duration = Base Time + (Base Time * Probability * (Multiplier - 1))
-            // Example: If prob=0, Duration = 5s. If prob=1.0, Duration = 5s + (5s * 1.0 * (2.0 - 1)) = 10s.
+            // Probability scales the duration from base to (base * maxMultiplier)
             float probabilityFactor = memory.playerProbability * (maxProbabilityMultiplier - 1.0f);
             float finalDuration = baseInvestigationTime + (baseInvestigationTime * probabilityFactor);
 
-            // Ensure Director Tips give at least the max duration, regardless of probability score
+            // Ensure Director Tips receive max duration regardless of score
             if (memory.hasDirectorTip && finalDuration < (baseInvestigationTime * maxProbabilityMultiplier))
             {
                 return baseInvestigationTime * maxProbabilityMultiplier;
@@ -353,12 +358,73 @@ public class Hunter_Basic : MonoBehaviour
             return finalDuration;
         }
 
-        // Fallback: If for some reason the point isn't in the dictionary, return base time.
         return baseInvestigationTime;
     }
 
-    // --- CORE AI UTILITY FUNCTIONS ---
+    // 2. Starts the investigation timer.
+    public void StartInvestigation(Transform patrolPoint)
+    {
+        // 1. Set the calculated duration
+        investigationDuration = GetInvestigationDuration(patrolPoint);
 
+        // 2. Reset and start the timer
+        investigationTimeElapsed = 0f;
+        isInvestigating = true;
+        agent.isStopped = true; // Stop movement while investigating
+
+        // Record the visit now (Handles HasBeenVisited Deprecation)
+        RecordPatrolVisit(patrolPoint);
+
+        Debug.Log($"Starting Investigation at {patrolPoint.name}. Duration: {investigationDuration:F2}s.");
+    }
+
+    // 3. Updates the timer (called by the BT node)
+    public Node.NodeState UpdateInvestigationTimer()
+    {
+        if (!isInvestigating)
+        {
+            // Should not happen, but as a safeguard
+            return Node.NodeState.FAILURE;
+        }
+
+        investigationTimeElapsed += Time.deltaTime;
+
+        if (investigationTimeElapsed >= investigationDuration)
+        {
+            // Investigation Complete
+            isInvestigating = false;
+            agent.isStopped = false;
+            currentPatrolTarget = null; // Clear target for next Patrol selection
+            return Node.NodeState.SUCCESS;
+        }
+
+        // Still waiting
+        return Node.NodeState.RUNNING;
+    }
+
+    // 4. Record Patrol Visit & Memory Cleanup (Deprecating HasBeenVisited)
+    public void RecordPatrolVisit(Transform point)
+    {
+        if (patrolPointData.TryGetValue(point, out HunterPatrolMemory memory))
+        {
+            // Set the visit time to now
+            memory.lastPatrolTime = Time.time;
+
+            // Decay probability slightly upon successful investigation (example: 20%)
+            memory.playerProbability = Mathf.Max(0f, memory.playerProbability * 0.8f);
+
+            // Clear discrete high-priority tags
+            memory.hasDirectorTip = false;
+            memory.hasHeardNoise = false;
+
+            // Write the struct back to the dictionary
+            patrolPointData[point] = memory;
+        }
+    }
+
+    // ==================================
+    // --- CORE AI UTILITY FUNCTIONS ---
+    // ==================================
     private IEnumerator DecayProbabilitiesRoutine()
     {
         while (true)
@@ -421,9 +487,9 @@ public class Hunter_Basic : MonoBehaviour
         }
     }
 
-
+    // ========================================================
     // --- BEHAVIOR TREE SETUP (Placeholder implementation) ---
-
+    // ========================================================
     private Node SetupBehaviorTree()
     {
         // ----------------------------------------------------------------------
@@ -537,7 +603,9 @@ public class Hunter_Basic : MonoBehaviour
         return bestTarget;
     }
 
+    // ==============================================
     // --- DIRECTOR COMMAND MEMORY MODIFICATION ---
+    // ==============================================
     // A helper method to modify memory near a given location for purpose of Director commands
     private void ModifyMemoryNearLocation(Vector3 location, float probabilityIncrease, bool setDirectorTip)
     {
