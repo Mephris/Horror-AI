@@ -127,25 +127,33 @@ public class HunterBehaviorNodes
         {
             NavMeshAgent agent = context.agent;
 
+            // --- THIS IS THE FIX ---
+            // If we don't have a target, we can't be "at" it. This node must fail.
+            // This stops the infinite loop with wanderAround.
+            if (context.hunter.currentPatrolTarget == null)
+            {
+                nodeState = NodeState.FAILURE;
+                return nodeState;
+            }
+
             if (!agent.pathPending)
             {
                 if (agent.remainingDistance <= acceptableDistance)
                 {
-                    if (context.hunter.currentPatrolTarget != null)
-                    {
-                        // The Agent has arrived. Mark the point as visited in memory.
-                        context.hunter.RecordPatrolVisit(context.hunter.currentPatrolTarget);
-                        // Clear the target so the BT knows it needs to find a new one.
-                        context.hunter.currentPatrolTarget = null;
-                    }
+                    // We have arrived at the currentPatrolTarget.
 
-                    // Returning SUCCESS allows the parent Sequence/Selector to move to the next step,
-                    // which is usually a Wait/Pause node before the next patrol begins.
+                    // Record the visit (which sets prob to base)
+                    context.hunter.RecordPatrolVisit(context.hunter.currentPatrolTarget);
+                    // Clear the target so the BT knows it needs a new one
+                    context.hunter.currentPatrolTarget = null;
+
+                    // Return SUCCESS because we *did* successfully arrive.
                     nodeState = NodeState.SUCCESS;
                     return nodeState;
                 }
             }
 
+            // If we are not at the destination yet, this condition is a FAILURE.
             nodeState = NodeState.FAILURE;
             return nodeState;
         }
