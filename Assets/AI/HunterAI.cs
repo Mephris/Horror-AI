@@ -67,8 +67,8 @@ public class HunterAI : MonoBehaviour
     [Header("Investigation Timer")]
     [Tooltip("Flag set by the InvestigatePatrolPoint BT Node to track the current wait state.")]
     public bool isInvestigating = false;
-    [HideInInspector]public float investigationTimeElapsed = 0f;
-    [HideInInspector]public float investigationDuration = 0f; // The calculated duration for the current point.
+    [HideInInspector] public float investigationTimeElapsed = 0f;
+    [HideInInspector] public float investigationDuration = 0f; // The calculated duration for the current point.
 
     [Header("Investigation Duration")]
     [Tooltip("Base time (seconds) Hunter spends investigating a patrol point.")]
@@ -87,6 +87,7 @@ public class HunterAI : MonoBehaviour
     [Header("Chase Settings")]
     [Tooltip("Time (in seconds) the Hunter continues to investigate the last known location after losing sight.")]
     [SerializeField] public float chaseInvestigationTime = 7.0f;
+    [SerializeField] private float patrolCooldownTime = 60f; // 
 
     [HideInInspector] public float timeSinceLastSeen = 999.0f;
     [HideInInspector] public bool isChasingPlayer = false; // Flag for the BT
@@ -267,7 +268,7 @@ public class HunterAI : MonoBehaviour
         {
             float distance = Vector3.Distance(transform.position, room.transform.position);
             // Must update AllPointsChecked to use HasBeenVisited
-            if (distance < closestDistance && !AllPointsChecked(room))
+            if (distance < closestDistance)
             {
                 closestDistance = distance;
                 roomNearby = room;
@@ -285,7 +286,7 @@ public class HunterAI : MonoBehaviour
         foreach (Room room in rooms)
         {
             float distance = Vector3.Distance(transform.position, room.transform.position);
-            if (distance < closestDistance && !AllPointsChecked(room))
+            if (distance < closestDistance)
             {
                 closestDistance = distance;
                 roomNearby = room;

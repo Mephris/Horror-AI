@@ -19,17 +19,17 @@ public class PatrolPoints : MonoBehaviour
 
     // Cache the HunterAI component for Gizmo drawing
     // This allows the PatrolPoint to query the Hunter's current memory for visualization.
-    private HunterAI hunterBasic;
-    private HunterAI HunterBasic
+    private HunterAI hunterAI;
+    private HunterAI HunterAI
     {
         get
         {
-            if (hunterBasic == null)
+            if (hunterAI == null)
             {
                 // Find the Hunter in the scene (assuming only one HunterAI exists)
-                hunterBasic = FindObjectOfType<HunterAI>();
+                hunterAI = FindObjectOfType<HunterAI>();
             }
-            return hunterBasic;
+            return hunterAI;
         }
     }
 
@@ -39,10 +39,10 @@ public class PatrolPoints : MonoBehaviour
         // 1. Get the probability score from the Hunter's memory
         float probability = 0f;
 
-        if (HunterBasic != null)
+        if (HunterAI != null)
         {
             // Query the memory via the HunterAI helper method
-            probability = HunterBasic.GetProbabilityScore(this.transform);
+            probability = HunterAI.GetProbabilityScore(this.transform);
         }
 
         // 2. Set Gizmo color based on probability (0.0 to 1.0)
