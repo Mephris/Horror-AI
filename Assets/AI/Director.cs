@@ -24,6 +24,15 @@ public class Director : MonoBehaviour
     [Tooltip("Amount of tension to decrease per calculation interval (e.g., every 1-3 seconds) when the Hunter is far.")]
     [SerializeField] private float tensionDistanceDecayAmount = 1f;
 
+
+    // High Tension Trigger
+    [Header("High Priority Command")]
+    [Tooltip("Time Hunter must see Player to trigger a High Priority Command/Memory Tag.")]
+    [SerializeField] private float highTensionThresholdTime = 15.0f;
+    private float highTensionTimeElapsed = 0f;
+    private bool isHighPriorityCommandSent = false;
+
+
     //We save player location to be able to find the locations which we will give Hunter AI
     //while obscuring the player precise location
     [Header("Player Information")]
@@ -43,188 +52,51 @@ public class Director : MonoBehaviour
     [Header("Current State/Task")]
     public DirectorStates CurrentState;
     [SerializeField] private DirectorStates PreviousState;
+
+    //Director states
     public enum DirectorStates
     {
-        HighPriorityIncreaseTension,
-        HighPriorityDecreaseTension,
-        IncreaseTension,
-        DecreaseTension,
-        Observe
-    }
-
-    [Header("Rooms Reference")]
-    private Rooms roomsController;
-
-    [Header("Hunter Command Logic")]
-    [Tooltip("Time player must be seen by Hunter to trigger a High Priority Command (memory tag).")]
-    [SerializeField] private float highTensionThresholdTime = 15f;
-    private float highTensionTimeElapsed = 0f;
-    private bool isHighPriorityCommandSent = false;
-
-    // Start is called before the first frame update
-    void Start()
-    {
-        Actions.HunterCanSeePlayer += OnHunterCanSeePlayer;
-        Actions.PlayerCanSeeHunter += OnPlayerCanSeeHunter;
-
-        // Initialize Rooms reference (Assuming Rooms is on a GameObject in the scene)
-        roomsController = FindObjectOfType<Rooms>();
-
-        // Existing calculation setup
-        calculationInterval = calculationTime;
-    }
-
-
-
-    // Update is called once per frame
-    void Update()
-    {
-
-        TensionCalculation(); // Cykliczna zmiana zmiennej tension
-
-        StateHandler(); // zmiana stanu maszymy stanowej Command 
-
-    }
-
-    private void FixedUpdate()
-    {
-
+        Idle,
+        LowTension,
+        MediumTension,
+        HighTension,
+        ExtremeTension
     }
 
     private void Awake()
     {
-        // ENDPOINT reference which we will manipulate 
-        GameObject EndPoint = GameObject.Find("EndPoint");
-        Endpoint = EndPoint.GetComponent<Transform>();
-
-        GameObject HunterNavMesh = GameObject.Find("Hunter");
-        hunterAgent = HunterNavMesh.GetComponent<NavMeshAgent>();
-
-
+        calculationInterval = calculationTime;
+        roomToTarget = FindObjectOfType<Rooms>();
     }
 
-    private void StateHandler()
+    private void Start()
     {
-        // Changing Hunter Command which will be sent to the Hunter AI
-        CurrentState = tension < 15 ? DirectorStates.HighPriorityIncreaseTension :
-                       tension > 85 ? DirectorStates.HighPriorityDecreaseTension :
-                       tension < 35 ? DirectorStates.IncreaseTension :
-                       tension > 70 ? DirectorStates.DecreaseTension :
-                       DirectorStates.Observe;
-
-        //Debug.Log(FindObjectOfType<Rooms>());
-        // Depending on state, send the chosen command to Hunter AI
-        switch (CurrentState)
-        {
-            //Send Hunter to
-            case DirectorStates.IncreaseTension:
-                //to closest room
-                EndpointPos = FindObjectOfType<Rooms>().ClosestRoom();
-                break;
-
-            case DirectorStates.DecreaseTension:
-                //entrance to the furthest viable room
-                EndpointPos = FindObjectOfType<Rooms>().PosFarFromPlayer();
-                break;
-
-            case DirectorStates.HighPriorityDecreaseTension:
-                //furthest viable room
-                EndpointPos = FindObjectOfType<Rooms>().FurthestRoom();
-                break;
-
-            case DirectorStates.HighPriorityIncreaseTension:
-                // 1. Check that our references are valid before we use them
-                if (hunterAgent == null) Debug.LogError("Director's hunterAgent is NOT assigned in the Inspector!");
-                if (player == null) Debug.LogError("Director's player is NOT assigned in the Inspector!");
-
-                // 2. Pass the agent and player.position to the method
-                Vector3 PosVec3 = FindObjectOfType<Rooms>().PosNearPlayer(hunterAgent, player.position);
-
-                EndpointPos = PosVec3;
-                break;
-
-            case DirectorStates.Observe:
-
-
-                break;
-
-        }
-        UpdateTensionState();
+        // Subscribe to events
+        Actions.PlayerCanSeeHunter += OnPlayerCanSeeHunter;
+        Actions.HunterCanSeePlayer += OnHunterCanSeePlayer;
     }
 
-    private void UpdateTensionState()
+    private void OnDestroy()
     {
-        // [Your existing logic for TensionCalculation is assumed to be called regularly]
-
-        if (PreviousState != CurrentState || CurrentState == DirectorStates.HighPriorityDecreaseTension)
-        {
-            if (CurrentState != PreviousState)
-            {
-                // ... [Your existing logic for Low, Medium state transitions] ...
-
-                // --- CORRECTED STANDARD COMMAND LOGIC ---
-                if (roomsController != null && hunterAgent != null && player != null)
-                {
-                    // Pass the Hunter's agent and the Player's position as arguments.
-                    Vector3 commandTarget = roomsController.PosNearPlayer(hunterAgent, player.position);
-
-                    // Fire the standard command event (minor probability increase in Hunter memory)
-                    Actions.CommandToMove?.Invoke(commandTarget);
-                    Debug.Log($"DIRECTOR: Standard Command (Memory Tag) sent to area near player based on State Change. Target: {commandTarget}");
-                }
-                // --- END CORRECTED LOGIC ---
-            }
-
-            PreviousState = CurrentState;
-        }
+        // Unsubscribe from events
+        Actions.PlayerCanSeeHunter -= OnPlayerCanSeeHunter;
+        Actions.HunterCanSeePlayer -= OnHunterCanSeePlayer;
     }
 
-    //---------------------
-    // TENSION CYCLE
-    //---------------------
-    private void TensionCalculation()
+    private void Update()
     {
-        if (Time.time - calculationElapsedTime >= calculationInterval)
-        {
-            double tensionChange = 0;
-            float distance = Vector3.Distance(player.position, hunter.position);
-
-            if (distance < 12f)
-            {
-                // Hunter is close: increase tension
-                tensionChange = 1;
-            }
-            else if (distance > 12f)
-            {
-                // Hunter is far: decrease tension by the new configurable amount
-                tensionChange = -tensionDistanceDecayAmount;
-            }
-            // Note: If distance is exactly 12f, tensionChange remains 0.
-
-            tension += tensionChange;
-
-            // Ensure tension never goes below 0
-            tension = Math.Max(0, tension);
-
-            calculationElapsedTime = Time.time;
-        }
+        TensionCalculation();
+        StateChange();
     }
 
-    //---------------------------
-    // TENSION CHANGING EVENTS
-    //---------------------------
+    // --- Tension Handlers (Updated for FOV) ---
+
     private void OnPlayerCanSeeHunter(bool obj)
     {
         if (obj == true)
             tension += 0.5;
-
-        // !!! Change how High Priority Increase Tension works !!!
-        // Change it to a timer based on how long is Hunter seen by Player. If seen for 15 seconds, then give high priority order. 
     }
 
-    // --- In Director.cs (Modify this method) ---
-
-    // --- In Director.cs (Update OnHunterCanSeePlayer method) ---
 
     private void OnHunterCanSeePlayer(bool obj, Vector3 lastPlayerLocation)
     {
@@ -236,9 +108,11 @@ public class Director : MonoBehaviour
             highTensionTimeElapsed += Time.deltaTime;
 
             // 2. Trigger High Priority Command (Memory Tag)
+            // If sustained sight (e.g., 15s) and the command hasn't been sent yet
             if (highTensionTimeElapsed >= highTensionThresholdTime && !isHighPriorityCommandSent)
             {
-                Actions.HighPriorityCommandToMove?.Invoke(lastPlayerLocation);
+                // Send the last seen player location to the Hunter's memory (strong memory tag)
+                Actions.HighPriorityCommandToMove?.Invoke(lastPlayerLocation); // <-- FIRES THE EVENT
                 isHighPriorityCommandSent = true;
                 Debug.Log("DIRECTOR: High Priority Command (Memory Tag) sent due to sustained Hunter sight.");
             }
@@ -246,10 +120,91 @@ public class Director : MonoBehaviour
         else // Hunter lost sight of the player
         {
             // Do not decrease tension here, it is already handled in TensionCalculation().
+
             // Reset the tension timer and command flag
             highTensionTimeElapsed = 0f;
             isHighPriorityCommandSent = false;
         }
     }
 
+
+    private void TensionCalculation()
+    {
+        calculationElapsedTime += Time.deltaTime;
+        if (calculationElapsedTime >= calculationTime)
+        {
+            calculationElapsedTime = 0f;
+
+            // Get distance between player and hunter
+            float distance = Vector3.Distance(player.position, hunter.position);
+
+            // Distance-based Tension Decay
+            if (distance > 30) // Decay if Hunter is far from the player
+            {
+                tension = Math.Max(0, tension - tensionDistanceDecayAmount);
+            }
+
+            // Clamp tension to ensure it stays between 0 and 100
+            tension = Mathf.Clamp((float)tension, 0f, 100f);
+        }
+    }
+
+    private void StateChange()
+    {
+        // State change logic based on tension levels (TBD)
+    }
+
+    // --- Director Command Generation (TBD) ---
+
+    // ... (rest of the functions like PosCloseToPlayer, PosFarFromPlayer, etc. remain the same) ...
+
+    public Vector3 PosCloseToPlayer()
+    {
+        Room targetRoom = roomToTarget.ClosestRoomComponent();
+        NavMeshPath path = new NavMeshPath();
+        if (FindObjectOfType<Director>().hunterAgent.CalculatePath(targetRoom.transform.position, path))
+        {
+            // If the path has multiple corners, we target the second to last corner
+            if (path.corners.Length > 1)
+            {
+                // The second-to-last corner is the new endpoint
+                return path.corners[path.corners.Length - 2];
+            }
+            // If there's only one corner, use it as the endpoint
+            else if (path.corners.Length == 1)
+            {
+                return path.corners[0];
+            }
+        }
+        return Vector3.zero;
+    }
+    public Vector3 PosFarFromPlayer()
+    {
+        Room targetRoom = roomToTarget.MostCostMovement(player.transform.position);
+        NavMeshPath path = new NavMeshPath();
+        if (FindObjectOfType<Director>().hunterAgent.CalculatePath(targetRoom.transform.position, path))
+        {
+
+            if (path.corners.Length > 1) // Ensure there is more than one corner
+            {
+                // The second-to-last corner is the new endpoint
+                return path.corners[path.corners.Length - 2];
+            }
+            else if (path.corners.Length == 1) // If there's only one corner, use it as the endpoint
+            {
+                return path.corners[0];
+            }
+        }
+
+        return Vector3.zero;
+    }
+    public Vector3 FurthestRoom()
+    {
+        return roomToTarget.MostCostMovement(player.transform.position).transform.position;
+    }
+
+    public Vector3 ClosestRoom()
+    {
+        return roomToTarget.ClosestRoomComponent().transform.position;
+    }
 }
