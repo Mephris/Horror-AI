@@ -19,7 +19,11 @@ public class Director : MonoBehaviour
     [SerializeField] private float calculationTime;
     public static float calculationInterval; // Delay, so that calculations on Tension arent done on each frame. 
 
-
+    [Header("Tension Decay")]
+    [Tooltip("Rate at which tension decays per second when the Hunter is not actively seeing the player.")]
+    [Range(0.1f, 10f)] // A value like 0.5f means 50 tension points decay every 100 seconds
+    public float tensionDecayRate = 1.0f;
+    // Let's assume tension is up to 100, so 1.0f means it takes 100 seconds to fully decay from max.
 
     //We save player location to be able to find the locations which we will give Hunter AI
     //while obscuring the player precise location
@@ -78,6 +82,13 @@ public class Director : MonoBehaviour
     {
 
         TensionCalculation(); // Cykliczna zmiana zmiennej tension
+
+        if (tension > 0)
+        {
+            tension -= tensionDecayRate * Time.deltaTime;
+            tension = Math.Max(0, tension); // Ensure tension never goes below 0
+        }
+
         StateHandler(); // zmiana stanu maszymy stanowej Command 
 
     }
@@ -226,8 +237,6 @@ public class Director : MonoBehaviour
         }
         else // Hunter lost sight of the player
         {
-            tension -= 1; // Assuming you want tension to drop upon losing sight.
-
             // Reset the tension timer and command flag
             highTensionTimeElapsed = 0f;
             isHighPriorityCommandSent = false;
