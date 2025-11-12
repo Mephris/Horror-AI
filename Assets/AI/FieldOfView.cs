@@ -18,6 +18,7 @@ public class FieldOfView : MonoBehaviour
     [SerializeField] private LayerMask targetMask;
     [SerializeField] private LayerMask obstructionMask;
 
+    // These variables hold the state for the Hunter's perception
     public bool canSeeTarget;
     public Vector3 lastSeenTargetLocation;
 
@@ -25,62 +26,59 @@ public class FieldOfView : MonoBehaviour
 
     private IEnumerator FOVRoutine()
     {
-        WaitForSeconds wait = new WaitForSeconds(0.5f);
+        // Check frequency: A slower update rate is often better for AI perception
+        WaitForSeconds wait = new WaitForSeconds(0.2f);
         while (true)
         {
             yield return wait;
-            FieldOfViewCheck(); // <-- FIX 1: Call the check method
+            FieldOfViewCheck();
 
-            // This part of your logic remains the same
-            if (this.gameObject.CompareTag("Player"))
+            // The Hunter (Enemy) FOV check
+            if (this.gameObject.CompareTag("Enemy"))
             {
-                if (targetObjRef.CompareTag("Enemy"))
+                if (targetObjRef != null && targetObjRef.CompareTag("Player")) // Only check for the player here
                 {
-                    Actions.PlayerCanSeeHunter(canSeeTarget);
-                }
-            }
-            else if (this.gameObject.CompareTag("Enemy"))
-            {
-                if (targetObjRef.CompareTag("Player")) // Only check for the player here
-                {
+                    // Broadcast the result to the Hunter_Basic component
+                    Actions.HunterCanSeePlayer?.Invoke(canSeeTarget, lastSeenTargetLocation);
+
                     if (canSeeTarget)
                     {
+                        // Store the player's position when they were seen
                         lastSeenTargetLocation = targetObjRef.transform.position;
-                        Actions.HunterCanSeePlayer(canSeeTarget, lastSeenTargetLocation);
-                    }
-                    else
-                    {
-                        // Send a "false" signal if the player is the target but not seen
-                        Actions.HunterCanSeePlayer(canSeeTarget, lastSeenTargetLocation);
                     }
                 }
-
-                // We removed the patrol point check from here because
-                // FieldOfViewCheck() now handles it directly.
+            }
+            // Future: Player's FOV check (for player HUD/visuals)
+            else if (this.gameObject.CompareTag("Player"))
+            {
+                if (targetObjRef != null && targetObjRef.CompareTag("Enemy"))
+                {
+                    Actions.PlayerCanSeeHunter?.Invoke(canSeeTarget);
+                }
             }
         }
     }
 
-    // This is a suggested robust version of FieldOfViewCheck
     private void FieldOfViewCheck()
     {
-        bool playerWasSeenThisFrame = false; // We track the player separately
-
-        // Find all colliders (Player and Patrol Points) in range
+        // Find all colliders within the defined radius
         Collider[] rangeChecks = Physics.OverlapSphere(transform.position, radius, targetMask);
 
-        if (rangeChecks.Length != 0)
+        bool playerWasSeenThisFrame = false;
+
+        if (rangeChecks.Length > 0)
         {
-            foreach (Collider col in rangeChecks) // *** CORRECTED: Loop through ALL found colliders ***
+            foreach (Collider col in rangeChecks)
             {
                 Transform target = col.transform;
                 Vector3 directionToTarget = (target.position - transform.position).normalized;
 
+                // Check if the target is within the FOV angle
                 if (Vector3.Angle(transform.forward, directionToTarget) < angle / 2)
                 {
                     float distanceToTarget = Vector3.Distance(transform.position, target.position);
 
-                    // Check for line of sight (Raycast against obstructionMask)
+                    // Check for obstruction (Raycast from Hunter's position to the target's position)
                     if (!Physics.Raycast(transform.position, directionToTarget, distanceToTarget, obstructionMask))
                     {
                         // --- We have line of sight to a target ---
@@ -92,14 +90,11 @@ public class FieldOfView : MonoBehaviour
                             playerWasSeenThisFrame = true;
                         }
 
-                        // 2. Check if it's a Patrol Point
-                        // Note: This action should fire regardless of whether the player is also seen this frame.
+                        // 2. Check if it's a Patrol Point (for observation)
                         if (target.CompareTag("PatrolPoint"))
                         {
                             // Fire the action with the specific patrol point's transform
                             Actions.HunterSawPatrolPoint?.Invoke(target);
-                            Debug.Log($"Patrol point is seen");
-                            // Debug.Log($"Hunter saw Patrol Point: {target.name}"); 
                         }
                     }
                 }
@@ -107,14 +102,7 @@ public class FieldOfView : MonoBehaviour
         }
 
         // Update the main 'canSeeTarget' flag outside the loop
-        // This flag determines if the Hunter can see the Player this frame.
         canSeeTarget = playerWasSeenThisFrame;
-
-        // If no targets are in range, reset canSeeTarget
-        if (rangeChecks.Length == 0 && canSeeTarget)
-        {
-            canSeeTarget = false;
-        }
     }
 
 }
