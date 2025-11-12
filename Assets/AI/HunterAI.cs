@@ -87,7 +87,7 @@ public class HunterAI : MonoBehaviour
     [Header("Chase Settings")]
     [Tooltip("Time (in seconds) the Hunter continues to investigate the last known location after losing sight.")]
     [SerializeField] public float chaseInvestigationTime = 7.0f;
-    [SerializeField] private float patrolCooldownTime = 60f; // 
+
 
     [HideInInspector] public float timeSinceLastSeen = 999.0f;
     [HideInInspector] public bool isChasingPlayer = false; // Flag for the BT
@@ -369,7 +369,7 @@ public class HunterAI : MonoBehaviour
             memory.lastPatrolTime = Time.time;
 
             // Decay probability slightly upon successful investigation
-            memory.playerProbability = Mathf.Max(0f, memory.playerProbability * 0.8f);
+            memory.playerProbability = baseUncertainty; // Set to minimum interest
 
             // Clear discrete high-priority tags upon arrival
             memory.hasDirectorTip = false;
@@ -490,65 +490,49 @@ public class HunterAI : MonoBehaviour
     public Transform GetBestPatrolPoint()
     {
         Transform bestTarget = null;
-        // Start with a high negative priority so any valid point is better
         float highestPriorityScore = float.NegativeInfinity;
 
-        // Find the closest room that isn't fully checked, or just use the current closest room.
-        ClosestRoom();
-        Room targetRoom = closestRoom;
-
-        // Fallback: If no room is currently 'closest' or available, we can't move.
-        if (targetRoom == null)
+        // Iterate through ALL patrol points in the entire dictionary
+        foreach (var pair in patrolPointData)
         {
-            Debug.LogWarning("No available target room found for patrolling.");
-            return null;
-        }
+            Transform pointTransform = pair.Key;
+            HunterPatrolMemory memory = pair.Value;
 
-        // Iterate through all patrol points in the target room
-        foreach (PatrolPoints point in targetRoom.patrolPoint)
-        {
-            Transform pointTransform = point.transform;
+            // --- Start of logic from old loop ---
 
-            // Get the memory for this point
-            if (patrolPointData.TryGetValue(pointTransform, out HunterPatrolMemory memory))
+            // NOTE: The cooldown block is now GONE.
+
+            // Calculation Strategy:
+            // 1. Base Score: Probability of player presence (memory.playerProbability)
+            // 2. Bonus: If the point has discrete memory tags (noise/tip)
+            // 3. Penalty: Distance to the point (we prefer closer points)
+
+            float distance = Vector3.Distance(transform.position, pointTransform.position);
+
+            // Start the score with the highest weighted factor (usually probability)
+            float score = memory.playerProbability * 10f; // Scale probability to matter more
+
+            // Add a major bonus if it's worthy of investigation
+            if (memory.IsWorthyOfInvestigation)
             {
-
-                if (Time.time < memory.lastPatrolTime + patrolCooldownTime && !memory.IsWorthyOfInvestigation)
-                {
-                    memory.calculatedPriorityScore = float.NegativeInfinity; // For debug visualization
-                    patrolPointData[pointTransform] = memory;
-                    continue;
-                }
-                // Calculation Strategy:
-                // 1. Base Score: Probability of player presence (memory.playerProbability)
-                // 2. Bonus: If the point has discrete memory tags (noise/tip)
-                // 3. Penalty: Distance to the point (we prefer closer points)
-
-                float distance = Vector3.Distance(transform.position, pointTransform.position);
-
-                // Start the score with the highest weighted factor (usually probability)
-                float score = memory.playerProbability * 10f; // Scale probability to matter more
-
-                // Add a major bonus if it's worthy of investigation
-                if (memory.IsWorthyOfInvestigation)
-                {
-                    score += 5f;
-                }
-
-                // Subtract distance from the score (closer is better). 
-                // Normalize distance to avoid huge penalties (e.g., distance / 100)
-                score -= distance * 0.1f;
-
-                // Update the memory score for debugging/visualizing
-                memory.calculatedPriorityScore = score;
-                patrolPointData[pointTransform] = memory;
-
-                if (score > highestPriorityScore)
-                {
-                    highestPriorityScore = score;
-                    bestTarget = pointTransform;
-                }
+                score += 5f;
             }
+
+            // Subtract distance from the score (closer is better). 
+            score -= distance * 0.1f;
+
+            // Update the memory score for debugging/visualizing
+            // (We have to do this in a separate loop, so let's skip for now)
+            // memory.calculatedPriorityScore = score; 
+            // patrolPointData[pointTransform] = memory; // CAN'T DO THIS HERE, causes error.
+
+            if (score > highestPriorityScore)
+            {
+                highestPriorityScore = score;
+                bestTarget = pointTransform;
+            }
+
+            // --- End of logic from old loop ---
         }
 
         if (bestTarget == null)
