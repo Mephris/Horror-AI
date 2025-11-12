@@ -446,7 +446,7 @@ public class HunterAI : MonoBehaviour
     }
 
     // ========================================================
-    // --- BEHAVIOR TREE SETUP (Placeholder implementation) ---
+    // --- BEHAVIOR TREE SETUP ---
     // ========================================================
     private Node SetupBehaviorTree()
     {
@@ -456,12 +456,13 @@ public class HunterAI : MonoBehaviour
 
         // CONDITIONS
         var isPlayerSeen = new HunterBehaviorNodes.IsPlayerSeen(btContext);
-        var isAtDestination = new HunterBehaviorNodes.IsAtDestination(btContext);
 
         // TASKS
         var chasePlayer = new HunterBehaviorNodes.ChasePlayer(btContext);
         var movePatrol = new HunterBehaviorNodes.MoveToPatrolPoint(btContext);
-        var wanderAround = new HunterBehaviorNodes.WanderLocally(btContext);
+
+        // This is the node that handles waiting and resetting probability
+        var investigatePoint = new HunterBehaviorNodes.InvestigatePatrolPoint(btContext);
 
         // ----------------------------------------------------------------------
         // Step 2: Build the Main Branches
@@ -470,19 +471,17 @@ public class HunterAI : MonoBehaviour
         // Priority 1: Chase -> IF Player Seen THEN Chase
         var chaseBranch = new Sequence(new List<Node> { isPlayerSeen, chasePlayer });
 
-        // Priority 3: Patrol/Roam Loop
-        // IF At Destination THEN Wander (Gives the Hunter the roaming behavior)
-        var roamCheck = new Sequence(new List<Node> { isAtDestination, wanderAround });
-
-        // Standard patrol: Try roaming first, otherwise move to next point.
-        var patrolAndWander = new Selector(new List<Node> { roamCheck, movePatrol });
+        // Priority 2: Patrol Loop
+        // This is the new, correct patrol logic.
+        // It will Move to a point, and *then* Investigate it.
+        var patrolBranch = new Sequence(new List<Node> { movePatrol, investigatePoint });
 
         // ----------------------------------------------------------------------
         // Step 3: Define the Root Selector (Highest Priority Check)
         // ----------------------------------------------------------------------
 
-        // Priority Top-level: Chase > Patrol/Roam
-        var root = new Selector(new List<Node> { chaseBranch, patrolAndWander });
+        // Priority Top-level: Chase > Patrol
+        var root = new Selector(new List<Node> { chaseBranch, patrolBranch });
 
         return root;
     }
