@@ -59,17 +59,20 @@ public class Hunter_Basic : MonoBehaviour
     [SerializeField] private float wanderRange = 5f; // Used by GetRandomWanderPoint
     private WaitForSeconds decayWait;
 
+    // --- Director Command Settings ---
+    [Header("Director Command Settings")]
+    [Tooltip("The maximum NavMesh path cost (distance) a patrol point can be from the command location to be affected.")]
+    [SerializeField] private float directorCommandPathCostThreshold = 15f; // New threshold
 
     // --- Chase Settings ---
     [Header("Chase Settings")]
     [Tooltip("Time (in seconds) the Hunter continues to investigate the last known location after losing sight.")]
     [SerializeField] public float chaseInvestigationTime = 7.0f;
 
-    public float timeSinceLastSeen = 999.0f; 
+    [HideInInspector] public float timeSinceLastSeen = 999.0f;
     [HideInInspector] public bool isChasingPlayer = false; // Flag for the BT
 
-
-    // In Hunter_Basic.cs, add this near your other public fields:
+    // --- BT Debugging ---
     [Header("BT Debug")]
     [SerializeField] public string currentBTState = "Initializing";
 
@@ -439,34 +442,68 @@ public class Hunter_Basic : MonoBehaviour
     // A helper method to modify memory near a given location for purpose of Director commands
     private void ModifyMemoryNearLocation(Vector3 location, float probabilityIncrease, bool setDirectorTip)
     {
-        Transform closestPointTransform = null;
-        float closestDistance = float.MaxValue;
+        int pointsUpdated = 0;
+        NavMeshPath path = new NavMeshPath();
 
-        // Find the closest Patrol Point to the Director's commanded location
+        // 1. Iterate over ALL patrol points
         foreach (var pair in patrolPointData)
         {
-            float distance = Vector3.Distance(location, pair.Key.position);
-            if (distance < closestDistance)
+            Transform pointTransform = pair.Key;
+            HunterPatrolMemory memory = pair.Value;
+
+            // 2. Calculate the NavMesh Path from the command location to the patrol point
+            // NOTE: NavMesh.CalculatePath is an efficient way to get cost without setting the agent's destination.
+            if (NavMesh.CalculatePath(location, pointTransform.position, NavMesh.AllAreas, path))
             {
-                closestDistance = distance;
-                closestPointTransform = pair.Key;
+                // 3. Check if a complete path exists and calculate its cost (distance)
+                if (path.status == NavMeshPathStatus.PathComplete)
+                {
+                    float pathCost = CalculatePathCost(path); // Use the helper method from Rooms.cs logic
+
+                    // 4. Check if the path cost is below the defined threshold
+                    if (pathCost <= directorCommandPathCostThreshold)
+                    {
+                        // 5. Update memory for nearby, reachable points
+
+                        // Increase probability (clamped between 0 and 1)
+                        memory.playerProbability = Mathf.Clamp01(memory.playerProbability + probabilityIncrease);
+
+                        // Set the Director Tip flag (only for High Priority Commands)
+                        if (setDirectorTip)
+                        {
+                            memory.hasDirectorTip = true;
+                        }
+
+                        // Update the dictionary with the modified struct
+                        patrolPointData[pointTransform] = memory;
+                        pointsUpdated++;
+                    }
+                }
             }
         }
 
-        if (closestPointTransform != null && patrolPointData.ContainsKey(closestPointTransform))
+        if (pointsUpdated > 0)
         {
-            HunterPatrolMemory memory = patrolPointData[closestPointTransform];
-
-            // 1. Increase probability (clamped between 0 and 1)
-            memory.playerProbability = Mathf.Clamp01(memory.playerProbability + probabilityIncrease);
-
-            // 2. Set the Director Tip flag
-            memory.hasDirectorTip = setDirectorTip;
-
-            patrolPointData[closestPointTransform] = memory;
-
-            Debug.Log($"Director Command: Modified memory at **{closestPointTransform.name}**. New Prob: {memory.playerProbability:F2}. Tip: {setDirectorTip}");
+            Debug.Log($"Director Command: Updated memory for **{pointsUpdated}** reachable patrol point(s). Prob Inc: {probabilityIncrease:F2}. Tip: {setDirectorTip}");
         }
+        else
+        {
+            Debug.LogWarning("Director Command: No reachable patrol points found within the path cost threshold.");
+        }
+    }
+
+    // Helper function (Copy the logic from Rooms.CalculatePathCost)
+    private float CalculatePathCost(NavMeshPath path)
+    {
+        float cost = 0f;
+
+        // Sum up the cost of each corner in the path
+        for (int i = 1; i < path.corners.Length; i++)
+        {
+            cost += Vector3.Distance(path.corners[i - 1], path.corners[i]);
+        }
+
+        return cost;
     }
 
     private void DecayPatrolMemory()

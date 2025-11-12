@@ -254,6 +254,9 @@
   },
   "active": "3daf6262f4104576",
   "lastOpenFiles": [
+    "Temp/UnityTempFile-da1e6142cb7668f47bc3eb22a0c7eddf",
+    "Library/Artifacts/fc/fc3c62ae276e8a2d9c5380a161fb08d6",
+    "Library/Bee/TundraBuildState.state",
     "Temp/UnityTempFile-ebd6267075994524c9f6a9979fc3f44a",
     "Temp/UnityTempFile-19d563028ece358408f7597ab12bd47e",
     "Temp/UnityTempFile-2578e8c581004e548afb6c07a625345c",
@@ -273,9 +276,6 @@
     "notes/Changelog",
     "notes/Patrol",
     "Library/Search/propertyAliases.db_87a79f60641b44079c4dcf77d452c819_temp",
-    "Library/Bee/TundraBuildState.state",
-    "Temp/ADB-Refresh2198b0861d8d2b8429fb632e71f7e219",
-    "Temp/UnityTempFile-feb706ba495fc1144a19428b223e58a4",
     "README.md"
   ]
 }
