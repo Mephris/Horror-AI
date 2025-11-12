@@ -2,14 +2,14 @@ using UnityEngine;
 using UnityEngine.AI;
 using static Node;
 
-// Note: You must ensure this script has access to the Hunter_Basic component!
+// Note: You must ensure this script has access to the HunterAI component!
 
 public class HunterBehaviorNodes
 {
-    private Hunter_Basic hunter;
+    private HunterAI hunter;
     private NavMeshAgent agent;
 
-    public HunterBehaviorNodes(Hunter_Basic hunterComponent, NavMeshAgent navAgent)
+    public HunterBehaviorNodes(HunterAI hunterComponent, NavMeshAgent navAgent)
     {
         this.hunter = hunterComponent;
         this.agent = navAgent;
@@ -87,7 +87,7 @@ public class HunterBehaviorNodes
 
             if (agent.remainingDistance <= acceptableDistance && !agent.pathPending)
             {
-                // FIX 2: Now works because GetRandomWanderPoint is public in Hunter_Basic
+                // FIX 2: Now works because GetRandomWanderPoint is public in HunterAI
                 Vector3 newWanderPoint = context.hunter.GetRandomWanderPoint(agent.transform.position, wanderRange);
 
                 if (newWanderPoint != Vector3.zero)
@@ -133,7 +133,7 @@ public class HunterBehaviorNodes
                 {
                     if (context.hunter.currentPatrolTarget != null)
                     {
-                        // The Agent has arrived. Inform the Hunter_Basic component.
+                        // The Agent has arrived. Inform the HunterAI component.
                         context.hunter.ArrivedAtPatrolPoint();
                     }
 
@@ -235,7 +235,7 @@ public class HunterBehaviorNodes
 
                 // Return RUNNING to stall the BT on this node.
                 // This holds the highest-priority branch open while the Hunter waits 
-                // for the 7-second investigation timer (managed in Hunter_Basic.cs) to expire.
+                // for the 7-second investigation timer (managed in HunterAI.cs) to expire.
                 context.hunter.currentBTState = "CHASING/INVESTIGATING: Arrived, Waiting for Timer"; // Update debug state
 
 
@@ -278,7 +278,7 @@ public class HunterBehaviorNodes
                 return NodeState.FAILURE;
             }
 
-            // 2. First evaluation: Start the investigation timer in Hunter_Basic.cs.
+            // 2. First evaluation: Start the investigation timer in HunterAI.cs.
             if (!hasStartedInvestigation)
             {
                 context.hunter.StartInvestigation(context.hunter.currentPatrolTarget);

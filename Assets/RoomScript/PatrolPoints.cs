@@ -17,17 +17,17 @@ public class PatrolPoints : MonoBehaviour
 
     // -----------------------------------------------------------------------------------
 
-    // Cache the Hunter_Basic component for Gizmo drawing
+    // Cache the HunterAI component for Gizmo drawing
     // This allows the PatrolPoint to query the Hunter's current memory for visualization.
-    private Hunter_Basic hunterBasic;
-    private Hunter_Basic HunterBasic
+    private HunterAI hunterBasic;
+    private HunterAI HunterBasic
     {
         get
         {
             if (hunterBasic == null)
             {
-                // Find the Hunter in the scene (assuming only one Hunter_Basic exists)
-                hunterBasic = FindObjectOfType<Hunter_Basic>();
+                // Find the Hunter in the scene (assuming only one HunterAI exists)
+                hunterBasic = FindObjectOfType<HunterAI>();
             }
             return hunterBasic;
         }
@@ -41,7 +41,7 @@ public class PatrolPoints : MonoBehaviour
 
         if (HunterBasic != null)
         {
-            // Query the memory via the Hunter_Basic helper method
+            // Query the memory via the HunterAI helper method
             probability = HunterBasic.GetProbabilityScore(this.transform);
         }
 

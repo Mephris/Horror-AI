@@ -38,7 +38,7 @@ public class FieldOfView : MonoBehaviour
             {
                 if (targetObjRef != null && targetObjRef.CompareTag("Player")) // Only check for the player here
                 {
-                    // Broadcast the result to the Hunter_Basic component
+                    // Broadcast the result to the HunterAI component
                     Actions.HunterCanSeePlayer?.Invoke(canSeeTarget, lastSeenTargetLocation);
 
                     if (canSeeTarget)
