@@ -48,19 +48,13 @@ public class HunterAI : MonoBehaviour
     private Room closestRoom;
     private Dictionary<Transform, HunterPatrolMemory> patrolPointData = new Dictionary<Transform, HunterPatrolMemory>();
 
-    [Header("Patrol Memory Settings")]
-    [Tooltip("Rate at which patrol point probability decays per second (e.g., 0.01 = 1% decrease per second).")]
-    [SerializeField] private float memoryDecayRate = 0.01f;
-
     // --- Decay & Wander Settings ---
     [Header("Probability Settings")]
-    [Tooltip("How much probability decays per second (e.g., 0.01 = 1% per second).")]
-    [SerializeField] private float probabilityDecayRate = 0.01f;
-    [Tooltip("The minimum probability a point can decay to (baseline uncertainty).")]
+    [Tooltip("The minimum probability a point can be checked to (baseline uncertainty).")]
     [SerializeField] private float baseUncertainty = 0.2f;
-    [SerializeField] private float decayUpdateInterval = 1f;
+    [SerializeField] private float probabilityUpdateInterval = 1f;
     [SerializeField] private float wanderRange = 5f; // Used by GetRandomWanderPoint
-    private WaitForSeconds decayWait;
+    private WaitForSeconds probabilityWait;
 
 
 
@@ -104,7 +98,7 @@ public class HunterAI : MonoBehaviour
         rooms = FindObjectsOfType<Room>();
 
         // 1. Initialize decay timer
-        decayWait = new WaitForSeconds(decayUpdateInterval);
+        probabilityWait = new WaitForSeconds(probabilityUpdateInterval);
 
         // 2. Initialize memory for all patrol points in the scene
         foreach (Room room in rooms)
@@ -134,7 +128,7 @@ public class HunterAI : MonoBehaviour
         ClosestRoom();
 
         // 4. Start the continuous probability decay
-        StartCoroutine(DecayProbabilitiesRoutine());
+        StartCoroutine(UpdateCuriosityRoutine());
 
         // 5. Initialize the Behavior Tree Context and Root
         btContext = new HunterBehaviorNodes(this, agent);
@@ -386,37 +380,27 @@ public class HunterAI : MonoBehaviour
     // ==================================
     // --- CORE AI UTILITY FUNCTIONS ---
     // ==================================
-    private IEnumerator DecayProbabilitiesRoutine()
+    private IEnumerator UpdateCuriosityRoutine()
     {
         while (true)
         {
-            yield return decayWait;
+            yield return probabilityWait;
 
             List<Transform> keys = new List<Transform>(patrolPointData.Keys);
             foreach (Transform key in keys)
             {
                 HunterPatrolMemory memory = patrolPointData[key];
 
-                if (memory.playerProbability > baseUncertainty)
-                {
-                    // --- 1. DECAY ---
-                    // This point is "hot," so let it cool down.
-                    float decayAmount = probabilityDecayRate * decayUpdateInterval;
-                    memory.playerProbability = Mathf.Max(baseUncertainty, memory.playerProbability - decayAmount);
-                }
-                else
-                {
-                    // --- 2. CURIOSITY (THE FIX) ---
-                    // This point is "cold," so make it slowly heat up over time.
-                    float timeSinceLastVisit = Time.time - memory.lastPatrolTime;
+                // --- CURIOSITY LOGIC (THE FIX) ---
+                // This point is "cold," so make it slowly heat up over time.
+                float timeSinceLastVisit = Time.time - memory.lastPatrolTime;
 
-                    // After (e.g.) 30 seconds of not being seen, start increasing probability.
-                    if (timeSinceLastVisit > 30f)
-                    {
-                        // Increase prob by a small amount, up to a max cap (e.g., 0.5)
-                        // This makes it "interesting," but not as "hot" as a Director command.
-                        memory.playerProbability = Mathf.Min(0.5f, memory.playerProbability + 0.01f);
-                    }
+                // After (e.g.) 30 seconds of not being seen, start increasing probability.
+                if (timeSinceLastVisit > 30f)
+                {
+                    // Increase prob by a small amount, up to a max cap (e.g., 0.5)
+                    // This makes it "interesting," but not as "hot" as a Director command.
+                    memory.playerProbability = Mathf.Min(0.5f, memory.playerProbability + 0.01f);
                 }
 
                 patrolPointData[key] = memory;
@@ -436,32 +420,6 @@ public class HunterAI : MonoBehaviour
         }
 
         return cost;
-    }
-
-    private void DecayPatrolMemory()
-    {
-        // Create a temporary list to hold the modified memory structs
-        List<Transform> keysToUpdate = new List<Transform>(patrolPointData.Keys);
-
-        foreach (Transform pointTransform in keysToUpdate)
-        {
-            HunterPatrolMemory memory = patrolPointData[pointTransform];
-
-            // 1. Decay the player probability over time
-            memory.playerProbability -= memoryDecayRate * Time.deltaTime;
-
-            // 2. Clamp the probability to ensure it never goes below 0
-            memory.playerProbability = Mathf.Max(0f, memory.playerProbability);
-
-            // 3. Clear the Director Tip flag if probability is very low
-            if (memory.playerProbability < 0.1f)
-            {
-                memory.hasDirectorTip = false;
-            }
-
-            // 4. Update the dictionary with the modified struct
-            patrolPointData[pointTransform] = memory;
-        }
     }
 
     // ========================================================
