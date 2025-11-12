@@ -116,7 +116,8 @@ public class HunterAI : MonoBehaviour
                     patrolPointData.Add(point.transform, new HunterPatrolMemory
                     {
                         patrolpointTransform = point.transform,
-                        playerProbability = baseUncertainty
+                        playerProbability = baseUncertainty,
+                        lastPatrolTime = Time.time
                     });
                 }
             }
@@ -174,9 +175,6 @@ public class HunterAI : MonoBehaviour
             // Safety: Reset the timer to avoid re-entering chase without seeing the player first.
             timeSinceLastSeen = 999.0f; // Large value to indicate "not chasing"
         }
-
-        // 3. Run Memory Decay (assuming this is called in Update or a Coroutine)
-        DecayPatrolMemory();
     }
 
 
@@ -401,8 +399,24 @@ public class HunterAI : MonoBehaviour
 
                 if (memory.playerProbability > baseUncertainty)
                 {
+                    // --- 1. DECAY ---
+                    // This point is "hot," so let it cool down.
                     float decayAmount = probabilityDecayRate * decayUpdateInterval;
                     memory.playerProbability = Mathf.Max(baseUncertainty, memory.playerProbability - decayAmount);
+                }
+                else
+                {
+                    // --- 2. CURIOSITY (THE FIX) ---
+                    // This point is "cold," so make it slowly heat up over time.
+                    float timeSinceLastVisit = Time.time - memory.lastPatrolTime;
+
+                    // After (e.g.) 30 seconds of not being seen, start increasing probability.
+                    if (timeSinceLastVisit > 30f)
+                    {
+                        // Increase prob by a small amount, up to a max cap (e.g., 0.5)
+                        // This makes it "interesting," but not as "hot" as a Director command.
+                        memory.playerProbability = Mathf.Min(0.5f, memory.playerProbability + 0.01f);
+                    }
                 }
 
                 patrolPointData[key] = memory;
@@ -496,57 +510,41 @@ public class HunterAI : MonoBehaviour
         Transform bestTarget = null;
         float highestPriorityScore = float.NegativeInfinity;
 
-        // We must cache the score to write it back *after* the loop
         Dictionary<Transform, float> debugScores = new Dictionary<Transform, float>();
-
-        // We need a path object to re-use for our calculations
         NavMeshPath path = new NavMeshPath();
 
-        // Iterate through ALL patrol points in the entire dictionary
         foreach (var pair in patrolPointData)
         {
             Transform pointTransform = pair.Key;
             HunterPatrolMemory memory = pair.Value;
             float score = 0f;
 
-            // --- Score Calculation ---
+            // --- Simplified Score Calculation ---
 
-            // 1. "HEAT": Player Probability (from Director). 
-            // This is now the strongest motivation. A 1.0 prob = 20 points.
-            score += memory.playerProbability * 20f; 
+            // 1. "HEAT" (This score now includes both Director commands AND Curiosity)
+            score += memory.playerProbability * 100f;
 
-            // 2. "CURIOSITY": Bonus for points not visited recently.
-            // Kept strong, but weaker than a high-priority heat signal.
-            float timeSinceLastVisit = Time.time - memory.lastPatrolTime;
-            float recencyBonus = Mathf.Clamp(timeSinceLastVisit * 0.3f, 0f, 20f);
-            score += recencyBonus;
-
-            // 3. "EVENTS": Flat bonus for high-priority memory tags
+            // 2. "EVENTS": Flat bonus for high-priority memory tags
             if (memory.IsWorthyOfInvestigation)
             {
-                score += 5f;
+                score += 20f;
             }
 
-            // 4. "EFFORT": Penalty for *actual path cost*, not distance.
+            // 3. "EFFORT": Penalty for actual path cost.
             float pathCost;
             if (agent.CalculatePath(pointTransform.position, path) && path.status == NavMeshPathStatus.PathComplete)
             {
-                // We have a valid path. Get its true cost.
                 pathCost = CalculatePathCost(path);
-
-                // Apply the penalty
-                score -= pathCost * 0.01f;
+                score -= pathCost * 0.05f;
             }
             else
             {
-                // This point is unreachable (on a separate NavMesh, etc.)
-                // Give it a massive penalty so it is never chosen.
-                score = float.NegativeInfinity;
+                score = float.NegativeInfinity; // Unreachable
             }
 
             // --- End of Score Calculation ---
 
-            debugScores[pointTransform] = score; // Store score for debug/gizmos
+            debugScores[pointTransform] = score;
 
             if (score > highestPriorityScore)
             {
@@ -561,7 +559,6 @@ public class HunterAI : MonoBehaviour
             return null;
         }
 
-        // We found a target. Update its debug score in memory.
         HunterPatrolMemory bestMemory = patrolPointData[bestTarget];
         bestMemory.calculatedPriorityScore = highestPriorityScore;
         patrolPointData[bestTarget] = bestMemory;
