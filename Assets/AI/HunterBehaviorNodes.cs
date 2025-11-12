@@ -160,11 +160,10 @@ public class HunterBehaviorNodes
     }
 
     // =================================================================
-    // 4. TASK: Move to Patrol Point (Finds a new point OR moves to existing one)
+    // 4. TASK: Move to Patrol Point (Finds a new point OR moves to existing one | Re-evalutation added)
     // =================================================================
     public class MoveToPatrolPoint : HunterTask
     {
-        // --- Using the ROBUST arrival check settings ---
         private float acceptableDistance = 1.0f;
         private float velocityStopThreshold = 0.1f;
 
@@ -174,7 +173,7 @@ public class HunterBehaviorNodes
         {
             NavMeshAgent agent = context.agent;
 
-            // Step 1: If we DON'T have a target, find one.
+            // --- Step 1: If we DON'T have a target, find one. ---
             if (context.hunter.currentPatrolTarget == null)
             {
                 Transform bestPatrolPoint = context.hunter.GetBestPatrolPoint();
@@ -186,30 +185,45 @@ public class HunterBehaviorNodes
                 }
                 else
                 {
-                    // No points found, this task fails.
                     context.hunter.currentBTState = "PATROL: No Points Found / Stuck";
                     nodeState = NodeState.FAILURE;
                     return nodeState;
                 }
             }
 
-            // Step 2: We have a target, so move towards it.
+            // --- Step 1.5: THE "STOP SIGN" (RE-EVALUATION) ---
+            // Check if the point we are moving to has become "cold" (e.g., by glancing at it).
+            if (context.hunter.patrolPointData.TryGetValue(context.hunter.currentPatrolTarget, out HunterPatrolMemory memory))
+            {
+                // If the point is NOT worthy of investigation AND its probability is back to base
+                if (!memory.IsWorthyOfInvestigation && memory.playerProbability <= context.hunter.baseUncertainty)
+                {
+                    // STOP! This is a bad order.
+                    context.hunter.currentBTState = $"PATROL: Target {context.hunter.currentPatrolTarget.name} became cold. Re-evaluating.";
+                    context.hunter.currentPatrolTarget = null; // Clear the bad target
+                    agent.isStopped = true; // Stop moving
+                    nodeState = NodeState.FAILURE; // Fail this task to force the BT to pick a new one
+                    return nodeState;
+                }
+            }
+            // --- END OF THE "STOP SIGN" ---
+
+
+            // --- Step 2: We have a valid target, so move towards it. ---
             agent.SetDestination(context.hunter.currentPatrolTarget.position);
             agent.isStopped = false;
 
-            // --- THIS IS THE ROBUST ARRIVAL CHECK (Copied from ChasePlayer) ---
+            // --- Step 3: Robust Arrival Check ---
             bool isCloseEnough = agent.remainingDistance <= acceptableDistance;
             bool isStoppedMoving = agent.velocity.sqrMagnitude < velocityStopThreshold;
             bool isPathNotPending = !agent.pathPending;
 
-            // Check for Arrival
             if (isPathNotPending && isCloseEnough && isStoppedMoving)
             {
                 context.hunter.currentBTState = $"PATROL: Arrived at {context.hunter.currentPatrolTarget.name}";
                 nodeState = NodeState.SUCCESS; // We are done moving.
                 return nodeState;
             }
-            // --- END OF FIX ---
 
             // If we are not at the destination, we are still RUNNING.
             context.hunter.currentBTState = $"PATROL: Moving to {context.hunter.currentPatrolTarget.name}";
@@ -217,7 +231,6 @@ public class HunterBehaviorNodes
             return nodeState;
         }
     }
-
     // =================================================================
     // 5. TASK: Chase Player (High Priority Action)
     // =================================================================

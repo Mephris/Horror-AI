@@ -46,12 +46,12 @@ public class HunterAI : MonoBehaviour
     // --- PatrolPoint & Room Data ---
     private Room[] rooms;
     private Room closestRoom;
-    private Dictionary<Transform, HunterPatrolMemory> patrolPointData = new Dictionary<Transform, HunterPatrolMemory>();
+    [HideInInspector]public Dictionary<Transform, HunterPatrolMemory> patrolPointData = new Dictionary<Transform, HunterPatrolMemory>();
 
     // --- Decay & Wander Settings ---
     [Header("Probability Settings")]
     [Tooltip("The minimum probability a point can be checked to (baseline uncertainty).")]
-    [SerializeField] private float baseUncertainty = 0.2f;
+    [HideInInspector]public float baseUncertainty = 0.2f;
     [SerializeField] private float probabilityUpdateInterval = 1f;
     [SerializeField] private float wanderRange = 5f; // Used by GetRandomWanderPoint
     private WaitForSeconds probabilityWait;
