@@ -62,7 +62,7 @@ public class Hunter_Basic : MonoBehaviour
     // --- Director Command Settings ---
     [Header("Director Command Settings")]
     [Tooltip("The maximum NavMesh path cost (distance) a patrol point can be from the command location to be affected.")]
-    [SerializeField] private float directorCommandPathCostThreshold = 15f; // New threshold
+    [SerializeField] private float directorCommandPathCostThreshold = 40f; // New threshold
 
     // --- Chase Settings ---
     [Header("Chase Settings")]

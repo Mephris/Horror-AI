@@ -19,11 +19,10 @@ public class Director : MonoBehaviour
     [SerializeField] private float calculationTime;
     public static float calculationInterval; // Delay, so that calculations on Tension arent done on each frame. 
 
+    // 1. Add this new field near your other Header fields
     [Header("Tension Decay")]
-    [Tooltip("Rate at which tension decays per second when the Hunter is not actively seeing the player.")]
-    [Range(0.1f, 10f)] // A value like 0.5f means 50 tension points decay every 100 seconds
-    public float tensionDecayRate = 1.0f;
-    // Let's assume tension is up to 100, so 1.0f means it takes 100 seconds to fully decay from max.
+    [Tooltip("Amount of tension to decrease per calculation interval (e.g., every 1-3 seconds) when the Hunter is far.")]
+    [SerializeField] private float tensionDistanceDecayAmount = 1f;
 
     //We save player location to be able to find the locations which we will give Hunter AI
     //while obscuring the player precise location
@@ -82,12 +81,6 @@ public class Director : MonoBehaviour
     {
 
         TensionCalculation(); // Cykliczna zmiana zmiennej tension
-
-        if (tension > 0)
-        {
-            tension -= tensionDecayRate * Time.deltaTime;
-            tension = Math.Max(0, tension); // Ensure tension never goes below 0
-        }
 
         StateHandler(); // zmiana stanu maszymy stanowej Command 
 
@@ -193,13 +186,30 @@ public class Director : MonoBehaviour
     {
         if (Time.time - calculationElapsedTime >= calculationInterval)
         {
-            tension += Vector3.Distance(player.position, hunter.position) < 12f ? 1 :
-                        Vector3.Distance(player.position, hunter.position) > 12f ? -1 : 0;
+            double tensionChange = 0;
+            float distance = Vector3.Distance(player.position, hunter.position);
 
+            if (distance < 12f)
+            {
+                // Hunter is close: increase tension
+                tensionChange = 1;
+            }
+            else if (distance > 12f)
+            {
+                // Hunter is far: decrease tension by the new configurable amount
+                tensionChange = -tensionDistanceDecayAmount;
+            }
+            // Note: If distance is exactly 12f, tensionChange remains 0.
+
+            tension += tensionChange;
+
+            // Ensure tension never goes below 0
+            tension = Math.Max(0, tension);
 
             calculationElapsedTime = Time.time;
         }
     }
+
     //---------------------------
     // TENSION CHANGING EVENTS
     //---------------------------
@@ -226,17 +236,16 @@ public class Director : MonoBehaviour
             highTensionTimeElapsed += Time.deltaTime;
 
             // 2. Trigger High Priority Command (Memory Tag)
-            // If sustained sight (e.g., 15s) and the command hasn't been sent yet
             if (highTensionTimeElapsed >= highTensionThresholdTime && !isHighPriorityCommandSent)
             {
-                // Send the last seen player location to the Hunter's memory (strong memory tag)
-                Actions.HighPriorityCommandToMove?.Invoke(lastPlayerLocation); // <-- FIRES THE EVENT
+                Actions.HighPriorityCommandToMove?.Invoke(lastPlayerLocation);
                 isHighPriorityCommandSent = true;
                 Debug.Log("DIRECTOR: High Priority Command (Memory Tag) sent due to sustained Hunter sight.");
             }
         }
         else // Hunter lost sight of the player
         {
+            // Do not decrease tension here, it is already handled in TensionCalculation().
             // Reset the tension timer and command flag
             highTensionTimeElapsed = 0f;
             isHighPriorityCommandSent = false;
