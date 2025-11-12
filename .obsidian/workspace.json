@@ -104,9 +104,23 @@
               "icon": "lucide-file",
               "title": "11.11.2025 - Hunter"
             }
+          },
+          {
+            "id": "5271e6db46a9535d",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "12.11.2025.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "12.11.2025"
+            }
           }
         ],
-        "currentTab": 6
+        "currentTab": 7
       }
     ],
     "direction": "vertical"
@@ -179,7 +193,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "notes/Changelog/11.11.2025 - Hunter.md",
+                "file": "12.11.2025.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -189,7 +203,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Backlinks for 11.11.2025 - Hunter"
+              "title": "Backlinks for 12.11.2025"
             }
           },
           {
@@ -252,8 +266,10 @@
       "obsidian-git:Open Git source control": false
     }
   },
-  "active": "3daf6262f4104576",
+  "active": "5271e6db46a9535d",
   "lastOpenFiles": [
+    "notes/Changelog/11.11.2025 - Hunter.md",
+    "12.11.2025.md",
     "Temp/UnityTempFile-535ae98a2cadbc44096b2407152f962a",
     "Temp/UnityTempFile-f70b4fb5319577145b611513c632cca1",
     "Assets/AI/lbtpeqp4.afm~",
@@ -264,14 +280,12 @@
     "Temp/UnityTempFile-19d563028ece358408f7597ab12bd47e",
     "Temp/UnityTempFile-2578e8c581004e548afb6c07a625345c",
     "Temp/__Backupscenes/0.backup",
-    "Temp/__Backupscenes",
     "notes/Hunter.md",
     "notes/Changelog/7.11.2025 - Switching from FSM to BT.md",
     "notes/Director.md",
     "notes/ForNextDay-AI.md",
     "notes/Patrol/Roam System.md",
     "notes/Patrol/Patrol Points.md",
-    "notes/Changelog/11.11.2025 - Hunter.md",
     "notes/Changelog/10.11.2025 - Hunter.md",
     "notes/Changelog/6.11.2025 - Patrol Point Changes.md",
     "notes/Changelog/5.11.2025 - Patroling Behavior Changes.md",
