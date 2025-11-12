@@ -110,7 +110,7 @@ public class HunterAI : MonoBehaviour
                     patrolPointData.Add(point.transform, new HunterPatrolMemory
                     {
                         patrolpointTransform = point.transform,
-                        playerProbability = baseUncertainty,
+                        playerProbability = 0.5f,
                         lastPatrolTime = Time.time
                     });
                 }
