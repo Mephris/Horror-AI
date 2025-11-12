@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 using UnityEngine.AI;
 // Ensure you have this using statement for the Behavior Tree Node types
@@ -498,6 +499,9 @@ public class HunterAI : MonoBehaviour
         // We must cache the score to write it back *after* the loop
         Dictionary<Transform, float> debugScores = new Dictionary<Transform, float>();
 
+        // We need a path object to re-use for our calculations
+        NavMeshPath path = new NavMeshPath();
+
         // Iterate through ALL patrol points in the entire dictionary
         foreach (var pair in patrolPointData)
         {
@@ -509,25 +513,36 @@ public class HunterAI : MonoBehaviour
 
             // 1. "HEAT": Player Probability (from Director). 
             // This is now the strongest motivation. A 1.0 prob = 20 points.
-            score += memory.playerProbability * 20f; // <-- INCREASED FROM 10f
+            score += memory.playerProbability * 20f; 
 
             // 2. "CURIOSITY": Bonus for points not visited recently.
             // Kept strong, but weaker than a high-priority heat signal.
             float timeSinceLastVisit = Time.time - memory.lastPatrolTime;
-            // (0.5 point per second, max 20 points)
-            float recencyBonus = Mathf.Clamp(timeSinceLastVisit * 0.5f, 0f, 20f);
+            float recencyBonus = Mathf.Clamp(timeSinceLastVisit * 0.3f, 0f, 20f);
             score += recencyBonus;
 
             // 3. "EVENTS": Flat bonus for high-priority memory tags
             if (memory.IsWorthyOfInvestigation)
             {
-                score += 5f; // <-- INCREASED FROM 5f
+                score += 5f;
             }
 
-            // 4. "EFFORT": Penalty for distance.
-            // This is now just a tie-breaker, as you suggested.
-            float distance = Vector3.Distance(transform.position, pointTransform.position);
-            score -= distance * 0.05f; // <-- REDUCED FROM 0.1f
+            // 4. "EFFORT": Penalty for *actual path cost*, not distance.
+            float pathCost;
+            if (agent.CalculatePath(pointTransform.position, path) && path.status == NavMeshPathStatus.PathComplete)
+            {
+                // We have a valid path. Get its true cost.
+                pathCost = CalculatePathCost(path);
+
+                // Apply the penalty
+                score -= pathCost * 0.05f;
+            }
+            else
+            {
+                // This point is unreachable (on a separate NavMesh, etc.)
+                // Give it a massive penalty so it is never chosen.
+                score = float.NegativeInfinity;
+            }
 
             // --- End of Score Calculation ---
 
