@@ -442,49 +442,56 @@ public class Hunter_Basic : MonoBehaviour
     // A helper method to modify memory near a given location for purpose of Director commands
     private void ModifyMemoryNearLocation(Vector3 location, float probabilityIncrease, bool setDirectorTip)
     {
-        int pointsUpdated = 0;
+        // FIX: Collection was modified error. 
+        // Collect the keys (Transforms) that need modification first.
+        List<Transform> pointsToUpdate = new List<Transform>();
+
         NavMeshPath path = new NavMeshPath();
 
-        // 1. Iterate over ALL patrol points
+        // 1. First Pass: Find all points that are nearby and reachable
         foreach (var pair in patrolPointData)
         {
             Transform pointTransform = pair.Key;
-            HunterPatrolMemory memory = pair.Value;
 
-            // 2. Calculate the NavMesh Path from the command location to the patrol point
-            // NOTE: NavMesh.CalculatePath is an efficient way to get cost without setting the agent's destination.
+            // Calculate the NavMesh Path from the command location to the patrol point
             if (NavMesh.CalculatePath(location, pointTransform.position, NavMesh.AllAreas, path))
             {
-                // 3. Check if a complete path exists and calculate its cost (distance)
+                // Check if a complete path exists and calculate its cost (distance)
                 if (path.status == NavMeshPathStatus.PathComplete)
                 {
-                    float pathCost = CalculatePathCost(path); // Use the helper method from Rooms.cs logic
+                    float pathCost = CalculatePathCost(path); // Uses the helper method below
 
-                    // 4. Check if the path cost is below the defined threshold
+                    // Check if the path cost is below the defined threshold
                     if (pathCost <= directorCommandPathCostThreshold)
                     {
-                        // 5. Update memory for nearby, reachable points
-
-                        // Increase probability (clamped between 0 and 1)
-                        memory.playerProbability = Mathf.Clamp01(memory.playerProbability + probabilityIncrease);
-
-                        // Set the Director Tip flag (only for High Priority Commands)
-                        if (setDirectorTip)
-                        {
-                            memory.hasDirectorTip = true;
-                        }
-
-                        // Update the dictionary with the modified struct
-                        patrolPointData[pointTransform] = memory;
-                        pointsUpdated++;
+                        pointsToUpdate.Add(pointTransform);
                     }
                 }
             }
         }
 
-        if (pointsUpdated > 0)
+        // 2. Second Pass: Iterate over the collected keys and apply the memory modifications
+        foreach (Transform pointTransform in pointsToUpdate)
         {
-            Debug.Log($"Director Command: Updated memory for **{pointsUpdated}** reachable patrol point(s). Prob Inc: {probabilityIncrease:F2}. Tip: {setDirectorTip}");
+            // Get the current memory struct (value type, so we get a copy)
+            HunterPatrolMemory memory = patrolPointData[pointTransform];
+
+            // 1. Increase probability (clamped between 0 and 1)
+            memory.playerProbability = Mathf.Clamp01(memory.playerProbability + probabilityIncrease);
+
+            // 2. Set the Director Tip flag (only for High Priority Commands)
+            if (setDirectorTip)
+            {
+                memory.hasDirectorTip = true;
+            }
+
+            // 3. Update the dictionary with the modified struct (This is the modification step)
+            patrolPointData[pointTransform] = memory;
+        }
+
+        if (pointsToUpdate.Count > 0)
+        {
+            Debug.Log($"Director Command: Updated memory for **{pointsToUpdate.Count}** reachable patrol point(s). Prob Inc: {probabilityIncrease:F2}. Tip: {setDirectorTip}");
         }
         else
         {
@@ -493,6 +500,7 @@ public class Hunter_Basic : MonoBehaviour
     }
 
     // Helper function (Copy the logic from Rooms.CalculatePathCost)
+    // Required for the path cost check
     private float CalculatePathCost(NavMeshPath path)
     {
         float cost = 0f;
