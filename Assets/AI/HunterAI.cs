@@ -223,20 +223,24 @@ public class HunterAI : MonoBehaviour
     }
     private void OnPatrolPointSeen(Transform seenPointTransform)
     {
-        if (patrolPointData.ContainsKey(seenPointTransform))
+        if (patrolPointData.TryGetValue(seenPointTransform, out HunterPatrolMemory memory))
         {
-            HunterPatrolMemory memory = patrolPointData[seenPointTransform];
+            // NEW LOGIC: Only reduce probability if it's currently "hot"
+            // We don't want "glancing" to reduce the base uncertainty level.
+            if (memory.playerProbability > baseUncertainty)
+            {
+                // Logic: Seeing a Patrol Point means the area is "clear" for that moment.
+                float clearAmount = 0.1f;
+                // Reduce probability, but never go below the base uncertainty
+                memory.playerProbability = Mathf.Max(baseUncertainty, memory.playerProbability - clearAmount);
 
-            // Logic: Seeing a Patrol Point means the area is "clear" for that moment.
-            float clearAmount = 0.1f;
-            memory.playerProbability = Mathf.Max(0f, memory.playerProbability - clearAmount);
+                // Clear any memory tags that would be resolved by sight
+                memory.hasSeenDisturbance = false;
 
-            // Clear any memory tags that would be resolved by sight
-            memory.hasSeenDisturbance = false;
+                patrolPointData[seenPointTransform] = memory;
 
-            patrolPointData[seenPointTransform] = memory;
-
-            Debug.Log($"Hunter saw {seenPointTransform.name}. Probability REDUCED to: {memory.playerProbability}");
+                Debug.Log($"Hunter saw {seenPointTransform.name}. Probability REDUCED to: {memory.playerProbability}");
+            }
         }
     }
 
@@ -446,7 +450,7 @@ public class HunterAI : MonoBehaviour
     }
 
     // ========================================================
-    // --- BEHAVIOR TREE SETUP ---
+    // --- BEHAVIOR TREE SETUP (Placeholder implementation) ---
     // ========================================================
     private Node SetupBehaviorTree()
     {
@@ -456,13 +460,12 @@ public class HunterAI : MonoBehaviour
 
         // CONDITIONS
         var isPlayerSeen = new HunterBehaviorNodes.IsPlayerSeen(btContext);
+        var isAtDestination = new HunterBehaviorNodes.IsAtDestination(btContext);
 
         // TASKS
         var chasePlayer = new HunterBehaviorNodes.ChasePlayer(btContext);
         var movePatrol = new HunterBehaviorNodes.MoveToPatrolPoint(btContext);
-
-        // This is the node that handles waiting and resetting probability
-        var investigatePoint = new HunterBehaviorNodes.InvestigatePatrolPoint(btContext);
+        var wanderAround = new HunterBehaviorNodes.WanderLocally(btContext);
 
         // ----------------------------------------------------------------------
         // Step 2: Build the Main Branches
@@ -471,17 +474,19 @@ public class HunterAI : MonoBehaviour
         // Priority 1: Chase -> IF Player Seen THEN Chase
         var chaseBranch = new Sequence(new List<Node> { isPlayerSeen, chasePlayer });
 
-        // Priority 2: Patrol Loop
-        // This is the new, correct patrol logic.
-        // It will Move to a point, and *then* Investigate it.
-        var patrolBranch = new Sequence(new List<Node> { movePatrol, investigatePoint });
+        // Priority 3: Patrol/Roam Loop
+        // IF At Destination THEN Wander (Gives the Hunter the roaming behavior)
+        var roamCheck = new Sequence(new List<Node> { isAtDestination, wanderAround });
+
+        // Standard patrol: Try roaming first, otherwise move to next point.
+        var patrolAndWander = new Selector(new List<Node> { roamCheck, movePatrol });
 
         // ----------------------------------------------------------------------
         // Step 3: Define the Root Selector (Highest Priority Check)
         // ----------------------------------------------------------------------
 
-        // Priority Top-level: Chase > Patrol
-        var root = new Selector(new List<Node> { chaseBranch, patrolBranch });
+        // Priority Top-level: Chase > Patrol/Roam
+        var root = new Selector(new List<Node> { chaseBranch, patrolAndWander });
 
         return root;
     }

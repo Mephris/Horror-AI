@@ -160,14 +160,11 @@ public class HunterBehaviorNodes
     }
 
     // =================================================================
-    // 4. TASK: Move to Patrol Point (Finds a new point and moves there)
-    // =================================================================
-
-    // =================================================================
     // 4. TASK: Move to Patrol Point (Finds a new point OR moves to existing one)
     // =================================================================
     public class MoveToPatrolPoint : HunterTask
     {
+        // --- Using the ROBUST arrival check settings ---
         private float acceptableDistance = 1.0f;
         private float velocityStopThreshold = 0.1f;
 
@@ -200,22 +197,19 @@ public class HunterBehaviorNodes
             agent.SetDestination(context.hunter.currentPatrolTarget.position);
             agent.isStopped = false;
 
-            // --- Robust Arrival Check ---
-            // We check for arrival HERE. If we arrive, we return SUCCESS.
-            // This signals the parent Sequence to move to the *next* node (InvestigatePatrolPoint).
+            // --- THIS IS THE ROBUST ARRIVAL CHECK (Copied from ChasePlayer) ---
             bool isCloseEnough = agent.remainingDistance <= acceptableDistance;
             bool isStoppedMoving = agent.velocity.sqrMagnitude < velocityStopThreshold;
             bool isPathNotPending = !agent.pathPending;
 
-            bool hasArrived = !agent.pathPending && agent.remainingDistance <= acceptableDistance;
-
-            // Use the robust check from ChasePlayer
-            if (!agent.pathPending && agent.remainingDistance != Mathf.Infinity && agent.remainingDistance <= acceptableDistance && agent.velocity.sqrMagnitude < velocityStopThreshold)
+            // Check for Arrival
+            if (isPathNotPending && isCloseEnough && isStoppedMoving)
             {
                 context.hunter.currentBTState = $"PATROL: Arrived at {context.hunter.currentPatrolTarget.name}";
                 nodeState = NodeState.SUCCESS; // We are done moving.
                 return nodeState;
             }
+            // --- END OF FIX ---
 
             // If we are not at the destination, we are still RUNNING.
             context.hunter.currentBTState = $"PATROL: Moving to {context.hunter.currentPatrolTarget.name}";
