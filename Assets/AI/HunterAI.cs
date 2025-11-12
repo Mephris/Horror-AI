@@ -490,7 +490,6 @@ public class HunterAI : MonoBehaviour
 
         return root;
     }
-
     public Transform GetBestPatrolPoint()
     {
         Transform bestTarget = null;
@@ -509,15 +508,17 @@ public class HunterAI : MonoBehaviour
             // --- Score Calculation ---
 
             // 1. "HEAT": Base Score from Player Probability (Director commands, etc.)
-            score += memory.playerProbability * 10f;
+            score += memory.playerProbability * 30f; // Max: 10.0 (if prob is 1.0)
 
             // 2. "CURIOSITY": Bonus for points not visited recently.
-            // This is what makes the Hunter patrol when nothing is happening.
             float timeSinceLastVisit = Time.time - memory.lastPatrolTime;
 
-            // Scale the bonus: 0.1 points per second, maxing out at 6 points (after 60s)
-            float recencyBonus = Mathf.Clamp(timeSinceLastVisit * 0.1f, 0f, 6f);
+            // --- THIS IS THE FIX ---
+            // Give 1.0 point per second (instead of 0.1).
+            // This makes Curiosity a MUCH stronger motivation than Effort.
+            float recencyBonus = Mathf.Clamp(timeSinceLastVisit * 1.0f, 0f, 10f); // Max of 50
             score += recencyBonus;
+            // --- END OF FIX ---
 
             // 3. "EVENTS": Flat bonus for high-priority memory tags
             if (memory.IsWorthyOfInvestigation)
@@ -525,7 +526,7 @@ public class HunterAI : MonoBehaviour
                 score += 5f;
             }
 
-            // 4. "EFFORT": Penalty for distance
+            // 4. "EFFORT": Penalty for distance (keep this the same)
             float distance = Vector3.Distance(transform.position, pointTransform.position);
             score -= distance * 0.1f;
 
@@ -553,6 +554,7 @@ public class HunterAI : MonoBehaviour
 
         return bestTarget;
     }
+
 
     // ==============================================
     // --- DIRECTOR COMMAND MEMORY MODIFICATION ---
