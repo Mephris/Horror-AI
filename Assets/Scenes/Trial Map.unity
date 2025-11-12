@@ -13456,7 +13456,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: da15104aff048f1439b43db681ec945f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  radius: 30
+  radius: 25
   angle: 20
   targetObjRef: {fileID: 0}
   targetMask:
