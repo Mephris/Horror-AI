@@ -280,11 +280,6 @@ public class HunterBehaviorNodes
         }
     }
 
-    // --- HunterBehaviorNodes.cs ---
-
-    // Add this new class to your HunterBehaviorNodes.cs file:
-    // This node handles the time the Hunter spends looking around the point.
-    // --- NEW BT TASK: Handles Investigation Timer ---
     // --- NEW BT TASK: Handles Investigation Timer ---
     public class InvestigatePatrolPoint : HunterTask
     {

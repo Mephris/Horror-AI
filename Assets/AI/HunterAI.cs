@@ -400,7 +400,7 @@ public class HunterAI : MonoBehaviour
                 {
                     // Increase prob by a small amount, up to a max cap (e.g., 0.5)
                     // This makes it "interesting," but not as "hot" as a Director command.
-                    memory.playerProbability = Mathf.Min(0.5f, memory.playerProbability + 0.01f);
+                    memory.playerProbability = Mathf.Min(0.5f, memory.playerProbability + 0.05f);
                 }
 
                 patrolPointData[key] = memory;
