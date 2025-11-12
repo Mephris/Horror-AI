@@ -1,35 +1,24 @@
-// --- PatrolPoints.cs ---
-
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+// You may need to add this if you're using Unity Editor visualization helpers
+// #if UNITY_EDITOR
+// using UnityEditor; 
+// #endif
+
 public class PatrolPoints : MonoBehaviour
 {
-    // Atrefacts
-    /* public bool HasBeenVisited = false;
+    // --- OBSOLETE: Fields and methods for FSM state are removed ---
+    // public bool HasBeenVisited = false;
+    // public void ToggleCheckStatus() { ... }
+    // public void ResetCheckStatus() { ... }
+    // private IEnumerator ResetCheckStatusAfterDelay(float delay) { ... }
 
-    public void ToggleCheckStatus()
-    {
-        HasBeenVisited = true;
-        Debug.Log($"Patrol point is {(HasBeenVisited ? "visited" : "unvisited")}");
-        StartCoroutine(ResetCheckStatusAfterDelay(50));
-    }
+    // -----------------------------------------------------------------------------------
 
-    public void ResetCheckStatus()
-    {
-        HasBeenVisited = false;
-        Debug.Log($"Patrol point is {(HasBeenVisited ? "visited" : "unvisited")} after reset");
-    }
-
-    private IEnumerator ResetCheckStatusAfterDelay(float delay)
-    {
-        yield return new WaitForSeconds(delay);
-        HasBeenVisited = false;
-        Debug.Log($"Patrol point is {(HasBeenVisited ? "visited" : "unvisited")} after delay");
-    }
-    */
-
+    // Cache the Hunter_Basic component for Gizmo drawing
+    // This allows the PatrolPoint to query the Hunter's current memory for visualization.
     private Hunter_Basic hunterBasic;
     private Hunter_Basic HunterBasic
     {
@@ -37,12 +26,13 @@ public class PatrolPoints : MonoBehaviour
         {
             if (hunterBasic == null)
             {
-                // Find the Hunter in the scene (assuming there is only one or it's tagged uniquely)
+                // Find the Hunter in the scene (assuming only one Hunter_Basic exists)
                 hunterBasic = FindObjectOfType<Hunter_Basic>();
             }
             return hunterBasic;
         }
     }
+
 
     private void OnDrawGizmos()
     {
@@ -51,7 +41,7 @@ public class PatrolPoints : MonoBehaviour
 
         if (HunterBasic != null)
         {
-            // Use the new helper function in Hunter_Basic
+            // Query the memory via the Hunter_Basic helper method
             probability = HunterBasic.GetProbabilityScore(this.transform);
         }
 
@@ -66,11 +56,5 @@ public class PatrolPoints : MonoBehaviour
         // Scale the gizmo based on probability to make high-priority points stand out visually.
         float scale = 0.2f + (probability * 0.15f); // Scale from 0.2 to 0.35
         Gizmos.DrawCube(transform.position, Vector3.one * scale);
-
-        // Optional: Draw a label with the probability score (Editor only)
-        // You may need to add 'using UnityEditor;' at the top of PatrolPoints.cs if you use this.
-#if UNITY_EDITOR
-        // UnityEditor.Handles.Label(transform.position + Vector3.up * 0.5f, $"Prob: {probability:F2}");
-#endif
     }
 }
