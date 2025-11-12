@@ -59,6 +59,15 @@ public class Hunter_Basic : MonoBehaviour
     [SerializeField] private float wanderRange = 5f; // Used by GetRandomWanderPoint
     private WaitForSeconds decayWait;
 
+    // --- Investigation Duration Settings ---
+    [Header("Investigation Duration")]
+    [Tooltip("Base time (seconds) Hunter spends investigating a patrol point.")]
+    [SerializeField] private float baseInvestigationTime = 5f;
+
+    [Tooltip("Maximum multiplier applied to base time based on patrol point probability (e.g., probability of 1.0 gets baseTime * maxMultiplier).")]
+    [SerializeField] private float maxProbabilityMultiplier = 2.0f;
+    // A point with probability 1.0 would have a duration of 5s * 2.0 = 10s.
+
     // --- Director Command Settings ---
     [Header("Director Command Settings")]
     [Tooltip("The maximum NavMesh path cost (distance) a patrol point can be from the command location to be affected.")]
@@ -224,30 +233,6 @@ public class Hunter_Basic : MonoBehaviour
         }
     }
 
-    // --- CORE AI UTILITY FUNCTIONS ---
-
-    private IEnumerator DecayProbabilitiesRoutine()
-    {
-        while (true)
-        {
-            yield return decayWait;
-
-            List<Transform> keys = new List<Transform>(patrolPointData.Keys);
-            foreach (Transform key in keys)
-            {
-                HunterPatrolMemory memory = patrolPointData[key];
-
-                if (memory.playerProbability > baseUncertainty)
-                {
-                    float decayAmount = probabilityDecayRate * decayUpdateInterval;
-                    memory.playerProbability = Mathf.Max(baseUncertainty, memory.playerProbability - decayAmount);
-                }
-
-                patrolPointData[key] = memory;
-            }
-        }
-    }
-
     // --- WANDER LOGIC (Required by HunterBehaviorNodes.WanderLocally) ---
     public Vector3 GetRandomWanderPoint(Vector3 center, float range)
     {
@@ -296,6 +281,30 @@ public class Hunter_Basic : MonoBehaviour
         return true;
     }
 
+    // Arrival Handler for Patrol Points
+    public void ArrivedAtPatrolPoint()
+    {
+        if (currentPatrolTarget != null)
+        {
+            // 1. **Mark the Point as Arrived/Visited (Memory Update)**
+            PatrolPoints pointComponent = currentPatrolTarget.GetComponent<PatrolPoints>();
+            if (pointComponent != null)
+            {
+                // We assume the PatrolPoints component has a public property/field called HasBeenVisited
+                // The AllPointsChecked method already uses this property: point.GetComponent<PatrolPoints>().HasBeenVisited
+                pointComponent.HasBeenVisited = true; // <--- ADDED LINE
+            }
+
+            // For now, let's just log it to ensure the logic fires:
+            Debug.Log($"Hunter arrived at Patrol Point: {currentPatrolTarget.gameObject.name}. Clearing target.");
+
+            // 2. **Clear the Current Target**
+            // Clearing the target forces the next tick of MoveToPatrolPoint
+            // to call GetBestPatrolPoint() and select a new destination.
+            currentPatrolTarget = null;
+        }
+    }
+
     // Updated FindRoom_Command to use HasBeenVisited
     private Room FindRoom_Command(Vector3 target)
     {
@@ -320,6 +329,95 @@ public class Hunter_Basic : MonoBehaviour
         foreach (var point in room.patrolPoint)
         {
             point.ResetCheckStatus();
+        }
+    }
+
+    // Scales the investigation duration based on patrol point probability in the memory. 
+    public float GetInvestigationDuration(Transform patrolPoint)
+    {
+        // 1. Get the memory for the patrol point.
+        if (patrolPointData.TryGetValue(patrolPoint, out HunterPatrolMemory memory))
+        {
+            // 2. Calculate the scaled time.
+            // Final Duration = Base Time + (Base Time * Probability * (Multiplier - 1))
+            // Example: If prob=0, Duration = 5s. If prob=1.0, Duration = 5s + (5s * 1.0 * (2.0 - 1)) = 10s.
+            float probabilityFactor = memory.playerProbability * (maxProbabilityMultiplier - 1.0f);
+            float finalDuration = baseInvestigationTime + (baseInvestigationTime * probabilityFactor);
+
+            // Ensure Director Tips give at least the max duration, regardless of probability score
+            if (memory.hasDirectorTip && finalDuration < (baseInvestigationTime * maxProbabilityMultiplier))
+            {
+                return baseInvestigationTime * maxProbabilityMultiplier;
+            }
+
+            return finalDuration;
+        }
+
+        // Fallback: If for some reason the point isn't in the dictionary, return base time.
+        return baseInvestigationTime;
+    }
+
+    // --- CORE AI UTILITY FUNCTIONS ---
+
+    private IEnumerator DecayProbabilitiesRoutine()
+    {
+        while (true)
+        {
+            yield return decayWait;
+
+            List<Transform> keys = new List<Transform>(patrolPointData.Keys);
+            foreach (Transform key in keys)
+            {
+                HunterPatrolMemory memory = patrolPointData[key];
+
+                if (memory.playerProbability > baseUncertainty)
+                {
+                    float decayAmount = probabilityDecayRate * decayUpdateInterval;
+                    memory.playerProbability = Mathf.Max(baseUncertainty, memory.playerProbability - decayAmount);
+                }
+
+                patrolPointData[key] = memory;
+            }
+        }
+    }
+
+    // Helper method to calculate the cost of a NavMeshPath
+    private float CalculatePathCost(NavMeshPath path)
+    {
+        float cost = 0f;
+
+        // Sum up the cost of each corner in the path
+        for (int i = 1; i < path.corners.Length; i++)
+        {
+            cost += Vector3.Distance(path.corners[i - 1], path.corners[i]);
+        }
+
+        return cost;
+    }
+
+    private void DecayPatrolMemory()
+    {
+        // Create a temporary list to hold the modified memory structs
+        List<Transform> keysToUpdate = new List<Transform>(patrolPointData.Keys);
+
+        foreach (Transform pointTransform in keysToUpdate)
+        {
+            HunterPatrolMemory memory = patrolPointData[pointTransform];
+
+            // 1. Decay the player probability over time
+            memory.playerProbability -= memoryDecayRate * Time.deltaTime;
+
+            // 2. Clamp the probability to ensure it never goes below 0
+            memory.playerProbability = Mathf.Max(0f, memory.playerProbability);
+
+            // 3. Clear the Director Tip flag if probability is very low
+            if (memory.playerProbability < 0.1f)
+            {
+                memory.hasDirectorTip = false;
+            }
+
+            // 4. Update the dictionary with the modified struct
+            patrolPointData[pointTransform] = memory;
         }
     }
 
@@ -501,94 +599,6 @@ public class Hunter_Basic : MonoBehaviour
         }
     }
 
-    // ADD this helper function to Hunter_Basic.cs (it calculates the cost of a NavMeshPath)
-    private float CalculatePathCost(NavMeshPath path)
-    {
-        float cost = 0f;
-
-        // Sum up the cost of each corner in the path
-        for (int i = 1; i < path.corners.Length; i++)
-        {
-            cost += Vector3.Distance(path.corners[i - 1], path.corners[i]);
-        }
-
-        return cost;
-    }
-
-    private void DecayPatrolMemory()
-    {
-        // Create a temporary list to hold the modified memory structs
-        List<Transform> keysToUpdate = new List<Transform>(patrolPointData.Keys);
-
-        foreach (Transform pointTransform in keysToUpdate)
-        {
-            HunterPatrolMemory memory = patrolPointData[pointTransform];
-
-            // 1. Decay the player probability over time
-            memory.playerProbability -= memoryDecayRate * Time.deltaTime;
-
-            // 2. Clamp the probability to ensure it never goes below 0
-            memory.playerProbability = Mathf.Max(0f, memory.playerProbability);
-
-            // 3. Clear the Director Tip flag if probability is very low
-            if (memory.playerProbability < 0.1f)
-            {
-                memory.hasDirectorTip = false;
-            }
-
-            // 4. Update the dictionary with the modified struct
-            patrolPointData[pointTransform] = memory;
-        }
-    }
-
-    //Called by BT when the agent has arrived at a patrol point
-    public void ArrivedAtPatrolPoint()
-    {
-        if (currentPatrolTarget != null)
-        {
-            // 1. **Mark the Point as Arrived/Visited (Memory Update)**
-            PatrolPoints pointComponent = currentPatrolTarget.GetComponent<PatrolPoints>();
-            if (pointComponent != null)
-            {
-                // We assume the PatrolPoints component has a public property/field called HasBeenVisited
-                // The AllPointsChecked method already uses this property: point.GetComponent<PatrolPoints>().HasBeenVisited
-                pointComponent.HasBeenVisited = true; // <--- ADDED LINE
-            }
-
-            // For now, let's just log it to ensure the logic fires:
-            Debug.Log($"Hunter arrived at Patrol Point: {currentPatrolTarget.gameObject.name}. Clearing target.");
-
-            // 2. **Clear the Current Target**
-            // Clearing the target forces the next tick of MoveToPatrolPoint
-            // to call GetBestPatrolPoint() and select a new destination.
-            currentPatrolTarget = null;
-        }
-    }
-
-    // --- End Hunter_Basic.cs addition ---
-
-    // --- PLACEHOLDER NODE DEFINITIONS (REQUIRED FOR COMPILATION) ---
-
-    private class PlaceholderTask : Node
-    {
-        private string taskName;
-        public PlaceholderTask(string name) { taskName = name; }
-        public override NodeState Evaluate()
-        {
-            // return NodeState.SUCCESS; // Will be replaced by your real Task
-            return NodeState.RUNNING; // Tasks should usually run until complete
-        }
-    }
-
-    private class PlaceholderCondition : Node
-    {
-        private string conditionName;
-        public PlaceholderCondition(string name) { conditionName = name; }
-        public override NodeState Evaluate()
-        {
-            return NodeState.FAILURE; // Will be replaced by your real Condition
-        }
-    }
 
     public void TickBT()
     {
@@ -608,5 +618,6 @@ public class Hunter_Basic : MonoBehaviour
 
         // The most accurate way is to update this variable inside the highest priority successful node.
     }
+
 
 }
