@@ -492,59 +492,63 @@ public class HunterAI : MonoBehaviour
         Transform bestTarget = null;
         float highestPriorityScore = float.NegativeInfinity;
 
+        // We must cache the score to write it back *after* the loop
+        Dictionary<Transform, float> debugScores = new Dictionary<Transform, float>();
+
         // Iterate through ALL patrol points in the entire dictionary
         foreach (var pair in patrolPointData)
         {
             Transform pointTransform = pair.Key;
             HunterPatrolMemory memory = pair.Value;
+            float score = 0f;
 
-            // --- Start of logic from old loop ---
+            // --- Score Calculation ---
 
-            // NOTE: The cooldown block is now GONE.
+            // 1. "HEAT": Base Score from Player Probability (Director commands, etc.)
+            score += memory.playerProbability * 10f;
 
-            // Calculation Strategy:
-            // 1. Base Score: Probability of player presence (memory.playerProbability)
-            // 2. Bonus: If the point has discrete memory tags (noise/tip)
-            // 3. Penalty: Distance to the point (we prefer closer points)
+            // 2. "CURIOSITY": Bonus for points not visited recently.
+            // This is what makes the Hunter patrol when nothing is happening.
+            float timeSinceLastVisit = Time.time - memory.lastPatrolTime;
 
-            float distance = Vector3.Distance(transform.position, pointTransform.position);
+            // Scale the bonus: 0.1 points per second, maxing out at 6 points (after 60s)
+            float recencyBonus = Mathf.Clamp(timeSinceLastVisit * 0.1f, 0f, 6f);
+            score += recencyBonus;
 
-            // Start the score with the highest weighted factor (usually probability)
-            float score = memory.playerProbability * 10f; // Scale probability to matter more
-
-            // Add a major bonus if it's worthy of investigation
+            // 3. "EVENTS": Flat bonus for high-priority memory tags
             if (memory.IsWorthyOfInvestigation)
             {
                 score += 5f;
             }
 
-            // Subtract distance from the score (closer is better). 
+            // 4. "EFFORT": Penalty for distance
+            float distance = Vector3.Distance(transform.position, pointTransform.position);
             score -= distance * 0.1f;
 
-            // Update the memory score for debugging/visualizing
-            // (We have to do this in a separate loop, so let's skip for now)
-            // memory.calculatedPriorityScore = score; 
-            // patrolPointData[pointTransform] = memory; // CAN'T DO THIS HERE, causes error.
+            // --- End of Score Calculation ---
+
+            debugScores[pointTransform] = score; // Store score for debug/gizmos
 
             if (score > highestPriorityScore)
             {
                 highestPriorityScore = score;
                 bestTarget = pointTransform;
             }
-
-            // --- End of logic from old loop ---
         }
 
         if (bestTarget == null)
         {
-            Debug.LogWarning("No suitable patrol point found after checks. All likely on cooldown.");
+            Debug.LogWarning("No suitable patrol point found after checks.");
             return null;
         }
 
+        // We found a target. Update its debug score in memory.
+        HunterPatrolMemory bestMemory = patrolPointData[bestTarget];
+        bestMemory.calculatedPriorityScore = highestPriorityScore;
+        patrolPointData[bestTarget] = bestMemory;
+
         return bestTarget;
     }
-
-
 
     // ==============================================
     // --- DIRECTOR COMMAND MEMORY MODIFICATION ---
