@@ -227,7 +227,7 @@ public class HunterAI : MonoBehaviour
             // 2. If the point was "hot," glancing at it helps cool it down.
             if (memory.playerProbability > baseUncertainty)
             {
-                float clearAmount = 0.1f;
+                float clearAmount = 0.25f;
                 memory.playerProbability = Mathf.Max(baseUncertainty, memory.playerProbability - clearAmount);
                 Debug.Log($"Hunter saw {seenPointTransform.name}. Probability REDUCED to: {memory.playerProbability}");
             }
