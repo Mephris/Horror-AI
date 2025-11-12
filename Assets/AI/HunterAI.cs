@@ -214,22 +214,38 @@ public class HunterAI : MonoBehaviour
             // NOTE: targetPos MUST NOT be updated here, it stays at the last location
         }
     }
-    private void OnPatrolPointSeen(Transform seenPointTransform)
+private void OnPatrolPointSeen(Transform seenPointTransform)
     {
         if (patrolPointData.TryGetValue(seenPointTransform, out HunterPatrolMemory memory))
         {
+            // --- 1. "GLANCE" PERK ---
+            // Reset the "Curiosity" timer for this point. This is the "perk."
+            memory.lastPatrolTime = Time.time; 
 
-            // 1. Reset the "Curiosity" timer for this point.
-            // This stops UpdateCuriosityRoutine from increasing its probability,
-            // effectively "clearing" the point for 30 seconds.
-            memory.lastPatrolTime = Time.time;
-
-            // 2. If the point was "hot," glancing at it helps cool it down.
+            // --- 2. "SCALED COLDNESS" (YOUR IDEA) ---
+            // Only cool down the point if it was "hot."
             if (memory.playerProbability > baseUncertainty)
             {
-                float clearAmount = 0.25f;
-                memory.playerProbability = Mathf.Max(baseUncertainty, memory.playerProbability - clearAmount);
-                Debug.Log($"Hunter saw {seenPointTransform.name}. Probability REDUCED to: {memory.playerProbability}");
+                // Calculate distance to scale the clear amount
+                float distance = Vector3.Distance(transform.position, seenPointTransform.position);
+
+                // Define our min/max ranges
+                float maxClearDistance = 25f; // Max distance to have any effect
+                float minClearDistance = 5f;  // Distance to have maximum effect
+                float maxClearAmount = 0.25f; // The "clear" amount you had
+                float minClearAmount = 0.05f; // A tiny clear amount for distant glances
+
+                // Calculate the scaling factor (0.0 at max dist, 1.0 at min dist)
+                float scale = Mathf.InverseLerp(maxClearDistance, minClearDistance, distance);
+                
+                // Calculate the final clear amount based on distance
+                float clearAmount = Mathf.Lerp(minClearAmount, maxClearAmount, scale);
+
+                if (clearAmount > 0)
+                {
+                    memory.playerProbability = Mathf.Max(baseUncertainty, memory.playerProbability - clearAmount);
+                    Debug.Log($"Hunter saw {seenPointTransform.name} (Dist: {distance:F0}m, Clear: {clearAmount:F2}). Prob REDUCED to: {memory.playerProbability:F2}");
+                }
             }
 
             // 3. Save the changes to the dictionary.

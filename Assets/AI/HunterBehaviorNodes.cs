@@ -196,7 +196,7 @@ public class HunterBehaviorNodes
             if (context.hunter.patrolPointData.TryGetValue(context.hunter.currentPatrolTarget, out HunterPatrolMemory memory))
             {
                 // If the point is NOT worthy of investigation AND its probability is back to base
-                if (!memory.IsWorthyOfInvestigation && memory.playerProbability <= context.hunter.baseUncertainty)
+                if (!memory.IsWorthyOfInvestigation && memory.playerProbability <= (context.hunter.baseUncertainty*1.2))
                 {
                     // STOP! This is a bad order.
                     context.hunter.currentBTState = $"PATROL: Target {context.hunter.currentPatrolTarget.name} became cold. Re-evaluating.";
