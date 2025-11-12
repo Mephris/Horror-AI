@@ -218,22 +218,22 @@ public class HunterAI : MonoBehaviour
     {
         if (patrolPointData.TryGetValue(seenPointTransform, out HunterPatrolMemory memory))
         {
-            // NEW LOGIC: Only reduce probability if it's currently "hot"
-            // We don't want "glancing" to reduce the base uncertainty level.
+
+            // 1. Reset the "Curiosity" timer for this point.
+            // This stops UpdateCuriosityRoutine from increasing its probability,
+            // effectively "clearing" the point for 30 seconds.
+            memory.lastPatrolTime = Time.time;
+
+            // 2. If the point was "hot," glancing at it helps cool it down.
             if (memory.playerProbability > baseUncertainty)
             {
-                // Logic: Seeing a Patrol Point means the area is "clear" for that moment.
                 float clearAmount = 0.1f;
-                // Reduce probability, but never go below the base uncertainty
                 memory.playerProbability = Mathf.Max(baseUncertainty, memory.playerProbability - clearAmount);
-
-                // Clear any memory tags that would be resolved by sight
-                memory.hasSeenDisturbance = false;
-
-                patrolPointData[seenPointTransform] = memory;
-
                 Debug.Log($"Hunter saw {seenPointTransform.name}. Probability REDUCED to: {memory.playerProbability}");
             }
+
+            // 3. Save the changes to the dictionary.
+            patrolPointData[seenPointTransform] = memory;
         }
     }
 
