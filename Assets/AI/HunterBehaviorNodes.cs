@@ -162,8 +162,14 @@ public class HunterBehaviorNodes
     // =================================================================
     // 4. TASK: Move to Patrol Point (Finds a new point and moves there)
     // =================================================================
+
     public class MoveToPatrolPoint : HunterTask
     {
+        // --- ADDED THIS SECTION ---
+        // We need the arrival check logic from IsAtDestination
+        private float acceptableDistance = 1.5f;
+        // --- END ADDED SECTION ---
+
         public MoveToPatrolPoint(HunterBehaviorNodes context) : base(context) { }
 
         public override NodeState Evaluate()
@@ -173,7 +179,18 @@ public class HunterBehaviorNodes
             // Step 1: Check if we are already moving to a known patrol point
             if (agent.hasPath && context.hunter.currentPatrolTarget != null)
             {
-                // If the current path is valid, keep running the task.
+                // --- ADDED THIS ARRIVAL CHECK ---
+                // If we are not waiting for the path and we are close enough, we have arrived.
+                if (!agent.pathPending && agent.remainingDistance <= acceptableDistance)
+                {
+                    // We have arrived. Return SUCCESS.
+                    // This allows the Behavior Tree's Selector to run 'roamCheck' on the next frame.
+                    nodeState = NodeState.SUCCESS;
+                    return nodeState;
+                }
+                // --- END ADDED SECTION ---
+
+                // If the current path is valid and we are not at the destination, keep running.
                 nodeState = NodeState.RUNNING;
                 return nodeState;
             }
@@ -187,17 +204,16 @@ public class HunterBehaviorNodes
                 context.hunter.currentPatrolTarget = bestPatrolPoint;
                 context.hunter.currentBTState = $"PATROL: Moving to {bestPatrolPoint.gameObject.name}";
 
-                // Set the new destination
+                // Set the new destination and ensure the agent can move
                 agent.SetDestination(bestPatrolPoint.position);
+                agent.isStopped = false; // --- ADDED THIS LINE ---
 
                 nodeState = NodeState.RUNNING;
                 return nodeState;
             }
 
-            // ... (existing logic returns FAILURE if no patrol point is found)
-            context.hunter.currentBTState = "PATROL: No Points Found / Stuck";
-
             // If no valid patrol point could be found (e.g., all points checked)
+            context.hunter.currentBTState = "PATROL: No Points Found / Stuck";
             nodeState = NodeState.FAILURE;
             return nodeState;
         }
