@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -298,13 +299,14 @@ public class Hunter_Basic : MonoBehaviour
     // 1. Calculates the duration based on the point's probability score.
     public float GetInvestigationDuration(Transform patrolPoint)
     {
+        // Retrieve memory, which should be guaranteed to exist at this point.
         if (patrolPointData.TryGetValue(patrolPoint, out HunterPatrolMemory memory))
         {
             // Probability scales the duration from base to (base * maxMultiplier)
             float probabilityFactor = memory.playerProbability * (maxProbabilityMultiplier - 1.0f);
             float finalDuration = baseInvestigationTime + (baseInvestigationTime * probabilityFactor);
 
-            // Ensure Director Tips receive max duration regardless of score
+            // Ensure Director Tips give at least the max duration, regardless of score
             if (memory.hasDirectorTip && finalDuration < (baseInvestigationTime * maxProbabilityMultiplier))
             {
                 return baseInvestigationTime * maxProbabilityMultiplier;
@@ -327,18 +329,18 @@ public class Hunter_Basic : MonoBehaviour
         isInvestigating = true;
         agent.isStopped = true; // Stop movement while investigating
 
-        // Record the visit now (Handles HasBeenVisited Deprecation)
+        // 3. Record the visit now (Replaces ArrivedAtPatrolPoint logic and sets lastPatrolTime)
         RecordPatrolVisit(patrolPoint);
 
         Debug.Log($"Starting Investigation at {patrolPoint.name}. Duration: {investigationDuration:F2}s.");
     }
+
 
     // 3. Updates the timer (called by the BT node)
     public Node.NodeState UpdateInvestigationTimer()
     {
         if (!isInvestigating)
         {
-            // Should not happen, but as a safeguard
             return Node.NodeState.FAILURE;
         }
 
@@ -357,7 +359,7 @@ public class Hunter_Basic : MonoBehaviour
         return Node.NodeState.RUNNING;
     }
 
-    // 4. Record Patrol Visit & Memory Cleanup (Deprecating HasBeenVisited)
+    // 4. Record Patrol Visit & Memory Cleanup (Replaces HasBeenVisited = true logic)
     public void RecordPatrolVisit(Transform point)
     {
         if (patrolPointData.TryGetValue(point, out HunterPatrolMemory memory))
@@ -365,10 +367,10 @@ public class Hunter_Basic : MonoBehaviour
             // Set the visit time to now
             memory.lastPatrolTime = Time.time;
 
-            // Decay probability slightly upon successful investigation (example: 20%)
+            // Decay probability slightly upon successful investigation (example: 20% reduction)
             memory.playerProbability = Mathf.Max(0f, memory.playerProbability * 0.8f);
 
-            // Clear discrete high-priority tags
+            // Clear discrete high-priority tags upon arrival
             memory.hasDirectorTip = false;
             memory.hasHeardNoise = false;
 
@@ -506,9 +508,12 @@ public class Hunter_Basic : MonoBehaviour
         {
             Transform pointTransform = point.transform;
 
-            // Skip points that are already marked as visited recently (HasBeenVisited)
-            if (point.HasBeenVisited)
+            if (Time.time < memory.lastPatrolTime + patrolCooldownTime && !memory.IsWorthyOfInvestigation)
+            {
+                memory.calculatedPriorityScore = float.NegativeInfinity; // For debug visualization
+                patrolPointData[pointTransform] = memory;
                 continue;
+            }
 
             // Get the memory for this point
             if (patrolPointData.TryGetValue(pointTransform, out HunterPatrolMemory memory))
@@ -545,18 +550,16 @@ public class Hunter_Basic : MonoBehaviour
             }
         }
 
-        // Final check: If the highest score is still negative infinity, it means all points were skipped or invalid.
-        if (bestTarget == null && targetRoom != null)
+        if (bestTarget == null)
         {
-            // All points in this room are checked, so reset the room and try again in the next frame.
-            Debug.Log($"All points in {targetRoom.name} checked. Resetting status.");
-            ResetRoomPatrolPoints(targetRoom);
-            // Return null for this frame so the BT task fails, but the next frame it will succeed.
+            Debug.LogWarning("No suitable patrol point found after checks. All likely on cooldown.");
             return null;
         }
 
         return bestTarget;
     }
+
+
 
     // ==============================================
     // --- DIRECTOR COMMAND MEMORY MODIFICATION ---

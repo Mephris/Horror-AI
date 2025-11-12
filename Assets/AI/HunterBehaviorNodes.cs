@@ -259,6 +259,7 @@ public class HunterBehaviorNodes
 
     // Add this new class to your HunterBehaviorNodes.cs file:
     // This node handles the time the Hunter spends looking around the point.
+    // --- NEW BT TASK: Handles Investigation Timer ---
     public class InvestigatePatrolPoint : HunterTask
     {
         private bool hasStartedInvestigation = false;
@@ -272,15 +273,16 @@ public class HunterBehaviorNodes
             {
                 hasStartedInvestigation = false;
                 context.hunter.isInvestigating = false;
+                context.hunter.currentBTState = "PATROL: No Target to Investigate";
                 return NodeState.FAILURE;
             }
 
-            // 2. First evaluation: Start the investigation timer.
+            // 2. First evaluation: Start the investigation timer in Hunter_Basic.cs.
             if (!hasStartedInvestigation)
             {
                 context.hunter.StartInvestigation(context.hunter.currentPatrolTarget);
                 hasStartedInvestigation = true;
-                context.hunter.currentBTState = $"PATROL: Investigating (Duration: {context.hunter.investigationDuration:F2}s)";
+                context.hunter.currentBTState = $"PATROL: Starting Investigation (Duration: {context.hunter.investigationDuration:F2}s)";
                 nodeState = NodeState.RUNNING;
                 return nodeState;
             }
@@ -296,7 +298,7 @@ public class HunterBehaviorNodes
             }
             else if (timerState == NodeState.RUNNING)
             {
-                // Still waiting.
+                // Still waiting. Update the debug state.
                 context.hunter.currentBTState = $"PATROL: Investigating ({context.hunter.investigationDuration - context.hunter.investigationTimeElapsed:F2}s left)";
             }
 
