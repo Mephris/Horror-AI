@@ -133,8 +133,10 @@ public class HunterBehaviorNodes
                 {
                     if (context.hunter.currentPatrolTarget != null)
                     {
-                        // The Agent has arrived. Inform the HunterAI component.
-                        context.hunter.ArrivedAtPatrolPoint();
+                        // The Agent has arrived. Mark the point as visited in memory.
+                        context.hunter.RecordPatrolVisit(context.hunter.currentPatrolTarget);
+                        // Clear the target so the BT knows it needs to find a new one.
+                        context.hunter.currentPatrolTarget = null;
                     }
 
                     // Returning SUCCESS allows the parent Sequence/Selector to move to the next step,

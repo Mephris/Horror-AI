@@ -509,16 +509,16 @@ public class HunterAI : MonoBehaviour
         {
             Transform pointTransform = point.transform;
 
-            if (Time.time < memory.lastPatrolTime + patrolCooldownTime && !memory.IsWorthyOfInvestigation)
-            {
-                memory.calculatedPriorityScore = float.NegativeInfinity; // For debug visualization
-                patrolPointData[pointTransform] = memory;
-                continue;
-            }
-
             // Get the memory for this point
             if (patrolPointData.TryGetValue(pointTransform, out HunterPatrolMemory memory))
             {
+
+                if (Time.time < memory.lastPatrolTime + patrolCooldownTime && !memory.IsWorthyOfInvestigation)
+                {
+                    memory.calculatedPriorityScore = float.NegativeInfinity; // For debug visualization
+                    patrolPointData[pointTransform] = memory;
+                    continue;
+                }
                 // Calculation Strategy:
                 // 1. Base Score: Probability of player presence (memory.playerProbability)
                 // 2. Bonus: If the point has discrete memory tags (noise/tip)
