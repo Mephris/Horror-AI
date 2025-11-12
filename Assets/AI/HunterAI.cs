@@ -535,7 +535,7 @@ public class HunterAI : MonoBehaviour
                 pathCost = CalculatePathCost(path);
 
                 // Apply the penalty
-                score -= pathCost * 0.05f;
+                score -= pathCost * 0.01f;
             }
             else
             {
