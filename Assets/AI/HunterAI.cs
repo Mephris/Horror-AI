@@ -507,28 +507,27 @@ public class HunterAI : MonoBehaviour
 
             // --- Score Calculation ---
 
-            // 1. "HEAT": Base Score from Player Probability (Director commands, etc.)
-            score += memory.playerProbability * 30f; // Max: 10.0 (if prob is 1.0)
+            // 1. "HEAT": Player Probability (from Director). 
+            // This is now the strongest motivation. A 1.0 prob = 20 points.
+            score += memory.playerProbability * 20f; // <-- INCREASED FROM 10f
 
             // 2. "CURIOSITY": Bonus for points not visited recently.
+            // Kept strong, but weaker than a high-priority heat signal.
             float timeSinceLastVisit = Time.time - memory.lastPatrolTime;
-
-            // --- THIS IS THE FIX ---
-            // Give 1.0 point per second (instead of 0.1).
-            // This makes Curiosity a MUCH stronger motivation than Effort.
-            float recencyBonus = Mathf.Clamp(timeSinceLastVisit * 1.0f, 0f, 10f); // Max of 50
+            // (0.5 point per second, max 20 points)
+            float recencyBonus = Mathf.Clamp(timeSinceLastVisit * 0.5f, 0f, 20f);
             score += recencyBonus;
-            // --- END OF FIX ---
 
             // 3. "EVENTS": Flat bonus for high-priority memory tags
             if (memory.IsWorthyOfInvestigation)
             {
-                score += 5f;
+                score += 5f; // <-- INCREASED FROM 5f
             }
 
-            // 4. "EFFORT": Penalty for distance (keep this the same)
+            // 4. "EFFORT": Penalty for distance.
+            // This is now just a tie-breaker, as you suggested.
             float distance = Vector3.Distance(transform.position, pointTransform.position);
-            score -= distance * 0.1f;
+            score -= distance * 0.05f; // <-- REDUCED FROM 0.1f
 
             // --- End of Score Calculation ---
 
