@@ -46,12 +46,12 @@ public class HunterAI : MonoBehaviour
     // --- PatrolPoint & Room Data ---
     private Room[] rooms;
     private Room closestRoom;
-    [HideInInspector]public Dictionary<Transform, HunterPatrolMemory> patrolPointData = new Dictionary<Transform, HunterPatrolMemory>();
+    [HideInInspector] public Dictionary<Transform, HunterPatrolMemory> patrolPointData = new Dictionary<Transform, HunterPatrolMemory>();
 
     // --- Decay & Wander Settings ---
     [Header("Probability Settings")]
     [Tooltip("The minimum probability a point can be checked to (baseline uncertainty).")]
-    [HideInInspector]public float baseUncertainty = 0.2f;
+    [HideInInspector] public float baseUncertainty = 0.2f;
     [SerializeField] private float probabilityUpdateInterval = 1f;
     [SerializeField] private float wanderRange = 5f; // Used by GetRandomWanderPoint
     private WaitForSeconds probabilityWait;
@@ -214,13 +214,13 @@ public class HunterAI : MonoBehaviour
             // NOTE: targetPos MUST NOT be updated here, it stays at the last location
         }
     }
-private void OnPatrolPointSeen(Transform seenPointTransform)
+    private void OnPatrolPointSeen(Transform seenPointTransform)
     {
         if (patrolPointData.TryGetValue(seenPointTransform, out HunterPatrolMemory memory))
         {
             // --- 1. "GLANCE" PERK ---
             // Reset the "Curiosity" timer for this point. This is the "perk."
-            memory.lastPatrolTime = Time.time; 
+            memory.lastPatrolTime = Time.time;
 
             // --- 2. "SCALED COLDNESS" (YOUR IDEA) ---
             // Only cool down the point if it was "hot."
@@ -232,12 +232,12 @@ private void OnPatrolPointSeen(Transform seenPointTransform)
                 // Define our min/max ranges
                 float maxClearDistance = 25f; // Max distance to have any effect
                 float minClearDistance = 5f;  // Distance to have maximum effect
-                float maxClearAmount = 0.25f; // The "clear" amount you had
-                float minClearAmount = 0.05f; // A tiny clear amount for distant glances
+                float maxClearAmount = 0.12f; // <-- HALVED
+                float minClearAmount = 0.02f; // <-- HALVED (approx)
 
                 // Calculate the scaling factor (0.0 at max dist, 1.0 at min dist)
                 float scale = Mathf.InverseLerp(maxClearDistance, minClearDistance, distance);
-                
+
                 // Calculate the final clear amount based on distance
                 float clearAmount = Mathf.Lerp(minClearAmount, maxClearAmount, scale);
 
