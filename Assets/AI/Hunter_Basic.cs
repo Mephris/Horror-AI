@@ -10,12 +10,13 @@ using static Node;
 public class HunterPatrolMemory
 {
     public Transform patrolpointTransform;
+    // Tracks the last time the hunter completed an investigation here
     public float lastPatrolTime = 0f;
 
     // THE CORE PROBABILITY SCORE (0.0=Clear to 1.0=Likely Here)
     public float playerProbability = 0f;
 
-    // NEW DISCRETE MEMORY TAGS 
+    // Discrete memory tags for specific events
     public bool hasHeardNoise = false;
     public bool hasSeenDisturbance = false;
     public bool hasDirectorTip = false;
@@ -274,43 +275,6 @@ public class Hunter_Basic : MonoBehaviour
         closestRoom = roomNearby;
     }
 
-    // Updated AllPointsChecked to use HasBeenVisited
-    private bool AllPointsChecked(Room room)
-    {
-        foreach (PatrolPoints point in room.patrolPoint)
-        {
-            if (!point.GetComponent<PatrolPoints>().HasBeenVisited) // <-- CHANGED
-            {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    // Arrival Handler for Patrol Points
-    public void ArrivedAtPatrolPoint()
-    {
-        if (currentPatrolTarget != null)
-        {
-            // 1. **Mark the Point as Arrived/Visited (Memory Update)**
-            PatrolPoints pointComponent = currentPatrolTarget.GetComponent<PatrolPoints>();
-            if (pointComponent != null)
-            {
-                // We assume the PatrolPoints component has a public property/field called HasBeenVisited
-                // The AllPointsChecked method already uses this property: point.GetComponent<PatrolPoints>().HasBeenVisited
-                pointComponent.HasBeenVisited = true; // <--- ADDED LINE
-            }
-
-            // For now, let's just log it to ensure the logic fires:
-            Debug.Log($"Hunter arrived at Patrol Point: {currentPatrolTarget.gameObject.name}. Clearing target.");
-
-            // 2. **Clear the Current Target**
-            // Clearing the target forces the next tick of MoveToPatrolPoint
-            // to call GetBestPatrolPoint() and select a new destination.
-            currentPatrolTarget = null;
-        }
-    }
-
     // Updated FindRoom_Command to use HasBeenVisited
     private Room FindRoom_Command(Vector3 target)
     {
@@ -327,15 +291,6 @@ public class Hunter_Basic : MonoBehaviour
             }
         }
         return roomNearby;
-    }
-
-    // This is good to keep for when a full sweep is required
-    private void ResetRoomPatrolPoints(Room room)
-    {
-        foreach (var point in room.patrolPoint)
-        {
-            point.ResetCheckStatus();
-        }
     }
 
     // --- Investigation Methods ---
