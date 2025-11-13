@@ -9,14 +9,6 @@ using UnityEngine;
 
 public class PatrolPoints : MonoBehaviour
 {
-    // --- OBSOLETE: Fields and methods for FSM state are removed ---
-    // public bool HasBeenVisited = false;
-    // public void ToggleCheckStatus() { ... }
-    // public void ResetCheckStatus() { ... }
-    // private IEnumerator ResetCheckStatusAfterDelay(float delay) { ... }
-
-    // -----------------------------------------------------------------------------------
-
     // Cache the HunterAI component for Gizmo drawing
     // This allows the PatrolPoint to query the Hunter's current memory for visualization.
     private HunterAI hunterAI;
@@ -32,8 +24,6 @@ public class PatrolPoints : MonoBehaviour
             return hunterAI;
         }
     }
-
-
     private void OnDrawGizmos()
     {
         // 1. Get the probability score from the Hunter's memory

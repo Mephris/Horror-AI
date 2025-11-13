@@ -6,9 +6,8 @@ public class Room : MonoBehaviour
 {
     public PatrolPoints[] patrolPoint;
 
-    public bool isNearbyPlayer;
-
-    public int exitCount;
+    [SerializeField]public bool isNearbyPlayer;
+    [SerializeField]public int exitCount;
 
     private void Awake()
     {
