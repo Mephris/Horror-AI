@@ -30,7 +30,7 @@ public class HunterPatrolMemory
     public float calculatedPriorityScore = 0f;
 
     // NEW: Link to the parent room for hierarchical planning
-    public RoomInfo parentRoom;
+    [System.NonSerialized] public RoomInfo parentRoom;
 }
 
 
