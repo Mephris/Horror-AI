@@ -8,6 +8,8 @@ public class Room : MonoBehaviour
 
     public bool isNearbyPlayer;
 
+    public int exitCount;
+
     private void Awake()
     {
         patrolPoint = GetComponentsInChildren<PatrolPoints>();

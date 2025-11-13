@@ -26,10 +26,9 @@ public class HunterPatrolMemory
     // Quick Check for BT to decide if this point is a high priority detour
     public bool IsWorthyOfInvestigation => hasHeardNoise || hasSeenDisturbance || hasDirectorTip || playerProbability > 0.5f;
 
-    // The final value the BT will use to compare points.
-    public float calculatedPriorityScore = 0f;
+    public float calculatedPriorityScore = 0f;   // The final value the BT will use to compare points.
 
-    public RoomInfo parentRoom;
+    public RoomInfo parentRoom; // The room this patrol point belongs to 
 }
 
 public class HunterAI : MonoBehaviour
@@ -37,6 +36,9 @@ public class HunterAI : MonoBehaviour
     // --- Behavior Tree Fields ---
     private Node rootNode;
     private HunterBehaviorNodes btContext;
+
+    // The Planner's active "line of command."
+    public HunterGoal activeGoal;
 
     // --- Navigation & Targets (Made public for HunterBehaviorNodes) ---
     public Transform currentPatrolTarget = null;
@@ -46,7 +48,13 @@ public class HunterAI : MonoBehaviour
     // --- PatrolPoint & Room Data ---
     private Room[] rooms;
     private Room closestRoom;
-    [HideInInspector] public Dictionary<Transform, HunterPatrolMemory> patrolPointData = new Dictionary<Transform, HunterPatrolMemory>();
+
+    [HideInInspector] // This is the "Master List" of all patrol point memory, It provides fast, "flat" lookups by Transform (for "Glance Perk").
+    public Dictionary<Transform, HunterPatrolMemory> patrolPointData = new Dictionary<Transform, HunterPatrolMemory>();
+
+    [HideInInspector] // Micro level hierarchical memory for the Planner organizing memory by room. 
+    public Dictionary<string, RoomInfo> roomData = new Dictionary<string, RoomInfo>();
+
 
     // --- Decay & Wander Settings ---
     [Header("Probability Settings")]
@@ -88,23 +96,36 @@ public class HunterAI : MonoBehaviour
     {
         agent = GetComponent<NavMeshAgent>();
         rooms = FindObjectsOfType<Room>();
-
-        // 1. Initialize decay timer
-        probabilityWait = new WaitForSeconds(probabilityUpdateInterval);
+        probabilityWait = new WaitForSeconds(probabilityUpdateInterval); // 1. Initilize the Decay Timer
 
         // 2. Initialize memory for all patrol points in the scene
         foreach (Room room in rooms)
         {
+            // 2. Create the new "Level 1" RoomInfo data container
+            // (Assuming your 'Room.cs' has an 'exitCount' property)
+            RoomInfo newRoomInfo = new RoomInfo(room.gameObject.name, room.exitCount);
+            roomData.Add(newRoomInfo.roomName, newRoomInfo);
+
+            // 3. Loop through all patrol points *within* this room
             foreach (PatrolPoints point in room.patrolPoint)
             {
                 if (!patrolPointData.ContainsKey(point.transform))
                 {
-                    patrolPointData.Add(point.transform, new HunterPatrolMemory
+                    // 4. Create the "Level 2" memory object
+                    HunterPatrolMemory newMemory = new HunterPatrolMemory
                     {
                         patrolpointTransform = point.transform,
                         playerProbability = 0.5f,
-                        lastPatrolTime = Time.time
-                    });
+                        lastPatrolTime = Time.time,
+                        parentRoom = newRoomInfo // Link it to its parent room
+                    };
+
+                    // 5. Add the new memory to *both* lists:
+                    // A) The master "flat list" for fast lookups
+                    patrolPointData.Add(point.transform, newMemory);
+
+                    // B) The room's "hierarchical list" for planning
+                    newRoomInfo.patrolPoints.Add(newMemory);
                 }
             }
         }
