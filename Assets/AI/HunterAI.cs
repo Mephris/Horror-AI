@@ -28,81 +28,9 @@ public class HunterPatrolMemory
 
     // The final value the BT will use to compare points.
     public float calculatedPriorityScore = 0f;
+
+    public RoomInfo parentRoom;
 }
-
-[System.Serializable]
-public class RoomInfo
-{
-    public string roomName;
-    public int exitCount = 0; // You would set this on initialization
-
-    // Heat Planner - Counts player probability across all points in this room
-    public float generalCuriosity = 0f; // Macro heat - all points
-    public List<HunterPatrolMemory> patrolPoints; // Micro heat - It's a List of *references* to the memory objects,
-                                                  // which are also stored in the main HunterAI dictionary.
-
-    // Information about the room can be expanded as needed in the future...
-    public RoomInfo(string name, int exits)
-    {
-        this.roomName = name;
-        this.exitCount = exits;
-        this.patrolPoints = new List<HunterPatrolMemory>();
-    }
-
-    // This method is called by HunterAI to update the room's "heat."
-    public void UpdateGeneralCuriosity()
-    {
-        if (patrolPoints.Count == 0)
-        {
-            generalCuriosity = 0;
-            return;
-        }
-
-        // Calculate the "heat" (e.g., average probability of all points)
-        float totalProbability = 0f;
-        foreach (HunterPatrolMemory pointMemory in patrolPoints)
-        {
-            totalProbability += pointMemory.playerProbability;
-        }
-
-        generalCuriosity = totalProbability / patrolPoints.Count;
-    }
-
-    // Helper to check if all points in this room are "cold."
-    public bool IsFullyPatrolled(float baseUncertainty)
-    {
-        foreach (HunterPatrolMemory pointMemory in patrolPoints)
-        {
-            // If any point is still "hot" (above base), this room is not done.
-            if (pointMemory.playerProbability > (baseUncertainty + 0.1f))
-                return false;
-        }
-        // All points are "cold."
-        return true;
-    }
-} // Room information about each rooms general heat level of each room, references memory. 
-public enum GoalType
-{
-    None,         // Idle or looking for a new goal
-    SearchRoom,   // Systematically patrol a "hot" room
-    AmbushRoom,   // A tactical goal, e.g., for a dead-end room
-    InvestigatePosition // A high-priority goal from a sound or Director hint
-} // Planner be planning that for sure 
-
-[System.Serializable]
-public class HunterGoal
-{
-    public GoalType type;
-    public RoomInfo targetRoom;      // The Room this goal applies to (e.g., "Search KITCHEN")
-    public Vector3 targetPosition; // The specific point this goal applies to (e.g., "Investigate SOUND")
-
-    public HunterGoal(GoalType type, RoomInfo room = null, Vector3 pos = default)
-    {
-        this.type = type;
-        this.targetRoom = room;
-        this.targetPosition = pos;
-    }
-}  // A simple struct to hold the current goal for the Hunter AI
 
 public class HunterAI : MonoBehaviour
 {
@@ -113,7 +41,6 @@ public class HunterAI : MonoBehaviour
     // --- Navigation & Targets (Made public for HunterBehaviorNodes) ---
     public Transform currentPatrolTarget = null;
     public Transform targetPos; // Last known or commanded position
-
     private NavMeshAgent agent;
 
     // --- PatrolPoint & Room Data ---
@@ -135,14 +62,11 @@ public class HunterAI : MonoBehaviour
     public bool isInvestigating = false;
     [HideInInspector] public float investigationTimeElapsed = 0f;
     [HideInInspector] public float investigationDuration = 0f; // The calculated duration for the current point.
-
     [Header("Investigation Duration")]
     [Tooltip("Base time (seconds) Hunter spends investigating a patrol point.")]
     [SerializeField] private float baseInvestigationTime = 5f;
-
     [Tooltip("Maximum multiplier applied to base time based on patrol point probability (e.g., probability of 1.0 gets baseTime * maxMultiplier).")]
     [SerializeField] private float maxProbabilityMultiplier = 2.0f; // A point with probability 1.0 would have a duration of 5s * 2.0 = 10s.
-
 
     // --- Director Command Settings ---
     [Header("Director Command Settings")]
@@ -160,7 +84,6 @@ public class HunterAI : MonoBehaviour
     [Header("BT Debug")]
     [SerializeField] public string currentBTState = "Initializing";
 
-    // Start is called before the first frame update
     void Start()
     {
         agent = GetComponent<NavMeshAgent>();
