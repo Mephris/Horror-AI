@@ -308,7 +308,9 @@ public class HunterAI : MonoBehaviour
         return roomNearby;
     }
 
+    // ==================================
     // --- Investigation Methods ---
+    // ==================================
 
     // 1. Calculates the duration based on the point's probability score.
     public float GetInvestigationDuration(Transform patrolPoint)
@@ -349,7 +351,6 @@ public class HunterAI : MonoBehaviour
         Debug.Log($"Starting Investigation at {patrolPoint.name}. Duration: {investigationDuration:F2}s.");
     }
 
-
     // 3. Updates the timer (called by the BT node)
     public Node.NodeState UpdateInvestigationTimer()
     {
@@ -373,7 +374,7 @@ public class HunterAI : MonoBehaviour
         return Node.NodeState.RUNNING;
     }
 
-    // 4. Record Patrol Visit & Memory Cleanup (Replaces HasBeenVisited = true)
+    // 4. Record Patrol Visit & Memory Cleanup 
     public void RecordPatrolVisit(Transform point)
     {
         if (patrolPointData.TryGetValue(point, out HunterPatrolMemory memory))
@@ -396,47 +397,6 @@ public class HunterAI : MonoBehaviour
     // ==================================
     // --- CORE AI UTILITY FUNCTIONS ---
     // ==================================
-    private IEnumerator UpdateCuriosityRoutine()
-    {
-        while (true)
-        {
-            yield return probabilityWait;
-
-            List<Transform> keys = new List<Transform>(patrolPointData.Keys);
-            foreach (Transform key in keys)
-            {
-                HunterPatrolMemory memory = patrolPointData[key];
-
-                // --- CURIOSITY LOGIC (THE FIX) ---
-                // This point is "cold," so make it slowly heat up over time.
-                float timeSinceLastVisit = Time.time - memory.lastPatrolTime;
-
-                // After (e.g.) 30 seconds of not being seen, start increasing probability.
-                if (timeSinceLastVisit > 30f)
-                {
-                    // Increase prob by a small amount, up to a max cap (e.g., 0.5)
-                    // This makes it "interesting," but not as "hot" as a Director command.
-                    memory.playerProbability = Mathf.Min(0.5f, memory.playerProbability + 0.05f);
-                }
-
-                patrolPointData[key] = memory;
-            }
-        }
-    }
-
-    // Helper method to calculate the cost of a NavMeshPath
-    private float CalculatePathCost(NavMeshPath path)
-    {
-        float cost = 0f;
-
-        // Sum up the cost of each corner in the path
-        for (int i = 1; i < path.corners.Length; i++)
-        {
-            cost += Vector3.Distance(path.corners[i - 1], path.corners[i]);
-        }
-
-        return cost;
-    }
 
     private Node SetupBehaviorTree()
     {
@@ -487,6 +447,47 @@ public class HunterAI : MonoBehaviour
     });
 
         return root;
+    }
+    private IEnumerator UpdateCuriosityRoutine()
+    {
+        while (true)
+        {
+            yield return probabilityWait;
+
+            List<Transform> keys = new List<Transform>(patrolPointData.Keys);
+            foreach (Transform key in keys)
+            {
+                HunterPatrolMemory memory = patrolPointData[key];
+
+                // --- CURIOSITY LOGIC (THE FIX) ---
+                // This point is "cold," so make it slowly heat up over time.
+                float timeSinceLastVisit = Time.time - memory.lastPatrolTime;
+
+                // After (e.g.) 30 seconds of not being seen, start increasing probability.
+                if (timeSinceLastVisit > 30f)
+                {
+                    // Increase prob by a small amount, up to a max cap (e.g., 0.5)
+                    // This makes it "interesting," but not as "hot" as a Director command.
+                    memory.playerProbability = Mathf.Min(0.5f, memory.playerProbability + 0.05f);
+                }
+
+                patrolPointData[key] = memory;
+            }
+        }
+    }
+
+    // Helper method to calculate the cost of a NavMeshPath
+    private float CalculatePathCost(NavMeshPath path)
+    {
+        float cost = 0f;
+
+        // Sum up the cost of each corner in the path
+        for (int i = 1; i < path.corners.Length; i++)
+        {
+            cost += Vector3.Distance(path.corners[i - 1], path.corners[i]);
+        }
+
+        return cost;
     }
     public Transform GetBestPatrolPoint()
     {
