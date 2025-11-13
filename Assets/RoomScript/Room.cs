@@ -12,6 +12,7 @@ public class Room : MonoBehaviour
     private void Awake()
     {
         patrolPoint = GetComponentsInChildren<PatrolPoints>();
+
     }
 
 
