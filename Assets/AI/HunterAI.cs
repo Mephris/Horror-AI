@@ -438,44 +438,53 @@ public class HunterAI : MonoBehaviour
         return cost;
     }
 
-    // ========================================================
-    // --- BEHAVIOR TREE SETUP (Placeholder implementation) ---
-    // ========================================================
     private Node SetupBehaviorTree()
     {
-        // ----------------------------------------------------------------------
-        // Step 1: Define all the Leaf Nodes
-        // ----------------------------------------------------------------------
-
-        // CONDITIONS
+        // --- LEAF NODES (Your existing nodes) ---
         var isPlayerSeen = new HunterBehaviorNodes.IsPlayerSeen(btContext);
-        var isAtDestination = new HunterBehaviorNodes.IsAtDestination(btContext);
-
-        // TASKS
         var chasePlayer = new HunterBehaviorNodes.ChasePlayer(btContext);
-        var movePatrol = new HunterBehaviorNodes.MoveToPatrolPoint(btContext);
-        var wanderAround = new HunterBehaviorNodes.WanderLocally(btContext);
 
-        // ----------------------------------------------------------------------
-        // Step 2: Build the Main Branches
-        // ----------------------------------------------------------------------
+        // This is the new "core" of your patrol. It's a sequence that:
+        // 1. Moves to the best point *in the goal room*.
+        // 2. Investigates it upon arrival.
+        var executePatrolStep = new Sequence(new List<Node>
+    {
+        // This task is your *existing* MoveToPatrolPoint.
+        // It will need a *small change* to make GetBestPatrolPoint() 
+        // respect the Planner's "ActiveGoal" room.
+        new HunterBehaviorNodes.MoveToPatrolPoint(btContext),
 
-        // Priority 1: Chase -> IF Player Seen THEN Chase
+        // This is your *existing* investigation node.
+        new HunterBehaviorNodes.InvestigatePatrolPoint(btContext)
+    });
+
+        // --- BRANCHES ---
+
+        // Priority 1: Chase (The highest priority interrupt)
         var chaseBranch = new Sequence(new List<Node> { isPlayerSeen, chasePlayer });
 
-        // Priority 3: Patrol/Roam Loop
-        // IF At Destination THEN Wander (Gives the Hunter the roaming behavior)
-        var roamCheck = new Sequence(new List<Node> { isAtDestination, wanderAround });
+        // Priority 2: Execute the Planner's Goal
+        var executeGoalBranch = new Sequence(new List<Node>
+    {
+        // 1. A new condition: Do we have a goal from the Planner?
+        new HunterBehaviorNodes.HasActiveGoal(btContext),
+        
+        // 2. If yes, run our core patrol/investigate sequence.
+        // This sequence will keep running (SUCCESS/RUNNING) as long
+        // as there are "hot" points in the goal room.
+        executePatrolStep
+    });
 
-        // Standard patrol: Try roaming first, otherwise move to next point.
-        var patrolAndWander = new Selector(new List<Node> { roamCheck, movePatrol });
+        // Priority 3: Get a New Goal (If we don't have one)
+        var getNewGoalBranch = new HunterBehaviorNodes.Planner_FindNewGoal(btContext);
 
-        // ----------------------------------------------------------------------
-        // Step 3: Define the Root Selector (Highest Priority Check)
-        // ----------------------------------------------------------------------
-
-        // Priority Top-level: Chase > Patrol/Roam
-        var root = new Selector(new List<Node> { chaseBranch, patrolAndWander });
+        // --- ROOT ---
+        var root = new Selector(new List<Node>
+    {
+        chaseBranch,        // ALWAYS check for the player first.
+        executeGoalBranch,  // THEN, try to execute our current plan.
+        getNewGoalBranch    // OTHERWISE, get a new plan.
+    });
 
         return root;
     }
