@@ -4,8 +4,8 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 using UnityEngine.AI;
-// Ensure you have this using statement for the Behavior Tree Node types
 using static Node;
+
 
 
 [System.Serializable]
@@ -28,6 +28,58 @@ public class HunterPatrolMemory
 
     // The final value the BT will use to compare points.
     public float calculatedPriorityScore = 0f;
+}
+
+[System.Serializable]
+public class RoomInfo
+{
+    public string roomName;
+    public int exitCount = 0; // You would set this on initialization
+
+    // Heat Planner - Counts player probability across all points in this room
+    public float generalCuriosity = 0f; // Macro heat - all points
+    public List<HunterPatrolMemory> patrolPoints; // Micro heat - It's a List of *references* to the memory objects,
+                                                  // which are also stored in the main HunterAI dictionary.
+
+    // Information about the room can be expanded as needed in the future...
+    public RoomInfo(string name, int exits)
+    {
+        this.roomName = name;
+        this.exitCount = exits;
+        this.patrolPoints = new List<HunterPatrolMemory>();
+    }
+
+    // This method is called by HunterAI to update the room's "heat."
+    public void UpdateGeneralCuriosity()
+    {
+        if (patrolPoints.Count == 0)
+        {
+            generalCuriosity = 0;
+            return;
+        }
+
+        // Calculate the "heat" (e.g., average probability of all points)
+        float totalProbability = 0f;
+        foreach (HunterPatrolMemory pointMemory in patrolPoints)
+        {
+            totalProbability += pointMemory.playerProbability;
+        }
+
+        generalCuriosity = totalProbability / patrolPoints.Count;
+    }
+
+    // Helper to check if all points in this room are "cold."
+    public bool IsFullyPatrolled(float baseUncertainty)
+    {
+        foreach (HunterPatrolMemory pointMemory in patrolPoints)
+        {
+            // If any point is still "hot" (above base), this room is not done.
+            if (pointMemory.playerProbability > (baseUncertainty*1.5f))
+                return false;
+        }
+        // All points are "cold."
+        return true;
+    }
 }
 
 
@@ -56,8 +108,6 @@ public class HunterAI : MonoBehaviour
     [SerializeField] private float wanderRange = 5f; // Used by GetRandomWanderPoint
     private WaitForSeconds probabilityWait;
 
-
-
     // --- Investigation Settings ---
     [Header("Investigation Timer")]
     [Tooltip("Flag set by the InvestigatePatrolPoint BT Node to track the current wait state.")]
@@ -82,8 +132,6 @@ public class HunterAI : MonoBehaviour
     [Header("Chase Settings")]
     [Tooltip("Time (in seconds) the Hunter continues to investigate the last known location after losing sight.")]
     [SerializeField] public float chaseInvestigationTime = 7.0f;
-
-
     [HideInInspector] public float timeSinceLastSeen = 999.0f;
     [HideInInspector] public bool isChasingPlayer = false; // Flag for the BT
 
@@ -184,8 +232,6 @@ public class HunterAI : MonoBehaviour
         ModifyMemoryNearLocation(target, 0.2f, false);
         // Note: We no longer set targetPos, the BT handles it based on memory
     }
-
-    // HighPriorityCommandToMove is a strong, definitive clue
     private void OnHighPriorityCommandToMove(Vector3 target)
     {
         // High Priority Command: Significant probability increase, sets the special 'Tip' flag
@@ -268,9 +314,9 @@ public class HunterAI : MonoBehaviour
         return Vector3.zero;
     }
 
-    // ======================================================
-    // --- PATROL LOGIC (Updated to use HasBeenVisited) ---
-    // ======================================================
+    // =====================
+    // --- PATROL LOGIC ---
+    // =====================
     // Keeps the logic that finds the closest room that isn't fully checked
     private void ClosestRoom()
     {
@@ -289,8 +335,6 @@ public class HunterAI : MonoBehaviour
         }
         closestRoom = roomNearby;
     }
-
-    // Updated FindRoom_Command to use HasBeenVisited
     private Room FindRoom_Command(Vector3 target)
     {
         Room roomNearby = null;
@@ -306,7 +350,7 @@ public class HunterAI : MonoBehaviour
             }
         }
         return roomNearby;
-    }
+    } // Updated FindRoom_Command to use HasBeenVisited
 
     // ==================================
     // --- Investigation Methods ---
@@ -476,7 +520,7 @@ public class HunterAI : MonoBehaviour
         }
     }
 
-    // Helper method to calculate the cost of a NavMeshPath
+
     private float CalculatePathCost(NavMeshPath path)
     {
         float cost = 0f;
@@ -488,7 +532,7 @@ public class HunterAI : MonoBehaviour
         }
 
         return cost;
-    }
+    }     // Helper method to calculate the cost of a NavMeshPath
     public Transform GetBestPatrolPoint()
     {
         Transform bestTarget = null;
@@ -548,8 +592,7 @@ public class HunterAI : MonoBehaviour
         patrolPointData[bestTarget] = bestMemory;
 
         return bestTarget;
-    }
-
+    } // Finds best patrol point based on current Heat (playerProbability)*100f + Events(20 or 0) - Effort (path cost*0.05f)
 
     // ==============================================
     // --- DIRECTOR COMMAND MEMORY MODIFICATION ---
@@ -614,8 +657,6 @@ public class HunterAI : MonoBehaviour
             Debug.LogWarning("Director Command: No reachable patrol points found within the path cost threshold.");
         }
     }
-
-
     public void TickBT()
     {
         // Evaluate the root node
@@ -636,8 +677,6 @@ public class HunterAI : MonoBehaviour
     }
 
     // -- GIZMO's FOR DEBUGGING --
-
-    // Helper method for gizmos visualization
     public float GetProbabilityScore(Transform patrolPoint)
     {
         if (patrolPointData.TryGetValue(patrolPoint, out HunterPatrolMemory memory))
@@ -645,7 +684,7 @@ public class HunterAI : MonoBehaviour
             return memory.playerProbability;
         }
         return 0f; // Default to 0 (no priority) if the point is not tracked
-    }
+    } // Helper method for gizmos visualization
 
 
 }
