@@ -16,3 +16,6 @@ Currently Director is able to send out commands to the Hunter in order to manipu
 - **Organic Movement:** The **`MoveToPatrolPoint`** task naturally selects the now high-scoring, commanded location, making the AI's response feel organic rather than forced.
 ```
 
+Currently Director is a state machine and akin to Hunter will go through a revamp, what we can do is to make him a "Goal oriented brain" rather then the [[Hunter| hunter's]] hybrid approach. 
+
+Idea is to get the high level planning from the [[Director|cheater]] to be perceived by the Hunter. Hunter then will do his own short term planning. 
