@@ -191,24 +191,6 @@ public class HunterBehaviorNodes
                 }
             }
 
-            // --- Step 1.5: THE "STOP SIGN" (RE-EVALUATION) ---
-            // Check if the point we are moving to has become "cold" (e.g., by glancing at it).
-            if (context.hunter.patrolPointData.TryGetValue(context.hunter.currentPatrolTarget, out HunterPatrolMemory memory))
-            {
-                // If the point is NOT worthy of investigation AND its probability is back to base
-                if (!memory.IsWorthyOfInvestigation && memory.playerProbability <= (context.hunter.baseUncertainty * 1.2))
-                {
-                    // STOP! This is a bad order.
-                    context.hunter.currentBTState = $"PATROL: Target {context.hunter.currentPatrolTarget.name} became cold. Re-evaluating.";
-                    context.hunter.currentPatrolTarget = null; // Clear the bad target
-                    agent.isStopped = true; // Stop moving
-                    nodeState = NodeState.FAILURE; // Fail this task to force the BT to pick a new one
-                    return nodeState;
-                }
-            }
-            // --- END OF THE "STOP SIGN" ---
-
-
             // --- Step 2: We have a valid target, so move towards it. ---
             agent.SetDestination(context.hunter.currentPatrolTarget.position);
             agent.isStopped = false;

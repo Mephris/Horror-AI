@@ -10,14 +10,17 @@ public class RoomInfo
     // This is the "Level 1" aggregated heat for the Planner.
     public float generalCuriosity = 0f;
 
-    // This is the "Level 2" micro data.
-    // It's a List of *references* to the memory objects,
-    // which are also stored in the main HunterAI dictionary.
+    // This is the "Level 2" micro data, reference. 
     public List<HunterPatrolMemory> patrolPoints;
 
-    public RoomInfo(string name, int exits)
+    // --- Gizmo Drawing Support ---
+    // A reference to the Room's MonoBehaviour for its position
+    [System.NonSerialized] // Don't serialize this, it's just a runtime reference
+    public Room roomRef;
+    public RoomInfo(Room roomScript, int exits)
     {
-        this.roomName = name;
+        this.roomRef = roomScript; // Store the reference
+        this.roomName = roomScript.gameObject.name;
         this.exitCount = exits;
         this.patrolPoints = new List<HunterPatrolMemory>();
     }

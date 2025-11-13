@@ -7,6 +7,11 @@ using UnityEngine.AI;
 // Ensure you have this using statement for the Behavior Tree Node types
 using static Node;
 
+// NEW: Required for drawing text labels in the Scene view
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
+
 
 [System.Serializable]
 public class HunterPatrolMemory
@@ -112,6 +117,10 @@ public class HunterAI : MonoBehaviour
         agent = GetComponent<NavMeshAgent>();
         rooms = FindObjectsOfType<Room>(); // Make sure your 'Room.cs' script exists
 
+        // --- ADD THIS LINE ---
+        Debug.Log($"[HunterAI.Start] Found {rooms.Length} Room objects in the scene.");
+        // --- END ADD ---
+
         // 1. Initialize decay timer
         probabilityWait = new WaitForSeconds(probabilityUpdateInterval);
 
@@ -127,7 +136,8 @@ public class HunterAI : MonoBehaviour
             int exits = 1; // Placeholder: You should get this from your 'Room.cs'
                            // if (room.exitCount != null) { exits = room.exitCount; } // Example
 
-            RoomInfo newRoomInfo = new RoomInfo(room.gameObject.name, exits);
+            // MODIFIED: Pass the 'room' (MonoBehaviour) to the constructor
+            RoomInfo newRoomInfo = new RoomInfo(room, exits);
             if (!roomData.ContainsKey(newRoomInfo.roomName))
             {
                 roomData.Add(newRoomInfo.roomName, newRoomInfo);
@@ -646,12 +656,6 @@ public class HunterAI : MonoBehaviour
         }
     }
 
-
-    public void TickBT()
-    {
-        // This method is likely obsolete, as Update() calls rootNode.Evaluate()
-    }
-
     // -- GIZMO's FOR DEBUGGING --
     public float GetProbabilityScore(Transform patrolPoint)
     {
@@ -660,5 +664,46 @@ public class HunterAI : MonoBehaviour
             return memory.playerProbability;
         }
         return 0f;
+    }
+
+    // --- GIZMO VISUALIZATION FOR ROOM HEAT ---
+    // This function is called by Unity only in the Editor
+    void OnDrawGizmos()
+    {
+        // Ensure we only run this logic if the data exists
+        if (roomData == null || roomData.Count == 0)
+        {
+            return;
+        }
+
+        // We must wrap Editor-specific code to prevent build errors
+#if UNITY_EDITOR
+        foreach (RoomInfo room in roomData.Values)
+        {
+            if (room.roomRef != null) // Check if the room reference is valid
+            {
+                Vector3 roomCenter = room.roomRef.transform.position;
+
+                // 1. Draw the "Heat" sphere
+                // Color interpolates from Blue (0.0) to Red (1.0)
+                Color gizmoColor = Color.Lerp(Color.blue, Color.red, room.generalCuriosity);
+                gizmoColor.a = 0.3f; // Make it semi-transparent
+                Gizmos.color = gizmoColor;
+                Gizmos.DrawSphere(roomCenter, 1.5f); // Draw a solid sphere
+
+                gizmoColor.a = 1.0f; // Make the outline solid
+                Gizmos.color = gizmoColor;
+                Gizmos.DrawWireSphere(roomCenter, 1.5f); // Draw the outline
+
+                // 2. Draw the text label
+                GUIStyle style = new GUIStyle();
+                style.normal.textColor = Color.white;
+                style.alignment = TextAnchor.MiddleCenter;
+
+                string label = $"{room.roomName}\nHeat: {room.generalCuriosity:F2}";
+                Handles.Label(roomCenter + Vector3.up * 2.0f, label, style);
+            }
+        }
+#endif
     }
 }
