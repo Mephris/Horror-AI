@@ -341,6 +341,110 @@ public class HunterBehaviorNodes
         }
     }
 
+    // =================================================================
+    // 6. CONDITION: Does the Hunter have an active, valid goal?
+    // =================================================================
+    public class HasActiveGoal : HunterCondition
+    {
+        public HasActiveGoal(HunterBehaviorNodes context) : base(context) { }
+
+        public override NodeState Evaluate()
+        {
+            // 1. Check if we have a goal at all.
+            if (context.hunter.activeGoal == null || context.hunter.activeGoal.type == GoalType.None)
+            {
+                nodeState = NodeState.FAILURE;
+                return nodeState;
+            }
+
+            // 2. Check if the goal is a "SearchRoom" goal that is already complete.
+            if (context.hunter.activeGoal.type == GoalType.SearchRoom)
+            {
+                if (context.hunter.activeGoal.targetRoom == null)
+                {
+                    // Goal is invalid.
+                    context.hunter.activeGoal = null;
+                    nodeState = NodeState.FAILURE;
+                    return nodeState;
+                }
+
+                // Check if the room is "cold."
+                if (context.hunter.activeGoal.targetRoom.IsFullyPatrolled(context.hunter.baseUncertainty))
+                {
+                    // This goal is complete! Clear it and FAIL,
+                    // so the Planner runs to find a *new* goal.
+                    context.hunter.currentBTState = $"PLANNER: Goal for {context.hunter.activeGoal.targetRoom.roomName} is complete.";
+                    context.hunter.activeGoal = null;
+                    nodeState = NodeState.FAILURE;
+                    return nodeState;
+                }
+            }
+
+            // --- (Future) ---
+            // You could add checks for other goal types here,
+            // like GoalType.Ambush, and check if its timer has expired.
+
+            // 3. If we are here, we have a valid, active goal.
+            nodeState = NodeState.SUCCESS;
+            return nodeState;
+        }
+    }
+
+    // =================================================================
+    // 7. TASK: Planner finds a new goal (High-level decision)
+    // =================================================================
+    public class Planner_FindNewGoal : HunterTask
+    {
+        public Planner_FindNewGoal(HunterBehaviorNodes context) : base(context) { }
+
+        public override NodeState Evaluate()
+        {
+            context.hunter.currentBTState = "PLANNER: Assessing... Looking for new goal.";
+
+            // --- Goal Priority 1: Tactical (Ambush) ---
+            // (We will add this logic later, e.g., checking if the
+            // player is in a dead-end room)
+
+            // --- Goal Priority 2: Search Hottest Room ---
+            RoomInfo bestRoom = null;
+            float maxCuriosity = float.NegativeInfinity;
+
+            // Loop through all Room memory to find the "hottest" one
+            foreach (RoomInfo room in context.hunter.roomData.Values)
+            {
+                // Find the room with the highest curiosity that isn't already "cold"
+                if (room.generalCuriosity > maxCuriosity && !room.IsFullyPatrolled(context.hunter.baseUncertainty))
+                {
+                    maxCuriosity = room.generalCuriosity;
+                    bestRoom = room;
+                }
+            }
+
+            if (bestRoom != null)
+            {
+                // We found a goal!
+                context.hunter.activeGoal = new HunterGoal(GoalType.SearchRoom, bestRoom);
+                context.hunter.currentBTState = $"PLANNER: New Goal - Search {bestRoom.roomName}";
+
+                // Return SUCCESS, so on the *next frame* the
+                // 'executeGoalBranch' will run.
+                nodeState = NodeState.SUCCESS;
+                return nodeState;
+            }
+
+            // --- Goal Priority 3: Wander (If no "hot" rooms) ---
+            // If no rooms are "hot," the AI is idle. We can tell it to
+            // just wander to a *random* room. (For now, we'll just fail)
+
+            context.hunter.currentBTState = "PLANNER: No hot rooms found. Idle.";
+            context.hunter.activeGoal = null;
+
+            // Return FAILURE. The BT will re-run this next frame, 
+            // effectively "idling" until a room gets "hot."
+            nodeState = NodeState.FAILURE;
+            return nodeState;
+        }
+    }
 }
 
 

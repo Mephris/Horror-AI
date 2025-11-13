@@ -4,8 +4,8 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 using UnityEngine.AI;
+// Ensure you have this using statement for the Behavior Tree Node types
 using static Node;
-
 
 
 [System.Serializable]
@@ -26,33 +26,40 @@ public class HunterPatrolMemory
     // Quick Check for BT to decide if this point is a high priority detour
     public bool IsWorthyOfInvestigation => hasHeardNoise || hasSeenDisturbance || hasDirectorTip || playerProbability > 0.5f;
 
-    public float calculatedPriorityScore = 0f;   // The final value the BT will use to compare points.
+    // The final value the BT will use to compare points.
+    public float calculatedPriorityScore = 0f;
 
-    public RoomInfo parentRoom; // The room this patrol point belongs to 
+    // NEW: Link to the parent room for hierarchical planning
+    public RoomInfo parentRoom;
 }
+
 
 public class HunterAI : MonoBehaviour
 {
-    // --- Behavior Tree Fields ---
+    // --- Behavior Tree & Planner Fields ---
     private Node rootNode;
     private HunterBehaviorNodes btContext;
 
-    // The Planner's active "line of command."
+    // NEW: The Planner's active "line of command."
     public HunterGoal activeGoal;
 
     // --- Navigation & Targets (Made public for HunterBehaviorNodes) ---
     public Transform currentPatrolTarget = null;
     public Transform targetPos; // Last known or commanded position
+
     private NavMeshAgent agent;
 
-    // --- PatrolPoint & Room Data ---
-    private Room[] rooms;
-    private Room closestRoom;
+    // --- PatrolPoint & Room Data (MODIFIED) ---
+    private Room[] rooms; // This is your 'Room.cs' component
 
-    [HideInInspector] // This is the "Master List" of all patrol point memory, It provides fast, "flat" lookups by Transform (for "Glance Perk").
+    // MODIFIED: This is now the "Master List" of all patrol point memory.
+    // It provides fast, "flat" lookups by Transform (for your "Glance Perk").
+    [HideInInspector]
     public Dictionary<Transform, HunterPatrolMemory> patrolPointData = new Dictionary<Transform, HunterPatrolMemory>();
 
-    [HideInInspector] // Micro level hierarchical memory for the Planner organizing memory by room. 
+    // NEW: This is the "Level 1" hierarchical memory for the Planner.
+    // It organizes the memory by room.
+    [HideInInspector]
     public Dictionary<string, RoomInfo> roomData = new Dictionary<string, RoomInfo>();
 
 
@@ -64,17 +71,22 @@ public class HunterAI : MonoBehaviour
     [SerializeField] private float wanderRange = 5f; // Used by GetRandomWanderPoint
     private WaitForSeconds probabilityWait;
 
+
+
     // --- Investigation Settings ---
     [Header("Investigation Timer")]
     [Tooltip("Flag set by the InvestigatePatrolPoint BT Node to track the current wait state.")]
     public bool isInvestigating = false;
     [HideInInspector] public float investigationTimeElapsed = 0f;
     [HideInInspector] public float investigationDuration = 0f; // The calculated duration for the current point.
+
     [Header("Investigation Duration")]
     [Tooltip("Base time (seconds) Hunter spends investigating a patrol point.")]
     [SerializeField] private float baseInvestigationTime = 5f;
+
     [Tooltip("Maximum multiplier applied to base time based on patrol point probability (e.g., probability of 1.0 gets baseTime * maxMultiplier).")]
     [SerializeField] private float maxProbabilityMultiplier = 2.0f; // A point with probability 1.0 would have a duration of 5s * 2.0 = 10s.
+
 
     // --- Director Command Settings ---
     [Header("Director Command Settings")]
@@ -85,6 +97,8 @@ public class HunterAI : MonoBehaviour
     [Header("Chase Settings")]
     [Tooltip("Time (in seconds) the Hunter continues to investigate the last known location after losing sight.")]
     [SerializeField] public float chaseInvestigationTime = 7.0f;
+
+
     [HideInInspector] public float timeSinceLastSeen = 999.0f;
     [HideInInspector] public bool isChasingPlayer = false; // Flag for the BT
 
@@ -92,22 +106,35 @@ public class HunterAI : MonoBehaviour
     [Header("BT Debug")]
     [SerializeField] public string currentBTState = "Initializing";
 
+    // Start is called before the first frame update
     void Start()
     {
         agent = GetComponent<NavMeshAgent>();
-        rooms = FindObjectsOfType<Room>();
-        probabilityWait = new WaitForSeconds(probabilityUpdateInterval); // 1. Initilize the Decay Timer
+        rooms = FindObjectsOfType<Room>(); // Make sure your 'Room.cs' script exists
+
+        // 1. Initialize decay timer
+        probabilityWait = new WaitForSeconds(probabilityUpdateInterval);
 
         // 2. Initialize memory for all patrol points in the scene
+        // We now build both the flat (patrolPointData) and hierarchical (roomData) dictionaries.
+
+        // 2a. Loop through all 'Room' GameObjects found in the scene
         foreach (Room room in rooms)
         {
-            // 2. Create the new "Level 1" RoomInfo data container
-            // (Assuming your 'Room.cs' has an 'exitCount' property)
-            RoomInfo newRoomInfo = new RoomInfo(room.gameObject.name, room.exitCount);
-            roomData.Add(newRoomInfo.roomName, newRoomInfo);
+            // 2b. Create the new "Level 1" RoomInfo data container
+            // (Assuming your 'Room.cs' has an 'exitCount' property,
+            // otherwise, you'll need to add it or set a default)
+            int exits = 1; // Placeholder: You should get this from your 'Room.cs'
+                           // if (room.exitCount != null) { exits = room.exitCount; } // Example
 
-            // 3. Loop through all patrol points *within* this room
-            foreach (PatrolPoints point in room.patrolPoint)
+            RoomInfo newRoomInfo = new RoomInfo(room.gameObject.name, exits);
+            if (!roomData.ContainsKey(newRoomInfo.roomName))
+            {
+                roomData.Add(newRoomInfo.roomName, newRoomInfo);
+            }
+
+            // 2c. Loop through all patrol points *within* this room
+            foreach (PatrolPoints point in room.patrolPoint) // Assuming 'patrolPoint' is the list in 'Room.cs'
             {
                 if (!patrolPointData.ContainsKey(point.transform))
                 {
@@ -115,7 +142,7 @@ public class HunterAI : MonoBehaviour
                     HunterPatrolMemory newMemory = new HunterPatrolMemory
                     {
                         patrolpointTransform = point.transform,
-                        playerProbability = 0.5f,
+                        playerProbability = 0.5f, // Start with some uncertainty
                         lastPatrolTime = Time.time,
                         parentRoom = newRoomInfo // Link it to its parent room
                     };
@@ -130,6 +157,7 @@ public class HunterAI : MonoBehaviour
             }
         }
 
+
         // Ensure targetPos is initialized
         if (targetPos == null)
         {
@@ -137,14 +165,14 @@ public class HunterAI : MonoBehaviour
             targetPos = new GameObject("PlayerChaseTarget_Dynamic").transform;
         }
 
-        // 3. Set the initial closest room
-        ClosestRoom();
+        // 3. Set the initial closest room (This logic might be obsolete now)
+        // ClosestRoom(); // You can likely remove this FSM-era method
 
         // 4. Start the continuous probability decay
         StartCoroutine(UpdateCuriosityRoutine());
 
         // 5. Initialize the Behavior Tree Context and Root
-        btContext = new HunterBehaviorNodes(this, agent);
+        // btContext is set inside SetupBehaviorTree
         rootNode = SetupBehaviorTree();
 
         // 6. Subscription to Actions
@@ -152,8 +180,6 @@ public class HunterAI : MonoBehaviour
         Actions.CommandToMove += OnCommandToMove;
         Actions.HunterCanSeePlayer += OnSeePlayer;
         Actions.HunterSawPatrolPoint += OnPatrolPointSeen;
-
-        // calculationInterval = Director.calculationInterval / 5.0f; // Leaving this commented out (old FSM logic)
     }
 
     void Update()
@@ -162,7 +188,7 @@ public class HunterAI : MonoBehaviour
         if (rootNode != null)
         {
             rootNode.Evaluate();
-            TickBT();
+            // TickBT(); // This is redundant if rootNode.Evaluate() is called
         }
 
         // 1. Increment the timer if the player is not actively seen (timeSinceLastSeen > 0).
@@ -173,13 +199,9 @@ public class HunterAI : MonoBehaviour
         }
 
         // 2. Clear the chasing state if the investigation timer expires.
-        // The chaseInvestigationTime is assumed to be defined in HunterAI.
         if (isChasingPlayer && timeSinceLastSeen >= chaseInvestigationTime)
         {
-            // Debug.Log($"Investigation expired after {timeSinceLastSeen:F2} seconds.");
             isChasingPlayer = false; // <--- THIS is what makes IsPlayerSeen return FAILURE.
-
-            // Safety: Reset the timer to avoid re-entering chase without seeing the player first.
             timeSinceLastSeen = 999.0f; // Large value to indicate "not chasing"
         }
     }
@@ -189,67 +211,53 @@ public class HunterAI : MonoBehaviour
     // --- EVENT HANDLERS (Simplified for BT) ---
     // ===========================================
 
-    // WARNING: Right now Command to move and HighPriorityCommandToMove both modify memory only up, they do not decrease it. 
-    // CommandToMove is now a standard, non-critical 'noise' event
     private void OnCommandToMove(Vector3 target)
     {
-        // Standard Command: Minor probability increase, no special 'Tip' flag
         ModifyMemoryNearLocation(target, 0.2f, false);
-        // Note: We no longer set targetPos, the BT handles it based on memory
     }
+
     private void OnHighPriorityCommandToMove(Vector3 target)
     {
-        // High Priority Command: Significant probability increase, sets the special 'Tip' flag
         ModifyMemoryNearLocation(target, 0.5f, true);
-        // Note: We no longer set targetPos
     }
+
     private void OnSeePlayer(bool isVisible, Vector3 lastPlayerLocation)
     {
-        // When the Hunter sees the player, update the chase target
         if (isVisible)
         {
             targetPos.position = lastPlayerLocation;
-
-            // Reset the timer and set the chasing flag
             timeSinceLastSeen = 0.0f;
             isChasingPlayer = true;
-
             agent.isStopped = false;
         }
         else // isVisible == false (Hunter lost sight)
         {
             if (isChasingPlayer && timeSinceLastSeen == 0.0f)
             {
+                // Start the 7-second timer
                 timeSinceLastSeen = Time.deltaTime;
             }
-            // NOTE: targetPos MUST NOT be updated here, it stays at the last location
         }
     }
+
     private void OnPatrolPointSeen(Transform seenPointTransform)
     {
+        // This lookup is still FAST because we kept the flat patrolPointData dictionary!
         if (patrolPointData.TryGetValue(seenPointTransform, out HunterPatrolMemory memory))
         {
             // --- 1. "GLANCE" PERK ---
-            // Reset the "Curiosity" timer for this point. This is the "perk."
             memory.lastPatrolTime = Time.time;
 
-            // --- 2. "SCALED COLDNESS" (YOUR IDEA) ---
-            // Only cool down the point if it was "hot."
+            // --- 2. "SCALED COLDNESS" ---
             if (memory.playerProbability > baseUncertainty)
             {
-                // Calculate distance to scale the clear amount
                 float distance = Vector3.Distance(transform.position, seenPointTransform.position);
+                float maxClearDistance = 25f;
+                float minClearDistance = 5f;
+                float maxClearAmount = 0.12f;
+                float minClearAmount = 0.02f;
 
-                // Define our min/max ranges
-                float maxClearDistance = 25f; // Max distance to have any effect
-                float minClearDistance = 5f;  // Distance to have maximum effect
-                float maxClearAmount = 0.12f; // <-- HALVED
-                float minClearAmount = 0.02f; // <-- HALVED (approx)
-
-                // Calculate the scaling factor (0.0 at max dist, 1.0 at min dist)
                 float scale = Mathf.InverseLerp(maxClearDistance, minClearDistance, distance);
-
-                // Calculate the final clear amount based on distance
                 float clearAmount = Mathf.Lerp(minClearAmount, maxClearAmount, scale);
 
                 if (clearAmount > 0)
@@ -259,8 +267,14 @@ public class HunterAI : MonoBehaviour
                 }
             }
 
-            // 3. Save the changes to the dictionary.
-            patrolPointData[seenPointTransform] = memory;
+            // --- 3. NEW: Update the parent room's heat ---
+            // After cooling the point, we tell its parent room to recalculate its "generalCuriosity."
+            if (memory.parentRoom != null)
+            {
+                memory.parentRoom.UpdateGeneralCuriosity();
+            }
+
+            // No need to write back to dictionary, 'memory' is a class (reference)
         }
     }
 
@@ -279,127 +293,75 @@ public class HunterAI : MonoBehaviour
         return Vector3.zero;
     }
 
-    // =====================
-    // --- PATROL LOGIC ---
-    // =====================
-    // Keeps the logic that finds the closest room that isn't fully checked
-    private void ClosestRoom()
-    {
-        Room roomNearby = null;
-        float closestDistance = Mathf.Infinity;
+    // ======================================================
+    // --- (OBSOLETE FSM) PATROL LOGIC ---
+    // ======================================================
+    // These ClosestRoom() and FindRoom_Command() methods
+    // are likely no longer needed, as the Planner (FindNewGoal)
+    // and GetBestPatrolPoint() handle this logic now.
+    // You can safely remove them.
+    // ======================================================
 
-        foreach (Room room in rooms)
-        {
-            float distance = Vector3.Distance(transform.position, room.transform.position);
-            // Must update AllPointsChecked to use HasBeenVisited
-            if (distance < closestDistance)
-            {
-                closestDistance = distance;
-                roomNearby = room;
-            }
-        }
-        closestRoom = roomNearby;
-    }
-    private Room FindRoom_Command(Vector3 target)
-    {
-        Room roomNearby = null;
-        float closestDistance = Mathf.Infinity;
 
-        foreach (Room room in rooms)
-        {
-            float distance = Vector3.Distance(transform.position, room.transform.position);
-            if (distance < closestDistance)
-            {
-                closestDistance = distance;
-                roomNearby = room;
-            }
-        }
-        return roomNearby;
-    } // Updated FindRoom_Command to use HasBeenVisited
-
-    // ==================================
     // --- Investigation Methods ---
-    // ==================================
 
-    // 1. Calculates the duration based on the point's probability score.
     public float GetInvestigationDuration(Transform patrolPoint)
     {
-        // Retrieve memory, which should be guaranteed to exist at this point.
         if (patrolPointData.TryGetValue(patrolPoint, out HunterPatrolMemory memory))
         {
-            // Probability scales the duration from base to (base * maxMultiplier)
             float probabilityFactor = memory.playerProbability * (maxProbabilityMultiplier - 1.0f);
             float finalDuration = baseInvestigationTime + (baseInvestigationTime * probabilityFactor);
 
-            // Ensure Director Tips give at least the max duration, regardless of score
             if (memory.hasDirectorTip && finalDuration < (baseInvestigationTime * maxProbabilityMultiplier))
             {
                 return baseInvestigationTime * maxProbabilityMultiplier;
             }
-
             return finalDuration;
         }
-
         return baseInvestigationTime;
     }
 
-    // 2. Starts the investigation timer.
     public void StartInvestigation(Transform patrolPoint)
     {
-        // 1. Set the calculated duration
         investigationDuration = GetInvestigationDuration(patrolPoint);
-
-        // 2. Reset and start the timer
         investigationTimeElapsed = 0f;
         isInvestigating = true;
-        agent.isStopped = true; // Stop movement while investigating
-
-        // 3. Record the visit now (Replaces ArrivedAtPatrolPoint logic and sets lastPatrolTime)
+        agent.isStopped = true;
         RecordPatrolVisit(patrolPoint);
-
         Debug.Log($"Starting Investigation at {patrolPoint.name}. Duration: {investigationDuration:F2}s.");
     }
 
-    // 3. Updates the timer (called by the BT node)
     public Node.NodeState UpdateInvestigationTimer()
     {
         if (!isInvestigating)
         {
             return Node.NodeState.FAILURE;
         }
-
         investigationTimeElapsed += Time.deltaTime;
-
         if (investigationTimeElapsed >= investigationDuration)
         {
-            // Investigation Complete
             isInvestigating = false;
             agent.isStopped = false;
-            currentPatrolTarget = null; // Clear target for next Patrol selection
+            currentPatrolTarget = null;
             return Node.NodeState.SUCCESS;
         }
-
-        // Still waiting
         return Node.NodeState.RUNNING;
     }
 
-    // 4. Record Patrol Visit & Memory Cleanup 
     public void RecordPatrolVisit(Transform point)
     {
         if (patrolPointData.TryGetValue(point, out HunterPatrolMemory memory))
         {
-            // Set the visit time to now
             memory.lastPatrolTime = Time.time;
-
-            // Decay probability slightly upon successful investigation
             memory.playerProbability = baseUncertainty; // Set to minimum interest
-
-            // Clear discrete high-priority tags upon arrival
             memory.hasDirectorTip = false;
             memory.hasHeardNoise = false;
 
-            // Write the struct back to the dictionary
-            patrolPointData[point] = memory;
+            // Update parent room's curiosity
+            if (memory.parentRoom != null)
+            {
+                memory.parentRoom.UpdateGeneralCuriosity();
+            }
         }
     }
 
@@ -407,80 +369,36 @@ public class HunterAI : MonoBehaviour
     // --- CORE AI UTILITY FUNCTIONS ---
     // ==================================
 
-    private Node SetupBehaviorTree()
-    {
-        // --- LEAF NODES (Your existing nodes) ---
-        var isPlayerSeen = new HunterBehaviorNodes.IsPlayerSeen(btContext);
-        var chasePlayer = new HunterBehaviorNodes.ChasePlayer(btContext);
-
-        // This is the new "core" of your patrol. It's a sequence that:
-        // 1. Moves to the best point *in the goal room*.
-        // 2. Investigates it upon arrival.
-        var executePatrolStep = new Sequence(new List<Node>
-    {
-        // This task is your *existing* MoveToPatrolPoint.
-        // It will need a *small change* to make GetBestPatrolPoint() 
-        // respect the Planner's "ActiveGoal" room.
-        new HunterBehaviorNodes.MoveToPatrolPoint(btContext),
-
-        // This is your *existing* investigation node.
-        new HunterBehaviorNodes.InvestigatePatrolPoint(btContext)
-    });
-
-        // --- BRANCHES ---
-
-        // Priority 1: Chase (The highest priority interrupt)
-        var chaseBranch = new Sequence(new List<Node> { isPlayerSeen, chasePlayer });
-
-        // Priority 2: Execute the Planner's Goal
-        var executeGoalBranch = new Sequence(new List<Node>
-    {
-        // 1. A new condition: Do we have a goal from the Planner?
-        new HunterBehaviorNodes.HasActiveGoal(btContext),
-        
-        // 2. If yes, run our core patrol/investigate sequence.
-        // This sequence will keep running (SUCCESS/RUNNING) as long
-        // as there are "hot" points in the goal room.
-        executePatrolStep
-    });
-
-        // Priority 3: Get a New Goal (If we don't have one)
-        var getNewGoalBranch = new HunterBehaviorNodes.Planner_FindNewGoal(btContext);
-
-        // --- ROOT ---
-        var root = new Selector(new List<Node>
-    {
-        chaseBranch,        // ALWAYS check for the player first.
-        executeGoalBranch,  // THEN, try to execute our current plan.
-        getNewGoalBranch    // OTHERWISE, get a new plan.
-    });
-
-        return root;
-    }
+    // THIS IS THE CORRECTED FUNCTION
     private IEnumerator UpdateCuriosityRoutine()
     {
         while (true)
         {
             yield return probabilityWait;
 
-            List<Transform> keys = new List<Transform>(patrolPointData.Keys);
-            foreach (Transform key in keys)
+            // We iterate over the .Values collection, which gives us
+            // a reference to each memory object.
+            foreach (HunterPatrolMemory memory in patrolPointData.Values)
             {
-                HunterPatrolMemory memory = patrolPointData[key];
-
-                // --- CURIOSITY LOGIC (THE FIX) ---
-                // This point is "cold," so make it slowly heat up over time.
+                // --- CURIOSITY LOGIC ---
                 float timeSinceLastVisit = Time.time - memory.lastPatrolTime;
 
-                // After (e.g.) 30 seconds of not being seen, start increasing probability.
                 if (timeSinceLastVisit > 30f)
                 {
-                    // Increase prob by a small amount, up to a max cap (e.g., 0.5)
-                    // This makes it "interesting," but not as "hot" as a Director command.
+                    // Because 'memory' is a class (a reference type),
+                    // this line *directly modifies* the object in the dictionary.
                     memory.playerProbability = Mathf.Min(0.5f, memory.playerProbability + 0.05f);
                 }
 
-                patrolPointData[key] = memory;
+                // That's it! The line "patrolPointData[key] = memory;" is
+                // deleted because we are modifying the object directly
+                // and don't have (or need) a 'key' in this loop.
+            }
+
+            // After updating all points, update all rooms
+            foreach (RoomInfo room in roomData.Values)
+            {
+                room.UpdateGeneralCuriosity();
             }
         }
     }
@@ -489,17 +407,97 @@ public class HunterAI : MonoBehaviour
     private float CalculatePathCost(NavMeshPath path)
     {
         float cost = 0f;
-
-        // Sum up the cost of each corner in the path
         for (int i = 1; i < path.corners.Length; i++)
         {
             cost += Vector3.Distance(path.corners[i - 1], path.corners[i]);
         }
-
         return cost;
-    }     // Helper method to calculate the cost of a NavMeshPath
+    }
+
+    // ========================================================
+    // --- BEHAVIOR TREE SETUP (NEW PLANNER-BASED) ---
+    // ========================================================
+    private Node SetupBehaviorTree()
+    {
+        // 1. Initialize the context that all nodes will share
+        btContext = new HunterBehaviorNodes(this, agent);
+
+        // =================================================================
+        // --- 2. LEAF NODES (Referencing your existing node classes)
+        // =================================================================
+
+        // --- Chase Branch ---
+        var isPlayerSeen = new HunterBehaviorNodes.IsPlayerSeen(btContext);
+        var chasePlayer = new HunterBehaviorNodes.ChasePlayer(btContext);
+
+        // --- Patrol/Goal Branch ---
+        var moveToPatrolPoint = new HunterBehaviorNodes.MoveToPatrolPoint(btContext);
+        var investigatePatrolPoint = new HunterBehaviorNodes.InvestigatePatrolPoint(btContext);
+
+        // --- Planner (New Nodes) ---
+        var hasActiveGoal = new HunterBehaviorNodes.HasActiveGoal(btContext);
+        var findNewGoal = new HunterBehaviorNodes.Planner_FindNewGoal(btContext);
+
+
+        // =================================================================
+        // --- 3. BRANCHES (Building the tree from leaves up)
+        // =================================================================
+
+        // --- Priority 1: Chase Branch ---
+        // If the player is seen, this sequence runs and locks the BT.
+        var chaseBranch = new Sequence(new List<Node>
+        {
+            isPlayerSeen,
+            chasePlayer
+        });
+
+        // --- Priority 2: Execute Goal Branch ---
+
+        // This is the "core loop" of the AI's intelligent patrol.
+        var executePatrolStep = new Sequence(new List<Node>
+        {
+            moveToPatrolPoint,
+            investigatePatrolPoint
+        });
+
+        // This branch checks if we *have* a goal, and if so, executes it.
+        var executeGoalBranch = new Sequence(new List<Node>
+        {
+            hasActiveGoal,
+            executePatrolStep
+        });
+
+        // --- Priority 3: Get New Goal Branch ---
+        var getNewGoalBranch = findNewGoal;
+
+
+        // =================================================================
+        // --- 4. ROOT (The final Selector)
+        // =================================================================
+
+        var root = new Selector(new List<Node>
+        {
+            chaseBranch,        // ALWAYS check for the player first.
+            executeGoalBranch,  // THEN, try to execute our current plan.
+            getNewGoalBranch    // OTHERWISE, get a new plan.
+        });
+
+        return root;
+    }
+
+
+    // ========================================================
+    // --- GetBestPatrolPoint (NOW GOAL-AWARE) ---
+    // ========================================================
     public Transform GetBestPatrolPoint()
     {
+        // NEW: If our goal is to search a room, only search that room.
+        if (activeGoal != null && activeGoal.type == GoalType.SearchRoom && activeGoal.targetRoom != null)
+        {
+            return GetBestPatrolPointInRoom(activeGoal.targetRoom);
+        }
+
+        // OLD: If we have no goal, just find the best point on the whole map.
         Transform bestTarget = null;
         float highestPriorityScore = float.NegativeInfinity;
 
@@ -513,17 +511,12 @@ public class HunterAI : MonoBehaviour
             float score = 0f;
 
             // --- Simplified Score Calculation ---
-
-            // 1. "HEAT" (This score now includes both Director commands AND Curiosity)
             score += memory.playerProbability * 100f;
-
-            // 2. "EVENTS": Flat bonus for high-priority memory tags
             if (memory.IsWorthyOfInvestigation)
             {
                 score += 20f;
             }
 
-            // 3. "EFFORT": Penalty for actual path cost.
             float pathCost;
             if (agent.CalculatePath(pointTransform.position, path) && path.status == NavMeshPathStatus.PathComplete)
             {
@@ -535,8 +528,6 @@ public class HunterAI : MonoBehaviour
                 score = float.NegativeInfinity; // Unreachable
             }
 
-            // --- End of Score Calculation ---
-
             debugScores[pointTransform] = score;
 
             if (score > highestPriorityScore)
@@ -546,46 +537,80 @@ public class HunterAI : MonoBehaviour
             }
         }
 
-        if (bestTarget == null)
+        if (bestTarget != null)
         {
-            Debug.LogWarning("No suitable patrol point found after checks.");
-            return null;
+            HunterPatrolMemory bestMemory = patrolPointData[bestTarget];
+            bestMemory.calculatedPriorityScore = highestPriorityScore;
         }
 
-        HunterPatrolMemory bestMemory = patrolPointData[bestTarget];
-        bestMemory.calculatedPriorityScore = highestPriorityScore;
-        patrolPointData[bestTarget] = bestMemory;
+        return bestTarget;
+    }
+
+    // NEW: The filtered version of GetBestPatrolPoint
+    public Transform GetBestPatrolPointInRoom(RoomInfo room)
+    {
+        Transform bestTarget = null;
+        float highestPriorityScore = float.NegativeInfinity;
+        NavMeshPath path = new NavMeshPath();
+
+        // Loop *only* over the points in that room.
+        foreach (HunterPatrolMemory memory in room.patrolPoints)
+        {
+            Transform pointTransform = memory.patrolpointTransform;
+            float score = 0f;
+
+            // --- Re-using your exact scoring logic ---
+            score += memory.playerProbability * 100f;
+            if (memory.IsWorthyOfInvestigation)
+            {
+                score += 20f;
+            }
+
+            float pathCost;
+            if (agent.CalculatePath(pointTransform.position, path) && path.status == NavMeshPathStatus.PathComplete)
+            {
+                pathCost = CalculatePathCost(path);
+                score -= pathCost * 0.05f;
+            }
+            else
+            {
+                score = float.NegativeInfinity; // Unreachable
+            }
+            // --- End of scoring logic ---
+
+            if (score > highestPriorityScore)
+            {
+                highestPriorityScore = score;
+                bestTarget = pointTransform;
+            }
+        }
+
+        if (bestTarget != null)
+        {
+            // We can update the memory struct directly since it's a class
+            patrolPointData[bestTarget].calculatedPriorityScore = highestPriorityScore;
+        }
 
         return bestTarget;
-    } // Finds best patrol point based on current Heat (playerProbability)*100f + Events(20 or 0) - Effort (path cost*0.05f)
+    }
+
 
     // ==============================================
     // --- DIRECTOR COMMAND MEMORY MODIFICATION ---
     // ==============================================
-    // A helper method to modify memory near a given location for purpose of Director commands
     private void ModifyMemoryNearLocation(Vector3 location, float probabilityIncrease, bool setDirectorTip)
     {
-        // FIX: Collection was modified error. 
-        // Pass 1: Collect the keys (Transforms) that need modification first.
         List<Transform> pointsToUpdate = new List<Transform>();
-
         NavMeshPath path = new NavMeshPath();
 
-        // 1. First Pass: Find all points that are nearby AND reachable via NavMesh
-        foreach (var pair in patrolPointData) // Iterate over all points
+        foreach (var pair in patrolPointData)
         {
             Transform pointTransform = pair.Key;
-
-            // Calculate the NavMesh Path from the command location to the patrol point
             if (NavMesh.CalculatePath(location, pointTransform.position, NavMesh.AllAreas, path))
             {
-                // Check if a complete path exists and calculate its cost (distance)
                 if (path.status == NavMeshPathStatus.PathComplete)
                 {
-                    // This is the custom path cost calculation (helper below)
                     float pathCost = CalculatePathCost(path);
-
-                    // Check if the path cost is below the defined threshold
                     if (pathCost <= directorCommandPathCostThreshold)
                     {
                         pointsToUpdate.Add(pointTransform);
@@ -594,23 +619,21 @@ public class HunterAI : MonoBehaviour
             }
         }
 
-        // 2. Second Pass: Iterate over the collected keys and apply the memory modifications
+        // Second Pass: Apply modifications
         foreach (Transform pointTransform in pointsToUpdate)
         {
-            // Get the current memory struct (value type, so we get a copy)
-            HunterPatrolMemory memory = patrolPointData[pointTransform];
-
-            // Increase probability (clamped between 0 and 1)
+            HunterPatrolMemory memory = patrolPointData[pointTransform]; // Get reference
             memory.playerProbability = Mathf.Clamp01(memory.playerProbability + probabilityIncrease);
-
-            // Set the Director Tip flag (only for High Priority Commands)
             if (setDirectorTip)
             {
                 memory.hasDirectorTip = true;
             }
 
-            // Update the dictionary with the modified struct
-            patrolPointData[pointTransform] = memory;
+            // NEW: Update the room's curiosity
+            if (memory.parentRoom != null)
+            {
+                memory.parentRoom.UpdateGeneralCuriosity();
+            }
         }
 
         if (pointsToUpdate.Count > 0)
@@ -622,23 +645,11 @@ public class HunterAI : MonoBehaviour
             Debug.LogWarning("Director Command: No reachable patrol points found within the path cost threshold.");
         }
     }
+
+
     public void TickBT()
     {
-        // Evaluate the root node
-        Node.NodeState state = rootNode.Evaluate();
-
-        // Debugging: Update the state string based on the result
-        if (state == Node.NodeState.RUNNING)
-        {
-            // This is a simplistic check. A more detailed check requires checking the BT structure.
-            // For now, let's keep it simple and update it in the nodes themselves.
-        }
-        else if (state == Node.NodeState.SUCCESS)
-        {
-            // The entire BT succeeded? Unlikely for a running AI.
-        }
-
-        // The most accurate way is to update this variable inside the highest priority successful node.
+        // This method is likely obsolete, as Update() calls rootNode.Evaluate()
     }
 
     // -- GIZMO's FOR DEBUGGING --
@@ -648,8 +659,6 @@ public class HunterAI : MonoBehaviour
         {
             return memory.playerProbability;
         }
-        return 0f; // Default to 0 (no priority) if the point is not tracked
-    } // Helper method for gizmos visualization
-
-
+        return 0f;
+    }
 }
