@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 using static Node;
@@ -117,6 +118,7 @@ public class HunterBehaviorNodes
     // =================================================================
     // 3. CONDITION: Is Agent At Patrol Point Destination?
     // =================================================================
+    // This node is no longer used by our BT structure, but we can leave it.
     public class IsAtDestination : HunterCondition
     {
         private float acceptableDistance = 0.5f;
@@ -275,58 +277,57 @@ public class HunterBehaviorNodes
         }
     }
 
-    // --- NEW BT TASK: Handles Investigation Timer ---
-    public class InvestigatePatrolPoint : HunterTask
+    public class ObserveAndScan : HunterTask
     {
-        private bool hasStartedInvestigation = false;
+        private float totalScanDuration = 8f; // Max time to spend in this node
+        private float totalTimeElapsed = 0f;
 
-        public InvestigatePatrolPoint(HunterBehaviorNodes context) : base(context) { }
+        private float timePerScanPoint = 2.5f; // Time to look at one point
+        private float scanPointTimer = 0f;
 
-        public override NodeState Evaluate()
+        private float rotationSpeed = 2.0f; // How fast to turn head
+
+        private List<HunterPatrolMemory> hotPoints;
+        private HunterPatrolMemory currentScanTarget;
+
+        public ObserveAndScan(HunterBehaviorNodes context) : base(context) { }
+
+        // This is called on the first frame the node runs
+        private void OnEnter()
         {
-            // 1. Check if we have a valid target to investigate.
-            if (context.hunter.currentPatrolTarget == null)
+            context.hunter.currentBTState = "INVESTIGATE: Starting Scan...";
+
+            // 1. As you planned: Stop the agent to rotate freely
+            context.agent.isStopped = true;
+
+            // 2. Mark the point we just arrived at as "visited"
+            if (context.hunter.currentPatrolTarget != null)
             {
-                hasStartedInvestigation = false;
-                context.hunter.isInvestigating = false;
-                context.hunter.currentBTState = "PATROL: No Target to Investigate";
-                return NodeState.FAILURE;
+                context.hunter.RecordPatrolVisit(context.hunter.currentPatrolTarget);
             }
 
-            // 2. First evaluation: Start the investigation timer in HunterAI.cs.
-            if (!hasStartedInvestigation)
+            // 3. Get the list of other "hot" points to scan
+            // We use the helper function you built in HunterAI!
+            if (context.hunter.activeGoal != null && context.hunter.activeGoal.targetRoom != null)
             {
-                context.hunter.StartInvestigation(context.hunter.currentPatrolTarget);
-                hasStartedInvestigation = true;
-                context.hunter.currentBTState = $"PATROL: Starting Investigation (Duration: {context.hunter.investigationDuration:F2}s)";
-                nodeState = NodeState.RUNNING;
-                return nodeState;
+                hotPoints = context.hunter.GetHotPointsInRoom(context.hunter.activeGoal.targetRoom);
+            }
+            else
+            {
+                hotPoints = new List<HunterPatrolMemory>(); // Empty list
             }
 
-            // 3. Subsequent evaluations: Update the timer.
-            NodeState timerState = context.hunter.UpdateInvestigationTimer();
-
-            if (timerState == NodeState.SUCCESS)
-            {
-                // The timer expired, investigation is complete.
-                hasStartedInvestigation = false;
-                context.hunter.currentBTState = "PATROL: Investigation Complete";
-            }
-            else if (timerState == NodeState.RUNNING)
-            {
-                // Still waiting. Update the debug state.
-                context.hunter.currentBTState = $"PATROL: Investigating ({context.hunter.investigationDuration - context.hunter.investigationTimeElapsed:F2}s left)";
-            }
-
-            nodeState = timerState;
-            return nodeState;
+            // 4. Reset all timers
+            totalTimeElapsed = 0f;
+            scanPointTimer = 0f;
+            currentScanTarget = null;
         }
-    }
 
-    // =================================================================
-    // 6. CONDITION: Does the Hunter have an active, valid goal?
-    // =================================================================
-    public class HasActiveGoal : HunterCondition
+
+        // =================================================================
+        // 6. CONDITION: Does the Hunter have an active, valid goal?
+        // =================================================================
+        public class HasActiveGoal : HunterCondition
     {
         public HasActiveGoal(HunterBehaviorNodes context) : base(context) { }
 

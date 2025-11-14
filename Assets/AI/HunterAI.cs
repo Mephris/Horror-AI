@@ -82,11 +82,6 @@ public class HunterAI : MonoBehaviour
 
 
     // --- Investigation Settings ---
-    [Header("Investigation Timer")]
-    [Tooltip("Flag set by the InvestigatePatrolPoint BT Node to track the current wait state.")]
-    public bool isInvestigating = false;
-    [HideInInspector] public float investigationTimeElapsed = 0f;
-    [HideInInspector] public float investigationDuration = 0f; // The calculated duration for the current point.
 
     [Header("Investigation Duration")]
     [Tooltip("Base time (seconds) Hunter spends investigating a patrol point.")]
@@ -322,33 +317,6 @@ public class HunterAI : MonoBehaviour
             return finalDuration;
         }
         return baseInvestigationTime;
-    }
-
-    public void StartInvestigation(Transform patrolPoint)
-    {
-        investigationDuration = GetInvestigationDuration(patrolPoint);
-        investigationTimeElapsed = 0f;
-        isInvestigating = true;
-        agent.isStopped = true;
-        RecordPatrolVisit(patrolPoint);
-        Debug.Log($"Starting Investigation at {patrolPoint.name}. Duration: {investigationDuration:F2}s.");
-    }
-
-    public Node.NodeState UpdateInvestigationTimer()
-    {
-        if (!isInvestigating)
-        {
-            return Node.NodeState.FAILURE;
-        }
-        investigationTimeElapsed += Time.deltaTime;
-        if (investigationTimeElapsed >= investigationDuration)
-        {
-            isInvestigating = false;
-            agent.isStopped = false;
-            currentPatrolTarget = null;
-            return Node.NodeState.SUCCESS;
-        }
-        return Node.NodeState.RUNNING;
     }
 
     public void RecordPatrolVisit(Transform point)
