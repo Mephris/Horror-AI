@@ -285,9 +285,10 @@ public class HunterBehaviorNodes
     {
         private float totalScanDuration = 8f; // Failsafe: Max time to spend in this node
         private float totalTimeElapsed = 0f;
-
-        private float timePerScanPoint = 2.5f; // Time to look at one point
         private float scanPointTimer = 0f;
+
+        // This will store the randomized time limit for the *current* target
+        private float currentScanTimeLimit = 2.0f;
 
         private float rotationSpeed = 2.0f; // How fast to turn head
 
@@ -343,14 +344,13 @@ public class HunterBehaviorNodes
         public override NodeState Evaluate()
         {
             // --- OnEnter Logic ---
-            // If totalTimeElapsed is 0, this is the first frame.
-            if (totalTimeElapsed == 0f)
+            if (totalTimeElapsed == 0f) // If totalTimeElapsed is 0, this is the first frame.
             {
                 OnEnter();
             }
 
             // --- OnUpdate Logic ---
-            totalTimeElapsed += Time.deltaTime;
+            // totalTimeElapsed += Time.deltaTime;
 
             // Failsafe timer: Check for timeout
             if (totalTimeElapsed >= totalScanDuration)
@@ -375,8 +375,14 @@ public class HunterBehaviorNodes
                     Time.deltaTime * rotationSpeed
                 );
 
-                // If we've looked long enough, clear this target
-                if (scanPointTimer >= timePerScanPoint)
+                // --- MODIFIED: "SMART" EXIT CONDITION ---
+                bool isTimerDone = scanPointTimer >= currentScanTimeLimit;
+
+                // Check if the point is now "cold" thanks to the Glance Perk
+                bool isPointCooled = currentScanTarget.playerProbability <= context.hunter.baseUncertainty;
+
+                // If we've looked long enough OR the point is now "cold", move on.
+                if (isTimerDone || isPointCooled)
                 {
                     currentScanTarget = null;
                     scanPointTimer = 0f;
@@ -384,8 +390,6 @@ public class HunterBehaviorNodes
 
                 return NodeState.RUNNING; // We are busy scanning
             }
-
-
 
             // --- Step 2: Get a NEW Scan Target ---
 
@@ -396,6 +400,10 @@ public class HunterBehaviorNodes
                 {
                     currentScanTarget = hotPoints[0];
                     hotPoints.RemoveAt(0);
+
+                    // Set a new random duration for this specific scan
+                    currentScanTimeLimit = Random.Range(1.0f, 3.0f);
+
                     context.hunter.currentBTState = $"INVESTIGATE: Scanning {currentScanTarget.patrolpointTransform.name}";
                     return NodeState.RUNNING;
                 }
