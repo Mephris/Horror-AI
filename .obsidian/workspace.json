@@ -109,14 +109,10 @@
             "id": "834bbc478827d83b",
             "type": "leaf",
             "state": {
-              "type": "markdown",
-              "state": {
-                "file": "notes/Changelog/13.11.2025.md",
-                "mode": "source",
-                "source": false
-              },
+              "type": "empty",
+              "state": {},
               "icon": "lucide-file",
-              "title": "13.11.2025"
+              "title": "New tab"
             }
           }
         ],
@@ -193,7 +189,6 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "notes/Changelog/13.11.2025.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -203,7 +198,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Backlinks for 13.11.2025"
+              "title": "Backlinks"
             }
           },
           {
