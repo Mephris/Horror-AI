@@ -302,7 +302,8 @@ public class HunterAI : MonoBehaviour
     }
 
     // --- Investigation Methods ---
-
+    /* Is this obsolete with the BT?
+   
     public float GetInvestigationDuration(Transform patrolPoint)
     {
         if (patrolPointData.TryGetValue(patrolPoint, out HunterPatrolMemory memory))
@@ -318,6 +319,7 @@ public class HunterAI : MonoBehaviour
         }
         return baseInvestigationTime;
     }
+    */
 
     public void RecordPatrolVisit(Transform point)
     {
