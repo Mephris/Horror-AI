@@ -277,6 +277,9 @@ public class HunterBehaviorNodes
         }
     }
 
+    // =================================================================
+    // --- NEW: "SMART" INVESTIGATION NODE ---
+    // =================================================================
     public class ObserveAndScan : HunterTask
     {
         private float totalScanDuration = 8f; // Max time to spend in this node
@@ -323,11 +326,92 @@ public class HunterBehaviorNodes
             currentScanTarget = null;
         }
 
+        // This is called when the node finishes (SUCCESS or FAILURE)
+        private void OnExit()
+        {
+            context.agent.isStopped = false; // Release the agent
+            context.hunter.currentPatrolTarget = null; // Clear target so MoveTo finds a new one
+            hotPoints = null;
+            currentScanTarget = null;
+        }
 
-        // =================================================================
-        // 6. CONDITION: Does the Hunter have an active, valid goal?
-        // =================================================================
-        public class HasActiveGoal : HunterCondition
+        public override NodeState Evaluate()
+        {
+            // --- OnEnter Logic ---
+            // If totalTimeElapsed is 0, this is the first frame.
+            if (totalTimeElapsed == 0f)
+            {
+                OnEnter();
+            }
+
+            // --- OnUpdate Logic ---
+            totalTimeElapsed += Time.deltaTime;
+
+            // 1. Check for timeout
+            if (totalTimeElapsed >= totalScanDuration)
+            {
+                context.hunter.currentBTState = "INVESTIGATE: Scan time over.";
+                OnExit();
+                return NodeState.SUCCESS; // Scan is done
+            }
+
+            // 2. Check if we need a new scan target
+            if (currentScanTarget == null)
+            {
+                // Try to get the next "hot" point from our list
+                if (hotPoints.Any())
+                {
+                    currentScanTarget = hotPoints[0]; // Get the closest one
+                    hotPoints.RemoveAt(0); // Remove it from the list
+                    scanPointTimer = 0f;
+                    context.hunter.currentBTState = $"INVESTIGATE: Scanning {currentScanTarget.patrolpointTransform.name}";
+                }
+                else
+                {
+                    // No more points to scan, just wait out the timer
+                    context.hunter.currentBTState = "INVESTIGATE: All points scanned, waiting...";
+                }
+            }
+
+            // 3. If we have a target, rotate to look at it
+            if (currentScanTarget != null)
+            {
+                scanPointTimer += Time.deltaTime;
+
+                // --- This is your "Active Scan" logic ---
+                // Get direction to target
+                Vector3 direction = currentScanTarget.patrolpointTransform.position - context.agent.transform.position;
+                direction.y = 0; // Keep rotation horizontal
+
+                // Smoothly rotate
+                Quaternion lookRotation = Quaternion.LookRotation(direction);
+                context.agent.transform.rotation = Quaternion.Slerp(
+                    context.agent.transform.rotation,
+                    lookRotation,
+                    Time.deltaTime * rotationSpeed
+                );
+                // --- End Active Scan ---
+
+                // This rotation will trigger your FieldOfView and "Glance Perk"
+                // automatically, cooling down the point.
+
+                // If we've looked long enough, get a new target
+                if (scanPointTimer >= timePerScanPoint)
+                {
+                    currentScanTarget = null;
+                }
+            }
+
+            // If we are here, the node is still running
+            return NodeState.RUNNING;
+        }
+    }
+
+
+    // =================================================================
+    // 6. CONDITION: Does the Hunter have an active, valid goal?
+    // =================================================================
+    public class HasActiveGoal : HunterCondition
     {
         public HasActiveGoal(HunterBehaviorNodes context) : base(context) { }
 
@@ -384,9 +468,9 @@ public class HunterBehaviorNodes
         {
             context.hunter.currentBTState = "PLANNER: Assessing... Looking for new goal.";
 
-            // --- Goal Priority 1: Tactical (Ambush) ---
-            // (We will add this logic later, e.g., checking if the
-            // player is in a dead-end room)
+            // --- Goal Priority 1: (Future) Ambush like events? ---
+            // Basically it would be "sees player but decides to do something else then kill"
+            // Cat playing with food behavior. For now, we skip this.
 
             // --- Goal Priority 2: Search Hottest Room ---
             RoomInfo bestRoom = null;
@@ -415,15 +499,33 @@ public class HunterBehaviorNodes
                 return nodeState;
             }
 
+
+
             // --- Goal Priority 3: Wander (If no "hot" rooms) ---
             // If no rooms are "hot," the AI is idle. We can tell it to
             // just wander to a *random* room. (For now, we'll just fail)
+            // --- Temporary Failsafe: Wander to a random room ---
+            if (context.hunter.roomData.Count == 0)
+            {
+                context.hunter.currentBTState = "PLANNER: No rooms found in memory.";
+                nodeState = NodeState.FAILURE;
+                return nodeState;
+            }
 
-            context.hunter.currentBTState = "PLANNER: No hot rooms found. Idle.";
-            context.hunter.activeGoal = null;
+            List<RoomInfo> allRooms = new List<RoomInfo>(context.hunter.roomData.Values);
+            int randomIndex = UnityEngine.Random.Range(0, allRooms.Count);
+            RoomInfo randomRoom = allRooms[randomIndex];
+
+            if (randomRoom != null)
+            {
+                context.hunter.activeGoal = new HunterGoal(GoalType.SearchRoom, randomRoom);
+                context.hunter.currentBTState = $"PLANNER: Bored. Wandering to {randomRoom.roomName}";
+                nodeState = NodeState.SUCCESS;
+                return nodeState;
+            }
 
             // Return FAILURE. The BT will re-run this next frame, 
-            // effectively "idling" until a room gets "hot."
+            context.hunter.currentBTState = "PLANNER: FAILED. No rooms in memory.";
             nodeState = NodeState.FAILURE;
             return nodeState;
         }
