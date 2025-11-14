@@ -666,11 +666,11 @@ public class HunterAI : MonoBehaviour
                 Color gizmoColor = Color.Lerp(Color.blue, Color.red, room.generalCuriosity);
                 gizmoColor.a = 0.3f; // Make it semi-transparent
                 Gizmos.color = gizmoColor;
-                Gizmos.DrawSphere(roomCenter, 1.5f); // Draw a solid sphere
+                Gizmos.DrawSphere(roomCenter, 0.5f); // Draw a solid sphere
 
                 gizmoColor.a = 1.0f; // Make the outline solid
                 Gizmos.color = gizmoColor;
-                Gizmos.DrawWireSphere(roomCenter, 1.5f); // Draw the outline
+                Gizmos.DrawWireSphere(roomCenter, 0.5f); // Draw the outline
 
                 // 2. Draw the text label
                 GUIStyle style = new GUIStyle();
