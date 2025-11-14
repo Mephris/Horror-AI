@@ -4,10 +4,13 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 using UnityEngine.AI;
-// Ensure you have this using statement for the Behavior Tree Node types
+//Behavior Tree Namespace
 using static Node;
 
-// NEW: Required for drawing text labels in the Scene view
+//Linq queries
+using System.Linq;
+
+// For Editor Gizmo drawing
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -34,7 +37,7 @@ public class HunterPatrolMemory
     // The final value the BT will use to compare points.
     public float calculatedPriorityScore = 0f;
 
-    // NEW: Link to the parent room for hierarchical planning
+    // Link to the parent room for hierarchical planning
     [System.NonSerialized] public RoomInfo parentRoom;
 }
 
@@ -303,16 +306,6 @@ public class HunterAI : MonoBehaviour
         return Vector3.zero;
     }
 
-    // ======================================================
-    // --- (OBSOLETE FSM) PATROL LOGIC ---
-    // ======================================================
-    // These ClosestRoom() and FindRoom_Command() methods
-    // are likely no longer needed, as the Planner (FindNewGoal)
-    // and GetBestPatrolPoint() handle this logic now.
-    // You can safely remove them.
-    // ======================================================
-
-
     // --- Investigation Methods ---
 
     public float GetInvestigationDuration(Transform patrolPoint)
@@ -379,7 +372,6 @@ public class HunterAI : MonoBehaviour
     // --- CORE AI UTILITY FUNCTIONS ---
     // ==================================
 
-    // THIS IS THE CORRECTED FUNCTION
     private IEnumerator UpdateCuriosityRoutine()
     {
         while (true)
@@ -413,6 +405,21 @@ public class HunterAI : MonoBehaviour
         }
     }
 
+    // Helper function for the ObserveAndScan node
+    public List<HunterPatrolMemory> GetHotPointsInRoom(RoomInfo room)
+    {
+        if (room == null || room.patrolPoints == null)
+        {
+            return new List<HunterPatrolMemory>(); // Return empty list
+        }
+
+        // Use LINQ to find all points in the room that are still "hot"
+        // and sort them by distance so we scan the closest ones first.
+        return room.patrolPoints
+            .Where(p => p.playerProbability > baseUncertainty)
+            .OrderBy(p => Vector3.Distance(transform.position, p.patrolpointTransform.position))
+            .ToList();
+    }
 
     private float CalculatePathCost(NavMeshPath path)
     {
@@ -425,7 +432,7 @@ public class HunterAI : MonoBehaviour
     }
 
     // ========================================================
-    // --- BEHAVIOR TREE SETUP (NEW PLANNER-BASED) ---
+    // --- BEHAVIOR TREE SETUP ---
     // ========================================================
     private Node SetupBehaviorTree()
     {
@@ -442,7 +449,7 @@ public class HunterAI : MonoBehaviour
 
         // --- Patrol/Goal Branch ---
         var moveToPatrolPoint = new HunterBehaviorNodes.MoveToPatrolPoint(btContext);
-        var investigatePatrolPoint = new HunterBehaviorNodes.InvestigatePatrolPoint(btContext);
+        var observeAndScan = new HunterBehaviorNodes.ObserveAndScan(btContext);
 
         // --- Planner (New Nodes) ---
         var hasActiveGoal = new HunterBehaviorNodes.HasActiveGoal(btContext);
@@ -467,7 +474,7 @@ public class HunterAI : MonoBehaviour
         var executePatrolStep = new Sequence(new List<Node>
         {
             moveToPatrolPoint,
-            investigatePatrolPoint
+            observeAndScan
         });
 
         // This branch checks if we *have* a goal, and if so, executes it.
@@ -497,17 +504,17 @@ public class HunterAI : MonoBehaviour
 
 
     // ========================================================
-    // --- GetBestPatrolPoint (NOW GOAL-AWARE) ---
+    // --- GetBestPatrolPoint ---
     // ========================================================
     public Transform GetBestPatrolPoint()
     {
-        // NEW: If our goal is to search a room, only search that room.
+        // If our goal is to search a room, only search that room.
         if (activeGoal != null && activeGoal.type == GoalType.SearchRoom && activeGoal.targetRoom != null)
         {
             return GetBestPatrolPointInRoom(activeGoal.targetRoom);
         }
 
-        // OLD: If we have no goal, just find the best point on the whole map.
+        // If we have no goal, just find the best point on the whole map.
         Transform bestTarget = null;
         float highestPriorityScore = float.NegativeInfinity;
 
@@ -556,7 +563,7 @@ public class HunterAI : MonoBehaviour
         return bestTarget;
     }
 
-    // NEW: The filtered version of GetBestPatrolPoint
+    // The filtered version of GetBestPatrolPoint
     public Transform GetBestPatrolPointInRoom(RoomInfo room)
     {
         Transform bestTarget = null;
