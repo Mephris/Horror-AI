@@ -391,7 +391,7 @@ public class HunterAI : MonoBehaviour
             .ToList();
     }
 
-    private float CalculatePathCost(NavMeshPath path)
+    public float CalculatePathCost(NavMeshPath path)
     {
         float cost = 0f;
         for (int i = 1; i < path.corners.Length; i++)
