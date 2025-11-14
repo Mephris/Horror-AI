@@ -350,7 +350,7 @@ public class HunterBehaviorNodes
             }
 
             // --- OnUpdate Logic ---
-            // totalTimeElapsed += Time.deltaTime;
+            totalTimeElapsed += Time.deltaTime;
 
             // Failsafe timer: Check for timeout
             if (totalTimeElapsed >= totalScanDuration)
