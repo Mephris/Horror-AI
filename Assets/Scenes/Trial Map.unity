@@ -3863,6 +3863,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 163093178018177616, guid: b84d2f8a2574e16459c3c7610a0dafec, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1180147519}
+    - targetCorrespondingSourceObject: {fileID: 163093178018177616, guid: b84d2f8a2574e16459c3c7610a0dafec, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 644457697}
     - targetCorrespondingSourceObject: {fileID: 8221589468159404334, guid: b84d2f8a2574e16459c3c7610a0dafec, type: 3}
       insertIndex: 0
       addedObject: {fileID: 2077154280}
@@ -6080,9 +6083,6 @@ PrefabInstance:
     m_RemovedGameObjects: []
     m_AddedGameObjects:
     - targetCorrespondingSourceObject: {fileID: 8735019042143473048, guid: 414ea7be2762ce54fa46affc5b5fe4fc, type: 3}
-      insertIndex: 0
-      addedObject: {fileID: 1805128978}
-    - targetCorrespondingSourceObject: {fileID: 8735019042143473048, guid: 414ea7be2762ce54fa46affc5b5fe4fc, type: 3}
       insertIndex: -1
       addedObject: {fileID: 38569210}
     m_AddedComponents: []
@@ -7852,7 +7852,7 @@ Transform:
   m_GameObject: {fileID: 644457696}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 2.5580597, y: -54.058083, z: -420.14615}
+  m_LocalPosition: {x: 2.5580597, y: -54.258083, z: -420.14615}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -7877,7 +7877,7 @@ Transform:
   - {fileID: 2053817387}
   - {fileID: 780782059}
   - {fileID: 963237777}
-  m_Father: {fileID: 1738425122}
+  m_Father: {fileID: 280804793}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &647677844
 PrefabInstance:
@@ -13857,9 +13857,6 @@ MonoBehaviour:
   baseUncertainty: 0.2
   probabilityUpdateInterval: 1
   wanderRange: 5
-  isInvestigating: 0
-  investigationTimeElapsed: 0
-  investigationDuration: 0
   baseInvestigationTime: 5
   maxProbabilityMultiplier: 2
   directorCommandPathCostThreshold: 40
@@ -20813,7 +20810,6 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 644457697}
   - {fileID: 1074244458}
   - {fileID: 280804793}
   m_Father: {fileID: 0}
@@ -21871,37 +21867,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 458972, guid: 5296e314f038d5946b1e87c49325871e, type: 3}
   m_PrefabInstance: {fileID: 1794696084}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &1805128977
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1805128978}
-  m_Layer: 0
-  m_Name: ExitHallway
-  m_TagString: RoomExit
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1805128978
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1805128977}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 6.71, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 494623875}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1807252665
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -492,72 +492,117 @@ public class HunterBehaviorNodes
     // =================================================================
     // 7. TASK: Planner finds a new goal (High-level decision)
     // =================================================================
+
     public class Planner_FindNewGoal : HunterTask
     {
+        // Path cost penalty. Higher = distance matters more.
+        private float pathCostPenalty = 0.5f;
+
         public Planner_FindNewGoal(HunterBehaviorNodes context) : base(context) { }
+
+        // Helper function to get all unpatrolled rooms
+        private List<RoomInfo> GetUnpatrolledRooms()
+        {
+            List<RoomInfo> unpatrolledRooms = new List<RoomInfo>();
+            foreach (RoomInfo room in context.hunter.roomData.Values)
+            {
+                if (!room.IsFullyPatrolled(context.hunter.baseUncertainty))
+                {
+                    unpatrolledRooms.Add(room);
+                }
+            }
+            return unpatrolledRooms;
+        }
+
+        // Helper function to calculate path cost to a room
+        private float GetPathCostToRoom(RoomInfo room)
+        {
+            if (room.roomRef == null) return float.PositiveInfinity; // Safety check
+
+            NavMeshPath path = new NavMeshPath();
+            if (context.agent.CalculatePath(room.roomRef.transform.position, path) && path.status == NavMeshPathStatus.PathComplete)
+            {
+                // Call the public function you created in HunterAI.cs
+                return context.hunter.CalculatePathCost(path);
+            }
+            return float.PositiveInfinity; // Unreachable
+        }
 
         public override NodeState Evaluate()
         {
             context.hunter.currentBTState = "PLANNER: Assessing... Looking for new goal.";
 
-            // --- Goal Priority 1: (Future) Ambush like events? ---
-            // Basically it would be "sees player but decides to do something else then kill"
-            // Cat playing with food behavior. For now, we skip this.
-
-            // --- Goal Priority 2: Search Hottest Room ---
             RoomInfo bestRoom = null;
-            float maxCuriosity = float.NegativeInfinity;
+            float maxScore = float.NegativeInfinity;
 
-            // Loop through all Room memory to find the "hottest" one
+            // --- Priority 1: Search Hottest "Un-patrolled" Room ---
+            List<RoomInfo> unpatrolledRooms = GetUnpatrolledRooms();
+
+            // If we have "hot" rooms, pick the best one
+            if (unpatrolledRooms.Count > 0)
+            {
+                foreach (RoomInfo room in unpatrolledRooms)
+                {
+                    float pathCost = GetPathCostToRoom(room);
+                    if (pathCost == float.PositiveInfinity) continue; // Skip unreachable
+
+                    // --- THIS IS THE FIX FOR BUG 2 (Distance) ---
+                    // Score = (How "hot" is the room) - (How "far" is the room)
+                    float score = (room.generalCuriosity * 100f) - (pathCost * pathCostPenalty);
+
+                    if (score > maxScore)
+                    {
+                        maxScore = score;
+                        bestRoom = room;
+                    }
+                }
+
+                if (bestRoom != null)
+                {
+                    // We found a "hot" room!
+                    context.hunter.activeGoal = new HunterGoal(GoalType.SearchRoom, bestRoom);
+                    context.hunter.currentBTState = $"PLANNER: New Goal - Search {bestRoom.roomName} (Score: {maxScore:F0})";
+                    nodeState = NodeState.SUCCESS;
+                    return nodeState;
+                }
+            }
+
+            // --- Priority 2: Failsafe "Wander" (All rooms are "cold") ---
+            // This code only runs if *all* rooms are "cold"
+            // We find the "least-worst" cold room to re-check (the one with the highest heat)
+            // This fixes the "stuck loop" (Bug 1)
+            context.hunter.currentBTState = "PLANNER: All rooms 'cold'. Finding least-recently-visited.";
+
+            maxScore = float.NegativeInfinity; // Reset score
+            bestRoom = null; // Reset room
+
             foreach (RoomInfo room in context.hunter.roomData.Values)
             {
-                // Find the room with the highest curiosity that isn't already "cold"
-                if (room.generalCuriosity > maxCuriosity && !room.IsFullyPatrolled(context.hunter.baseUncertainty))
+                float pathCost = GetPathCostToRoom(room);
+                if (pathCost == float.PositiveInfinity) continue; // Skip unreachable
+
+                // Same scoring, but now we're comparing "cold" rooms.
+                // The one with the highest curiosity (from the timer) will win.
+                float score = (room.generalCuriosity * 100f) - (pathCost * pathCostPenalty);
+
+                if (score > maxScore)
                 {
-                    maxCuriosity = room.generalCuriosity;
+                    maxScore = score;
                     bestRoom = room;
                 }
             }
 
             if (bestRoom != null)
             {
-                // We found a goal!
+                // We found the "least-worst" cold room to re-check
                 context.hunter.activeGoal = new HunterGoal(GoalType.SearchRoom, bestRoom);
-                context.hunter.currentBTState = $"PLANNER: New Goal - Search {bestRoom.roomName}";
-
-                // Return SUCCESS, so on the *next frame* the
-                // 'executeGoalBranch' will run.
+                context.hunter.currentBTState = $"PLANNER: Bored. Re-checking {bestRoom.roomName} (Score: {maxScore:F0})";
                 nodeState = NodeState.SUCCESS;
                 return nodeState;
             }
 
-
-
-            // --- Goal Priority 3: Wander (If no "hot" rooms) ---
-            // If no rooms are "hot," the AI is idle. We can tell it to
-            // just wander to a *random* room. (For now, we'll just fail)
-            // --- Temporary Failsafe: Wander to a random room ---
-            if (context.hunter.roomData.Count == 0)
-            {
-                context.hunter.currentBTState = "PLANNER: No rooms found in memory.";
-                nodeState = NodeState.FAILURE;
-                return nodeState;
-            }
-
-            List<RoomInfo> allRooms = new List<RoomInfo>(context.hunter.roomData.Values);
-            int randomIndex = UnityEngine.Random.Range(0, allRooms.Count);
-            RoomInfo randomRoom = allRooms[randomIndex];
-
-            if (randomRoom != null)
-            {
-                context.hunter.activeGoal = new HunterGoal(GoalType.SearchRoom, randomRoom);
-                context.hunter.currentBTState = $"PLANNER: Bored. Wandering to {randomRoom.roomName}";
-                nodeState = NodeState.SUCCESS;
-                return nodeState;
-            }
-
-            // Return FAILURE. The BT will re-run this next frame, 
-            context.hunter.currentBTState = "PLANNER: FAILED. No rooms in memory.";
+            // This should only happen if there are no rooms or no reachable rooms
+            context.hunter.currentBTState = "PLANNER: FAILED. No reachable rooms in memory.";
             nodeState = NodeState.FAILURE;
             return nodeState;
         }

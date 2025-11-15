@@ -8,6 +8,7 @@ TagManager:
   - Director
   - PatrolPoint
   - RoomExit
+  - Doorway
   layers:
   - Default
   - TransparentFX
@@ -22,7 +23,7 @@ TagManager:
   - whatIsGround
   - HidingSpot
   - PatrolPointLayer
-  - 
+  - DoorwayLayer
   - 
   - 
   - 
