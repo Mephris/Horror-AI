@@ -474,8 +474,55 @@ public class HunterAI : MonoBehaviour
 
 
     // ========================================================
+    // --- GetBestPatrolRoute ---
+    // ========================================================
+    public List<Transform> GetBestPatrolRoute(int maxSteps = 4)
+    {
+        // 1. Get all points, ordered by probability (hottest first)
+        var allPatrolPoints = patrolPointData.Values
+            .OrderByDescending(p => p.playerProbability)
+            .ToList();
+
+        List<Transform> bestRoute = new List<Transform>();
+        Transform lastPoint = transform; // Start from current Hunter position
+        NavMeshPath path = new NavMeshPath();
+
+        // Safety check: ensure we don't try to pathfind to the same point
+        HashSet<Transform> visited = new HashSet<Transform>();
+        float currentProbabilityThreshold = 0.5f; // Only start with points above a certain probability
+
+        // 2. Build a route of up to maxSteps
+        foreach (var memory in allPatrolPoints)
+        {
+            if (bestRoute.Count >= maxSteps)
+                break;
+
+            Transform nextPoint = memory.patrolpointTransform;
+
+            // Only consider points that are hot enough or the first step
+            if (memory.playerProbability < currentProbabilityThreshold && bestRoute.Count > 0)
+            {
+                continue;
+            }
+
+            // 3. Check for reachability from the last point in the path (or Hunter's start pos)
+            if (!visited.Contains(nextPoint) &&
+                agent.CalculatePath(lastPoint.position, nextPoint.position, NavMesh.AllAreas, path) &&
+                path.status == NavMeshPathStatus.PathComplete)
+            {
+                bestRoute.Add(nextPoint);
+                visited.Add(nextPoint);
+                lastPoint = nextPoint; // The next check is path from this newly added point
+            }
+        }
+
+        return bestRoute;
+    }
+
+    // ========================================================
     // --- GetBestPatrolPoint ---
     // ========================================================
+
     public Transform GetBestPatrolPoint()
     {
         // If our goal is to search a room, only search that room.
