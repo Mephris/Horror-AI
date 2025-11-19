@@ -266,7 +266,7 @@ public class HunterAI : MonoBehaviour
                 if (clearAmount > 0)
                 {
                     memory.playerProbability = Mathf.Max(baseUncertainty, memory.playerProbability - clearAmount);
-                    Debug.Log($"Hunter saw {seenPointTransform.name} (Dist: {distance:F0}m, Clear: {clearAmount:F2}). Prob REDUCED to: {memory.playerProbability:F2}");
+                    //Debug.Log($"Hunter saw {seenPointTransform.name} (Dist: {distance:F0}m, Clear: {clearAmount:F2}). Prob REDUCED to: {memory.playerProbability:F2}");
                 }
             }
 
