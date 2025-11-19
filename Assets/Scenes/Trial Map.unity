@@ -13702,7 +13702,7 @@ MonoBehaviour:
   targetObjRef: {fileID: 1041680238}
   targetMask:
     serializedVersion: 2
-    m_Bits: 128
+    m_Bits: 4224
   obstructionMask:
     serializedVersion: 2
     m_Bits: 2560
@@ -13864,6 +13864,7 @@ MonoBehaviour:
   timeSinceLastSeen: 999
   isChasingPlayer: 0
   currentBTState: Initializing
+  currentMicroBTState: Initializing
 --- !u!114 &1165612975
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -13878,7 +13879,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   radius: 25
   angle: 20
-  targetObjRef: {fileID: 0}
+  targetObjRef: {fileID: 1041680238}
   targetMask:
     serializedVersion: 2
     m_Bits: 4224
