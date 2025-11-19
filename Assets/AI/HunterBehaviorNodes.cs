@@ -337,50 +337,60 @@ public class HunterBehaviorNodes
     // =================================================================
     // --- "SMART" INVESTIGATION NODE ---
     // =================================================================
+
     public class ObserveAndScan : HunterTask
     {
-        private float totalScanDuration = 8f; // Failsafe: Max time to spend in this node
+        private float totalScanDuration = 8f; // Max failsafe time
         private float totalTimeElapsed = 0f;
         private float scanPointTimer = 0f;
 
-        // This will store the randomized time limit for the *current* target
         private float currentScanTimeLimit = 2.0f;
-
-        private float rotationSpeed = 2.0f; // How fast to turn head
+        private float rotationSpeed = 3.0f; // Faster head turn for short patrol
 
         private List<HunterPatrolMemory> hotPoints;
         private HunterPatrolMemory currentScanTarget;
 
-        // --- Logic for "Paranoia Check"---
         private bool hasFinishedHotScan = false;
         private bool hasPerformedParanoiaCheck = false;
+
         public ObserveAndScan(HunterBehaviorNodes context) : base(context) { }
 
-        // This is called on the first frame the node runs
         private void OnEnter()
         {
-            context.hunter.currentBTState = "INVESTIGATE: Starting Scan...";
-
-            // 1. Stop the agent to rotate freely - we will make this select doorways in future. 
+            // 1. Stop the agent so we can rotate/look around
             context.agent.isStopped = true;
+            context.hunter.currentBTState = "INVESTIGATE: Stopping to scan...";
 
-            // 2. Mark the point we just arrived at as "visited"
-            if (context.hunter.currentPatrolTarget != null)
+            // 2. Decide WHAT to scan based on the Goal
+            if (context.hunter.activeGoal != null)
             {
-                context.hunter.RecordPatrolVisit(context.hunter.currentPatrolTarget);
-            }
+                if (context.hunter.activeGoal.type == GoalType.ShortPatrol)
+                {
+                    // NEW: If Short Patrol, look at things nearby (Spatial Awareness)
+                    // Range: 10 meters. This makes him "notice" things he passed by.
+                    hotPoints = context.hunter.GetLocalHotPoints(context.agent.transform.position, 10f);
+                    context.hunter.currentBTState = $"INVESTIGATE: Short Patrol Scan. Found {hotPoints.Count} nearby points.";
 
-            // 3. Get the list of other "hot" points to scan
-            if (context.hunter.activeGoal != null && context.hunter.activeGoal.targetRoom != null)
-            {
-                hotPoints = context.hunter.GetHotPointsInRoom(context.hunter.activeGoal.targetRoom);
+                    // Reduce duration for short patrol so it feels snappy (Move > Glance > Move)
+                    totalScanDuration = 4.0f;
+                }
+                else if (context.hunter.activeGoal.type == GoalType.SearchRoom && context.hunter.activeGoal.targetRoom != null)
+                {
+                    // OLD: If Search Room, look at the whole room list
+                    hotPoints = context.hunter.GetHotPointsInRoom(context.hunter.activeGoal.targetRoom);
+                    totalScanDuration = 8.0f; // Full room search takes longer
+                }
+                else
+                {
+                    hotPoints = new List<HunterPatrolMemory>();
+                }
             }
             else
             {
-                hotPoints = new List<HunterPatrolMemory>(); // Empty list
+                hotPoints = new List<HunterPatrolMemory>();
             }
 
-            // 4. Reset all timers
+            // 3. Reset timers
             totalTimeElapsed = 0f;
             scanPointTimer = 0f;
             currentScanTarget = null;
@@ -388,108 +398,78 @@ public class HunterBehaviorNodes
             hasPerformedParanoiaCheck = false;
         }
 
-        // This is called when the node finishes (SUCCESS or FAILURE)
         private void OnExit()
         {
-            context.agent.isStopped = false; // Release the agent
-            context.hunter.currentPatrolTarget = null; // Clear target so MoveTo finds a new one
+            context.agent.isStopped = false;
+            // Do NOT clear currentPatrolTarget here, MoveToPatrolPoint handles the next step from the list
             hotPoints = null;
             currentScanTarget = null;
         }
 
         public override NodeState Evaluate()
         {
-            // --- OnEnter Logic ---
-            if (totalTimeElapsed == 0f) // If totalTimeElapsed is 0, this is the first frame.
-            {
-                OnEnter();
-            }
+            if (totalTimeElapsed == 0f) OnEnter();
 
-            // --- OnUpdate Logic ---
             totalTimeElapsed += Time.deltaTime;
 
-            // Failsafe timer: Check for timeout
             if (totalTimeElapsed >= totalScanDuration)
             {
-                context.hunter.currentBTState = "INVESTIGATE: Scan time over.";
+                context.hunter.currentBTState = "INVESTIGATE: Scan time over. Continuing...";
                 OnExit();
-                return NodeState.SUCCESS; // Scan is done
+                return NodeState.SUCCESS;
             }
 
-            // 1: Handle Current Scan Target
+            // --- LOOKING LOGIC ---
             if (currentScanTarget != null)
             {
                 scanPointTimer += Time.deltaTime;
 
-                // Rotate to look at the target
+                // MECHANIC: Physically rotate the agent to face the target
+                // This allows the FieldOfView cone to "sweep" over the target, triggering the Glance Perk
                 Vector3 direction = currentScanTarget.patrolpointTransform.position - context.agent.transform.position;
                 direction.y = 0;
-                Quaternion lookRotation = Quaternion.LookRotation(direction);
-                context.agent.transform.rotation = Quaternion.Slerp(
-                    context.agent.transform.rotation,
-                    lookRotation,
-                    Time.deltaTime * rotationSpeed
-                );
+                if (direction != Vector3.zero)
+                {
+                    Quaternion lookRotation = Quaternion.LookRotation(direction);
+                    context.agent.transform.rotation = Quaternion.Slerp(
+                        context.agent.transform.rotation,
+                        lookRotation,
+                        Time.deltaTime * rotationSpeed
+                    );
+                }
 
-                // --- MODIFIED: "SMART" EXIT CONDITION ---
+                // Check if done looking
                 bool isTimerDone = scanPointTimer >= currentScanTimeLimit;
-
-                // Check if the point is now "cold" thanks to the Glance Perk
                 bool isPointCooled = currentScanTarget.playerProbability <= context.hunter.baseUncertainty;
 
-                // If we've looked long enough OR the point is now "cold", move on.
                 if (isTimerDone || isPointCooled)
                 {
                     currentScanTarget = null;
                     scanPointTimer = 0f;
                 }
 
-                return NodeState.RUNNING; // We are busy scanning
+                return NodeState.RUNNING;
             }
 
-            // --- Step 2: Get a NEW Scan Target ---
-
-            // A. If we haven't finished the "hot" list, get the next hot point
+            // --- GET NEW LOOK TARGET ---
             if (!hasFinishedHotScan)
             {
-                if (hotPoints.Count > 0)
+                if (hotPoints != null && hotPoints.Count > 0)
                 {
                     currentScanTarget = hotPoints[0];
                     hotPoints.RemoveAt(0);
-
-                    // Set a new random duration for this specific scan
-                    currentScanTimeLimit = Random.Range(1.0f, 3.0f);
-
-                    context.hunter.currentBTState = $"INVESTIGATE: Scanning {currentScanTarget.patrolpointTransform.name}";
+                    // Quick glance (1-2 seconds)
+                    currentScanTimeLimit = UnityEngine.Random.Range(1.0f, 2.0f);
+                    context.hunter.currentBTState = $"INVESTIGATE: Glancing at {currentScanTarget.patrolpointTransform.name}";
                     return NodeState.RUNNING;
                 }
                 else
                 {
-                    // The "hot" list is now empty
                     hasFinishedHotScan = true;
-                    context.hunter.currentBTState = "INVESTIGATE: Hot scan complete.";
                 }
             }
 
-            // B. "Hot" list is done. Time for the "Paranoia" check.
-            if (hasFinishedHotScan && !hasPerformedParanoiaCheck)
-            {
-                hasPerformedParanoiaCheck = true; // Only do this once
-
-                RoomInfo currentRoom = context.hunter.activeGoal?.targetRoom;
-                if (currentRoom != null && currentRoom.patrolPoints.Count > 0)
-                {
-                    // Pick a random point (even a "cold" one) to double-check
-                    int randomIndex = UnityEngine.Random.Range(0, currentRoom.patrolPoints.Count);
-                    currentScanTarget = currentRoom.patrolPoints[randomIndex];
-                    context.hunter.currentBTState = $"INVESTIGATE: Double-checking {currentScanTarget.patrolpointTransform.name} (Paranoia)";
-                    return NodeState.RUNNING;
-                }
-            }
-
-            // C. All scans and paranoia checks are done.
-            // We don't need to wait for the timer. We can leave.
-            context.hunter.currentBTState = "INVESTIGATE: Scan complete, leaving.";
+            // If we are done scanning hot points, we can finish early
             OnExit();
             return NodeState.SUCCESS;
         }

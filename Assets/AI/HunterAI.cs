@@ -81,6 +81,7 @@ public class HunterAI : MonoBehaviour
 
 
 
+
     // --- Investigation Settings ---
 
     [Header("Investigation Duration")]
@@ -706,6 +707,18 @@ public class HunterAI : MonoBehaviour
         {
             Debug.LogWarning("Director Command: No reachable patrol points found within the path cost threshold.");
         }
+    }
+
+    // ========================================================
+    // --- HELPER: Get Local Hot Points (For Short Patrols) ---
+    // ========================================================
+    public List<HunterPatrolMemory> GetLocalHotPoints(Vector3 center, float radius)
+    {
+        // Find all points within 'radius' that are 'hot'
+        return patrolPointData.Values
+            .Where(p => p.playerProbability > baseUncertainty && Vector3.Distance(center, p.patrolpointTransform.position) <= radius)
+            .OrderByDescending(p => p.playerProbability) // Look at hottest first
+            .ToList();
     }
 
     // -- GIZMO's FOR DEBUGGING --
