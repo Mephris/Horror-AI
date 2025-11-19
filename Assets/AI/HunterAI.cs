@@ -468,51 +468,83 @@ public class HunterAI : MonoBehaviour
         return root;
     }
 
-
     // ========================================================
-    // --- GetBestPatrolRoute ---
+    // --- HELPER: Find the best single point from a specific spot ---
     // ========================================================
-    public List<Transform> GetBestPatrolRoute(int maxSteps = 4)
+    private Transform GetBestNextPoint(Vector3 currentPos, HashSet<Transform> visitedPoints)
     {
-        // 1. Get all points, ordered by probability (hottest first)
-        var allPatrolPoints = patrolPointData.Values
-            .OrderByDescending(p => p.playerProbability)
-            .ToList();
+        Transform bestCandidate = null;
+        float bestScore = float.NegativeInfinity;
 
-        List<Transform> bestRoute = new List<Transform>();
-        Transform lastPoint = transform; // Start from current Hunter position
-        NavMeshPath path = new NavMeshPath();
+        // Tuning: How much does distance hurt the score?
+        // 1.0 means 10m distance removes 10 points of heat score.
+        float distancePenalty = 1.0f;
 
-        // Safety check: ensure we don't try to pathfind to the same point
-        HashSet<Transform> visited = new HashSet<Transform>();
-        float currentProbabilityThreshold = 0.5f; // Only start with points above a certain probability
-
-        // 2. Build a route of up to maxSteps
-        foreach (var memory in allPatrolPoints)
+        foreach (var pair in patrolPointData)
         {
-            if (bestRoute.Count >= maxSteps)
-                break;
+            Transform point = pair.Key;
+            HunterPatrolMemory memory = pair.Value;
 
-            Transform nextPoint = memory.patrolpointTransform;
+            // 1. Skip if we already visited it in this chain
+            if (visitedPoints.Contains(point)) continue;
 
-            // Only consider points that are hot enough or the first step
-            if (memory.playerProbability < currentProbabilityThreshold && bestRoute.Count > 0)
+            // 2. Skip if it is cold (Optimization)
+            if (memory.playerProbability <= baseUncertainty) continue;
+
+            // 3. Calculate Score: (Heat * 100) - (Distance * Penalty)
+            // We use Vector3.Distance (Euclidean) for speed. 
+            // If you want extreme precision, you could use NavMesh.CalculatePath here, 
+            // but that might be too heavy for a loop inside a loop.
+            float dist = Vector3.Distance(currentPos, point.position);
+
+            float score = (memory.playerProbability * 100f) - (dist * distancePenalty);
+
+            // Optional: Add a bonus if it's a "Worthy" point (Noise/Director hint)
+            if (memory.IsWorthyOfInvestigation) score += 20f;
+
+            if (score > bestScore)
             {
-                continue;
-            }
-
-            // 3. Check for reachability from the last point in the path (or Hunter's start pos)
-            if (!visited.Contains(nextPoint) &&
-                UnityEngine.AI.NavMesh.CalculatePath(lastPoint.position, nextPoint.position, NavMesh.AllAreas, path) &&
-                path.status == NavMeshPathStatus.PathComplete)
-            {
-                bestRoute.Add(nextPoint);
-                visited.Add(nextPoint);
-                lastPoint = nextPoint; // The next check is path from this newly added point
+                bestScore = score;
+                bestCandidate = point;
             }
         }
 
-        return bestRoute;
+        return bestCandidate;
+    }
+
+    // ========================================================
+    // --- GetBestPatrolRoute (Chained Logic) ---
+    // ========================================================
+    public List<Transform> GetBestPatrolRoute(int maxSteps = 4)
+    {
+        List<Transform> route = new List<Transform>();
+        HashSet<Transform> visited = new HashSet<Transform>();
+
+        // Start the calculation from the Hunter's current physical position
+        Vector3 virtualPos = transform.position;
+
+        for (int i = 0; i < maxSteps; i++)
+        {
+            // Find the best point relative to where we would be *after* the previous step
+            Transform nextStep = GetBestNextPoint(virtualPos, visited);
+
+            if (nextStep != null)
+            {
+                route.Add(nextStep);
+                visited.Add(nextStep);
+
+                // Update our virtual position to this new point
+                // So the next point we find is close to THIS one, not the Hunter.
+                virtualPos = nextStep.position;
+            }
+            else
+            {
+                // No more valid hot points found to extend the path
+                break;
+            }
+        }
+
+        return route;
     }
 
     // ========================================================
