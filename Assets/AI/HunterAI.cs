@@ -116,9 +116,7 @@ public class HunterAI : MonoBehaviour
         agent = GetComponent<NavMeshAgent>();
         rooms = FindObjectsOfType<Room>(); // Make sure your 'Room.cs' script exists
 
-        // --- ADD THIS LINE ---
         Debug.Log($"[HunterAI.Start] Found {rooms.Length} Room objects in the scene.");
-        // --- END ADD ---
 
         // 1. Initialize decay timer
         probabilityWait = new WaitForSeconds(probabilityUpdateInterval);
@@ -174,9 +172,6 @@ public class HunterAI : MonoBehaviour
             targetPos = new GameObject("PlayerChaseTarget_Dynamic").transform;
         }
 
-        // 3. Set the initial closest room (This logic might be obsolete now)
-        // ClosestRoom(); // You can likely remove this FSM-era method
-
         // 4. Start the continuous probability decay
         StartCoroutine(UpdateCuriosityRoutine());
 
@@ -197,7 +192,6 @@ public class HunterAI : MonoBehaviour
         if (rootNode != null)
         {
             rootNode.Evaluate();
-            // TickBT(); // This is redundant if rootNode.Evaluate() is called
         }
 
         // 1. Increment the timer if the player is not actively seen (timeSinceLastSeen > 0).
@@ -282,8 +276,6 @@ public class HunterAI : MonoBehaviour
             {
                 memory.parentRoom.UpdateGeneralCuriosity();
             }
-
-            // No need to write back to dictionary, 'memory' is a class (reference)
         }
     }
 
@@ -301,26 +293,6 @@ public class HunterAI : MonoBehaviour
         }
         return Vector3.zero;
     }
-
-    // --- Investigation Methods ---
-    /* Is this obsolete with the BT?
-   
-    public float GetInvestigationDuration(Transform patrolPoint)
-    {
-        if (patrolPointData.TryGetValue(patrolPoint, out HunterPatrolMemory memory))
-        {
-            float probabilityFactor = memory.playerProbability * (maxProbabilityMultiplier - 1.0f);
-            float finalDuration = baseInvestigationTime + (baseInvestigationTime * probabilityFactor);
-
-            if (memory.hasDirectorTip && finalDuration < (baseInvestigationTime * maxProbabilityMultiplier))
-            {
-                return baseInvestigationTime * maxProbabilityMultiplier;
-            }
-            return finalDuration;
-        }
-        return baseInvestigationTime;
-    }
-    */
 
     public void RecordPatrolVisit(Transform point)
     {
@@ -360,6 +332,7 @@ public class HunterAI : MonoBehaviour
                 {
                     // Because 'memory' is a class (a reference type),
                     // this line *directly modifies* the object in the dictionary.
+                    // Option 2: Slower Increase (0.02f instead of 0.05f)
                     memory.playerProbability = Mathf.Min(0.5f, memory.playerProbability + 0.02f);
                 }
             }
@@ -469,10 +442,12 @@ public class HunterAI : MonoBehaviour
         return root;
     }
 
-    // ========================================================
-    // --- HELPER: Find the best single point from a specific spot ---
-    // ========================================================
-    private Transform GetBestNextPoint(Vector3 currentPos, HashSet<Transform> visitedPoints)
+    // =================================================================================
+    // --- GET BEST NEXT POINT (Replacement for Routes) ---
+    // =================================================================================
+    // This is the new smart brain for FreePatrol.
+    // It scores points based on Heat - Distance.
+    public Transform GetBestNextPoint(Vector3 currentPos)
     {
         Transform bestCandidate = null;
         float bestScore = float.NegativeInfinity;
@@ -486,16 +461,12 @@ public class HunterAI : MonoBehaviour
             Transform point = pair.Key;
             HunterPatrolMemory memory = pair.Value;
 
-            // 1. Skip if we already visited it in this chain
-            if (visitedPoints.Contains(point)) continue;
-
-            // 2. Skip if it is cold (Optimization)
+            // 1. Skip if it is cold (Optimization)
+            // This prevents returning the point we are standing on (since it's now cold)
             if (memory.playerProbability <= baseUncertainty) continue;
 
-            // 3. Calculate Score: (Heat * 100) - (Distance * Penalty)
+            // 2. Calculate Score: (Heat * 100) - (Distance * Penalty)
             // We use Vector3.Distance (Euclidean) for speed. 
-            // If you want extreme precision, you could use NavMesh.CalculatePath here, 
-            // but that might be too heavy for a loop inside a loop.
             float dist = Vector3.Distance(currentPos, point.position);
 
             float score = (memory.playerProbability * 100f) - (dist * distancePenalty);
@@ -514,42 +485,7 @@ public class HunterAI : MonoBehaviour
     }
 
     // ========================================================
-    // --- GetBestPatrolRoute (Chained Logic) ---
-    // ========================================================
-    public List<Transform> GetBestPatrolRoute(int maxSteps = 4)
-    {
-        List<Transform> route = new List<Transform>();
-        HashSet<Transform> visited = new HashSet<Transform>();
-
-        // Start the calculation from the Hunter's current physical position
-        Vector3 virtualPos = transform.position;
-
-        for (int i = 0; i < maxSteps; i++)
-        {
-            // Find the best point relative to where we would be *after* the previous step
-            Transform nextStep = GetBestNextPoint(virtualPos, visited);
-
-            if (nextStep != null)
-            {
-                route.Add(nextStep);
-                visited.Add(nextStep);
-
-                // Update our virtual position to this new point
-                // So the next point we find is close to THIS one, not the Hunter.
-                virtualPos = nextStep.position;
-            }
-            else
-            {
-                // No more valid hot points found to extend the path
-                break;
-            }
-        }
-
-        return route;
-    }
-
-    // ========================================================
-    // --- GetBestPatrolPoint ---
+    // --- GetBestPatrolPoint (For Room Search) ---
     // ========================================================
 
     public Transform GetBestPatrolPoint()
@@ -559,54 +495,8 @@ public class HunterAI : MonoBehaviour
         {
             return GetBestPatrolPointInRoom(activeGoal.targetRoom);
         }
-
-        // If we have no goal, just find the best point on the whole map.
-        Transform bestTarget = null;
-        float highestPriorityScore = float.NegativeInfinity;
-
-        Dictionary<Transform, float> debugScores = new Dictionary<Transform, float>();
-        NavMeshPath path = new NavMeshPath();
-
-        foreach (var pair in patrolPointData)
-        {
-            Transform pointTransform = pair.Key;
-            HunterPatrolMemory memory = pair.Value;
-            float score = 0f;
-
-            // --- Simplified Score Calculation ---
-            score += memory.playerProbability * 100f;
-            if (memory.IsWorthyOfInvestigation)
-            {
-                score += 20f;
-            }
-
-            float pathCost;
-            if (agent.CalculatePath(pointTransform.position, path) && path.status == NavMeshPathStatus.PathComplete)
-            {
-                pathCost = CalculatePathCost(path);
-                score -= pathCost * 0.05f;
-            }
-            else
-            {
-                score = float.NegativeInfinity; // Unreachable
-            }
-
-            debugScores[pointTransform] = score;
-
-            if (score > highestPriorityScore)
-            {
-                highestPriorityScore = score;
-                bestTarget = pointTransform;
-            }
-        }
-
-        if (bestTarget != null)
-        {
-            HunterPatrolMemory bestMemory = patrolPointData[bestTarget];
-            bestMemory.calculatedPriorityScore = highestPriorityScore;
-        }
-
-        return bestTarget;
+        // Fallback: Use the new free patrol logic
+        return GetBestNextPoint(transform.position);
     }
 
     // The filtered version of GetBestPatrolPoint
@@ -710,7 +600,7 @@ public class HunterAI : MonoBehaviour
     }
 
     // ========================================================
-    // --- HELPER: Get Local Hot Points (For Short Patrols) ---
+    // --- HELPER: Get Local Hot Points (For Scan/Glance) ---
     // ========================================================
     public List<HunterPatrolMemory> GetLocalHotPoints(Vector3 center, float radius)
     {

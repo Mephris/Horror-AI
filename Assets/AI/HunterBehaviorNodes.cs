@@ -130,9 +130,7 @@ public class HunterBehaviorNodes
         {
             NavMeshAgent agent = context.agent;
 
-            // --- THIS IS THE FIX ---
             // If we don't have a target, we can't be "at" it. This node must fail.
-            // This stops the infinite loop with wanderAround.
             if (context.hunter.currentPatrolTarget == null)
             {
                 nodeState = NodeState.FAILURE;
@@ -144,7 +142,6 @@ public class HunterBehaviorNodes
                 if (agent.remainingDistance <= acceptableDistance)
                 {
                     // We have arrived at the currentPatrolTarget.
-
                     // Record the visit (which sets prob to base)
                     context.hunter.RecordPatrolVisit(context.hunter.currentPatrolTarget);
                     // Clear the target so the BT knows it needs a new one
@@ -163,10 +160,7 @@ public class HunterBehaviorNodes
     }
 
     // =================================================================
-    // 4. TASK: Move to Patrol Point (Finds a new point OR moves to existing one | Re-evalutation added)
-    // =================================================================
-    // =================================================================
-    // 4. TASK: Move to Patrol Point (Finds a new point OR moves to existing one | Re-evalutation added)
+    // 4. TASK: Move to Patrol Point (Smart Movement - No Lists)
     // =================================================================
     public class MoveToPatrolPoint : HunterTask
     {
@@ -178,61 +172,61 @@ public class HunterBehaviorNodes
         public override NodeState Evaluate()
         {
             NavMeshAgent agent = context.agent;
-            string goalPrefix = "PATROL"; // Default prefix, should be overwritten
+            string goalPrefix = "PATROL";
 
-            // --- Step 1A: If we have a ShortPatrol goal, set the NEXT point as current target ---
-            if (context.hunter.activeGoal != null &&
-                context.hunter.activeGoal.type == GoalType.ShortPatrol)
+            // --- Step 1: If we don't have a target, FIND ONE based on the Goal Type ---
+            if (context.hunter.currentPatrolTarget == null)
             {
-                goalPrefix = "SHORT PATROL";
-                if (context.hunter.activeGoal.patrolSteps != null && context.hunter.activeGoal.patrolSteps.Count > 0)
+                if (context.hunter.activeGoal != null)
                 {
-                    // The next target is the FIRST element in the steps list
-                    context.hunter.currentPatrolTarget = context.hunter.activeGoal.patrolSteps[0];
-                    // Updated log message for target acquisition
-                    context.hunter.currentBTState = $"{goalPrefix}: Targeting Step {context.hunter.activeGoal.patrolSteps.Count} Target {context.hunter.currentPatrolTarget.gameObject.name}";
+                    // A. FREE PATROL: Find the best single point nearby (Heat - Distance)
+                    if (context.hunter.activeGoal.type == GoalType.FreePatrol)
+                    {
+                        goalPrefix = "FREE PATROL";
+                        // Use the new simple helper
+                        Transform bestNearby = context.hunter.GetBestNextPoint(context.agent.transform.position);
+
+                        if (bestNearby != null)
+                        {
+                            context.hunter.currentPatrolTarget = bestNearby;
+                            context.hunter.currentBTState = $"{goalPrefix}: Targeting {bestNearby.name} (Reactive)";
+                        }
+                        else
+                        {
+                            // If no points found nearby, Free Patrol fails (triggering Planner to run again)
+                            context.hunter.currentBTState = $"{goalPrefix}: No hot points found nearby.";
+                            return NodeState.FAILURE;
+                        }
+                    }
+                    // B. SEARCH ROOM: Find the best point inside the specific room
+                    else if (context.hunter.activeGoal.type == GoalType.SearchRoom)
+                    {
+                        goalPrefix = "ROOM SEARCH";
+                        Transform bestInRoom = context.hunter.GetBestPatrolPointInRoom(context.hunter.activeGoal.targetRoom);
+
+                        if (bestInRoom != null)
+                        {
+                            context.hunter.currentPatrolTarget = bestInRoom;
+                            context.hunter.currentBTState = $"{goalPrefix}: Targeting {bestInRoom.name}";
+                        }
+                        else
+                        {
+                            context.hunter.currentBTState = $"{goalPrefix}: Room seems empty/cleared.";
+                            return NodeState.FAILURE;
+                        }
+                    }
                 }
                 else
                 {
-                    // If steps are empty, this patrol step is complete.
-                    context.hunter.currentBTState = $"{goalPrefix}: No steps left. Succeeding goal.";
-                    return NodeState.SUCCESS;
+                    return NodeState.FAILURE; // No Goal
                 }
             }
-            // --- Step 1B: If we have a SearchRoom goal, find the best target in that room (EXISTING LOGIC) ---
-            else if (context.hunter.activeGoal != null && context.hunter.activeGoal.type == GoalType.SearchRoom)
-            {
-                goalPrefix = "ROOM SEARCH";
-                if (context.hunter.currentPatrolTarget == null)
-                {
-                    // Find a new target only if the previous one was cleared
-                    Transform bestPatrolPoint = context.hunter.GetBestPatrolPoint();
 
-                    if (bestPatrolPoint != null)
-                    {
-                        context.hunter.currentPatrolTarget = bestPatrolPoint;
-                        // Updated log message for target acquisition
-                        context.hunter.currentBTState = $"{goalPrefix}: New Target {bestPatrolPoint.gameObject.name}";
-                    }
-                    else
-                    {
-                        context.hunter.currentBTState = $"{goalPrefix}: No Points Found / Stuck";
-                        nodeState = NodeState.FAILURE; // Cannot move to a non-existent point
-                        return nodeState;
-                    }
-                }
-            }
-            // --- Step 1C: Safety Check for other goals ---
-            else
-            {
-                // If the goal is not ShortPatrol or SearchRoom, this node doesn't know how to move.
-                context.hunter.currentBTState = "MOVE: Invalid Goal Type for Movement.";
-                return NodeState.FAILURE;
-            }
+            // Safety Check
+            if (context.hunter.currentPatrolTarget == null) return NodeState.FAILURE;
 
-            // We should have a valid target now (context.hunter.currentPatrolTarget)
 
-            // --- Step 2: We have a valid target, so move towards it. ---
+            // --- Step 2: Move towards target ---
             agent.SetDestination(context.hunter.currentPatrolTarget.position);
             agent.isStopped = false;
 
@@ -245,27 +239,19 @@ public class HunterBehaviorNodes
             {
                 // --- ARRIVAL ACTION ---
 
-                // 1. Record the visit (this sets prob to base for the arrival point)
+                // 1. Record the visit (This cools the point down)
                 context.hunter.RecordPatrolVisit(context.hunter.currentPatrolTarget);
 
-                // 2. Consume the patrol point if it was part of a ShortPatrol
-                if (context.hunter.activeGoal.type == GoalType.ShortPatrol &&
-                    context.hunter.activeGoal.patrolSteps.Count > 0)
-                {
-                    context.hunter.activeGoal.patrolSteps.RemoveAt(0);
-                }
-
-                // 3. Clear the current target 
+                // 2. Clear the current target immediately.
+                // This forces Step 1 to run again in the next loop, calculating the *next* best step.
                 context.hunter.currentPatrolTarget = null;
 
-                // Updated log message for arrival
-                context.hunter.currentBTState = $"{goalPrefix}: Arrived at {context.hunter.currentPatrolTarget.name}";
-                nodeState = NodeState.SUCCESS; // We are done moving to this step.
+                context.hunter.currentBTState = $"{goalPrefix}: Arrived. Scanning next...";
+                nodeState = NodeState.SUCCESS;
                 return nodeState;
             }
 
             // If we are not at the destination, we are still RUNNING.
-            // Updated log message for running
             context.hunter.currentBTState = $"{goalPrefix}: Moving to {context.hunter.currentPatrolTarget.name}";
             nodeState = NodeState.RUNNING;
             return nodeState;
@@ -287,71 +273,52 @@ public class HunterBehaviorNodes
             NavMeshAgent agent = context.agent;
             Transform targetTransform = context.hunter.targetPos;
 
-            if (targetTransform == null)
-            {
-                return NodeState.FAILURE;
-            }
+            if (targetTransform == null) return NodeState.FAILURE;
 
-            // Set or Maintain Destination
             agent.SetDestination(targetTransform.position);
-            agent.isStopped = false; // Ensure movement is active
+            agent.isStopped = false;
 
-            // ROBUST ARRIVAL CHECK:
-            // 1. Are we close enough? (remainingDistance)
             bool isCloseEnough = agent.remainingDistance <= acceptableDistance;
-            // 2. Are we physically stopped? (This is the most reliable check to avoid orbiting/flickering)
             bool isStoppedMoving = agent.velocity.sqrMagnitude < velocityStopThreshold;
-            // 3. Is the path calculation complete? (Path must not be pending)
             bool isPathNotPending = !agent.pathPending;
 
-            // Check for Arrival
             bool hasArrived = isCloseEnough && isStoppedMoving && isPathNotPending;
 
             if (hasArrived)
             {
-
                 agent.isStopped = true;
-
-                // Return RUNNING to stall the BT on this node.
-                // This holds the highest-priority branch open while the Hunter waits 
-                // for the 7-second investigation timer (managed in HunterAI.cs) to expire.
-                context.hunter.currentBTState = "CHASING/INVESTIGATING: Arrived, Waiting for Timer"; // Update debug state
-
-
+                context.hunter.currentBTState = "CHASING/INVESTIGATING: Arrived, Waiting for Timer";
                 nodeState = NodeState.RUNNING;
                 return nodeState;
             }
             else
             {
-                // If we are still moving, ensure the agent is active
                 agent.isStopped = false;
-                context.hunter.currentBTState = "CHASING/INVESTIGATING: Moving to Last Seen"; // Update debug state
+                context.hunter.currentBTState = "CHASING/INVESTIGATING: Moving to Last Seen";
             }
 
-            // Chase is Running (still moving to the last known spot)
             nodeState = NodeState.RUNNING;
             return nodeState;
         }
     }
 
     // =================================================================
-    // --- "SMART" INVESTIGATION NODE ---
+    // 6. TASK: "SMART" INVESTIGATION NODE
     // =================================================================
 
     public class ObserveAndScan : HunterTask
     {
-        private float totalScanDuration = 8f; // Max failsafe time
+        private float totalScanDuration = 8f;
         private float totalTimeElapsed = 0f;
         private float scanPointTimer = 0f;
 
         private float currentScanTimeLimit = 2.0f;
-        private float rotationSpeed = 3.0f; // Faster head turn for short patrol
+        private float rotationSpeed = 3.0f;
 
         private List<HunterPatrolMemory> hotPoints;
         private HunterPatrolMemory currentScanTarget;
 
         private bool hasFinishedHotScan = false;
-        private bool hasPerformedParanoiaCheck = false;
 
         public ObserveAndScan(HunterBehaviorNodes context) : base(context) { }
 
@@ -359,26 +326,23 @@ public class HunterBehaviorNodes
         {
             // 1. Stop the agent so we can rotate/look around
             context.agent.isStopped = true;
-            context.hunter.currentBTState = "INVESTIGATE: Stopping to scan...";
 
             // 2. Decide WHAT to scan based on the Goal
             if (context.hunter.activeGoal != null)
             {
-                if (context.hunter.activeGoal.type == GoalType.ShortPatrol)
+                // A. FREE PATROL: Look at nearby things (Radius Check)
+                if (context.hunter.activeGoal.type == GoalType.FreePatrol)
                 {
-                    // NEW: If Short Patrol, look at things nearby (Spatial Awareness)
-                    // Range: 10 meters. This makes him "notice" things he passed by.
+                    // Check 10m radius for anything interesting
                     hotPoints = context.hunter.GetLocalHotPoints(context.agent.transform.position, 10f);
-                    context.hunter.currentBTState = $"INVESTIGATE: Short Patrol Scan. Found {hotPoints.Count} nearby points.";
-
-                    // Reduce duration for short patrol so it feels snappy (Move > Glance > Move)
-                    totalScanDuration = 4.0f;
+                    context.hunter.currentBTState = $"INVESTIGATE: Free Patrol Scan. Found {hotPoints.Count} nearby points.";
+                    totalScanDuration = 4.0f; // Snappy scan
                 }
+                // B. ROOM SEARCH: Look at the room's list
                 else if (context.hunter.activeGoal.type == GoalType.SearchRoom && context.hunter.activeGoal.targetRoom != null)
                 {
-                    // OLD: If Search Room, look at the whole room list
                     hotPoints = context.hunter.GetHotPointsInRoom(context.hunter.activeGoal.targetRoom);
-                    totalScanDuration = 8.0f; // Full room search takes longer
+                    totalScanDuration = 8.0f; // Systematic search
                 }
                 else
                 {
@@ -395,13 +359,11 @@ public class HunterBehaviorNodes
             scanPointTimer = 0f;
             currentScanTarget = null;
             hasFinishedHotScan = false;
-            hasPerformedParanoiaCheck = false;
         }
 
         private void OnExit()
         {
             context.agent.isStopped = false;
-            // Do NOT clear currentPatrolTarget here, MoveToPatrolPoint handles the next step from the list
             hotPoints = null;
             currentScanTarget = null;
         }
@@ -412,6 +374,7 @@ public class HunterBehaviorNodes
 
             totalTimeElapsed += Time.deltaTime;
 
+            // Timeout check
             if (totalTimeElapsed >= totalScanDuration)
             {
                 context.hunter.currentBTState = "INVESTIGATE: Scan time over. Continuing...";
@@ -424,8 +387,6 @@ public class HunterBehaviorNodes
             {
                 scanPointTimer += Time.deltaTime;
 
-                // MECHANIC: Physically rotate the agent to face the target
-                // This allows the FieldOfView cone to "sweep" over the target, triggering the Glance Perk
                 Vector3 direction = currentScanTarget.patrolpointTransform.position - context.agent.transform.position;
                 direction.y = 0;
                 if (direction != Vector3.zero)
@@ -438,7 +399,7 @@ public class HunterBehaviorNodes
                     );
                 }
 
-                // Check if done looking
+                // Check if done looking (Time OR Cool-down logic)
                 bool isTimerDone = scanPointTimer >= currentScanTimeLimit;
                 bool isPointCooled = currentScanTarget.playerProbability <= context.hunter.baseUncertainty;
 
@@ -458,7 +419,7 @@ public class HunterBehaviorNodes
                 {
                     currentScanTarget = hotPoints[0];
                     hotPoints.RemoveAt(0);
-                    // Quick glance (1-2 seconds)
+                    // Random glance duration
                     currentScanTimeLimit = UnityEngine.Random.Range(1.0f, 2.0f);
                     context.hunter.currentBTState = $"INVESTIGATE: Glancing at {currentScanTarget.patrolpointTransform.name}";
                     return NodeState.RUNNING;
@@ -469,7 +430,7 @@ public class HunterBehaviorNodes
                 }
             }
 
-            // If we are done scanning hot points, we can finish early
+            // If we are done scanning hot points, finish early
             OnExit();
             return NodeState.SUCCESS;
         }
@@ -477,7 +438,7 @@ public class HunterBehaviorNodes
 
 
     // =================================================================
-    // 6. CONDITION: Does the Hunter have an active, valid goal?
+    // 7. CONDITION: Does the Hunter have an active, valid goal?
     // =================================================================
     public class HasActiveGoal : HunterCondition
     {
@@ -492,25 +453,20 @@ public class HunterBehaviorNodes
                 return nodeState;
             }
 
-            // 2. Check for **ShortPatrol** Goal Completion (Changelog 191125)
-            if (context.hunter.activeGoal.type == GoalType.ShortPatrol)
+            // 2. Check Free Patrol
+            if (context.hunter.activeGoal.type == GoalType.FreePatrol)
             {
-                if (context.hunter.activeGoal.patrolSteps == null || context.hunter.activeGoal.patrolSteps.Count == 0)
-                {
-                    // This goal is complete! Clear it and FAIL.
-                    context.hunter.currentBTState = "PLANNER: ShortPatrol complete.";
-                    context.hunter.activeGoal = null;
-                    nodeState = NodeState.FAILURE;
-                    return nodeState;
-                }
+                // Free Patrol is considered "Active" as long as the Planner hasn't replaced it.
+                // It relies on MoveToPatrolPoint returning Failure if it runs out of points.
+                nodeState = NodeState.SUCCESS;
+                return nodeState;
             }
 
-            // 3. Check if the goal is a "SearchRoom" goal that is already complete.
+            // 3. Check Search Room Completion
             if (context.hunter.activeGoal.type == GoalType.SearchRoom)
             {
                 if (context.hunter.activeGoal.targetRoom == null)
                 {
-                    // Goal is invalid.
                     context.hunter.activeGoal = null;
                     nodeState = NodeState.FAILURE;
                     return nodeState;
@@ -519,37 +475,29 @@ public class HunterBehaviorNodes
                 // Check if the room is "cold."
                 if (context.hunter.activeGoal.targetRoom.IsFullyPatrolled(context.hunter.baseUncertainty))
                 {
-                    // This goal is complete! Clear it and FAIL,
-                    // so the Planner runs to find a *new* goal.
-                    context.hunter.currentBTState = $"PLANNER: Goal for {context.hunter.activeGoal.targetRoom.roomName} is complete.";
+                    context.hunter.currentBTState = $"PLANNER: {context.hunter.activeGoal.targetRoom.roomName} is clear.";
                     context.hunter.activeGoal = null;
                     nodeState = NodeState.FAILURE;
                     return nodeState;
                 }
             }
 
-            // --- (Future) ---
-            // You could add checks for other goal types here,
-            // like GoalType.Ambush, and check if its timer has expired.
-
-            // 4. If we are here, we have a valid, active goal.
+            // 4. If we are here, we have a valid goal.
             nodeState = NodeState.SUCCESS;
             return nodeState;
         }
     }
 
     // =================================================================
-    // 7. TASK: Planner finds a new goal (High-level decision)
+    // 8. TASK: Planner finds a new goal (High-level decision)
     // =================================================================
 
     public class Planner_FindNewGoal : HunterTask
     {
-        // Path cost penalty. Higher = distance matters more.
         private float pathCostPenalty = 0.5f;
 
         public Planner_FindNewGoal(HunterBehaviorNodes context) : base(context) { }
 
-        // Helper function to get all unpatrolled rooms
         private List<RoomInfo> GetUnpatrolledRooms()
         {
             List<RoomInfo> unpatrolledRooms = new List<RoomInfo>();
@@ -563,55 +511,50 @@ public class HunterBehaviorNodes
             return unpatrolledRooms;
         }
 
-        // Helper function to calculate path cost to a room
         private float GetPathCostToRoom(RoomInfo room)
         {
-            if (room.roomRef == null) return float.PositiveInfinity; // Safety check
+            if (room.roomRef == null) return float.PositiveInfinity;
 
             NavMeshPath path = new NavMeshPath();
             if (context.agent.CalculatePath(room.roomRef.transform.position, path) && path.status == NavMeshPathStatus.PathComplete)
             {
-                // Call the public function you created in HunterAI.cs
                 return context.hunter.CalculatePathCost(path);
             }
-            return float.PositiveInfinity; // Unreachable
+            return float.PositiveInfinity;
         }
-
-        // ... (start of Planner_FindNewGoal)
 
         public override NodeState Evaluate()
         {
-            context.hunter.currentBTState = "PLANNER: Assessing... Looking for new goal.";
+            context.hunter.currentBTState = "PLANNER: Assessing...";
 
-            RoomInfo bestRoom = null;
-            float maxScore = float.NegativeInfinity;
+            // --- PRIORITY 1: Check for Free Patrol Opportunities (Local Hot Points) ---
+            // Instead of calculating a route, we just check if there is *any* good next step nearby.
+            Transform bestNearby = context.hunter.GetBestNextPoint(context.agent.transform.position);
 
-            // --- PRIORITY 1: Generate a SHORT PATROL Route (NEW Highest Priority Planning) ---
-            // If the Hunter is mobile and can find a hot path, this is the preferred goal.
-            List<Transform> bestRoute = context.hunter.GetBestPatrolRoute(4); // Find a route of max 4 steps
-
-            if (bestRoute != null && bestRoute.Count > 0)
+            if (bestNearby != null)
             {
-                // For now, if a route is found, we take it as the highest value decision.
-                context.hunter.activeGoal = new HunterGoal(GoalType.ShortPatrol, steps: bestRoute);
-                context.hunter.currentBTState = $"PLANNER: New Goal - ShortPatrol of {bestRoute.Count} steps.";
+                // If there's a good point nearby, we default to Free Patrol.
+                // This keeps the Hunter mobile and reactive.
+                context.hunter.activeGoal = new HunterGoal(GoalType.FreePatrol);
+                context.hunter.currentBTState = "PLANNER: Assigned Free Patrol (Hot points nearby).";
                 nodeState = NodeState.SUCCESS;
                 return nodeState;
             }
 
-            // --- PRIORITY 2: Fallback to Search Hottest "Un-patrolled" Room (EXISTING LOGIC) ---
+            // --- PRIORITY 2: Search Hottest "Un-patrolled" Room (Long Distance) ---
+            // If nothing is nearby, we look for a specific room to travel to.
+            RoomInfo bestRoom = null;
+            float maxScore = float.NegativeInfinity;
             List<RoomInfo> unpatrolledRooms = GetUnpatrolledRooms();
 
-            // If we have "hot" rooms, pick the best one
             if (unpatrolledRooms.Count > 0)
             {
                 foreach (RoomInfo room in unpatrolledRooms)
                 {
                     float pathCost = GetPathCostToRoom(room);
-                    if (pathCost == float.PositiveInfinity) continue; // Skip unreachable
+                    if (pathCost == float.PositiveInfinity) continue;
 
-                    // --- THIS IS THE FIX FOR BUG 2 (Distance) ---
-                    // Score = (How "hot" is the room) - (How "far" is the room)
+                    // Score = Heat - Distance
                     float score = (room.generalCuriosity * 100f) - (pathCost * pathCostPenalty);
 
                     if (score > maxScore)
@@ -623,32 +566,25 @@ public class HunterBehaviorNodes
 
                 if (bestRoom != null)
                 {
-                    // We found a "hot" room!
                     context.hunter.activeGoal = new HunterGoal(GoalType.SearchRoom, bestRoom);
-                    context.hunter.currentBTState = $"PLANNER: New Goal - Search {bestRoom.roomName} (Score: {maxScore:F0})";
+                    context.hunter.currentBTState = $"PLANNER: Traveling to {bestRoom.roomName} (Score: {maxScore:F0})";
                     nodeState = NodeState.SUCCESS;
                     return nodeState;
                 }
             }
 
-            // --- Priority 2: Failsafe "Wander" (All rooms are "cold") ---
-            // This code only runs if *all* rooms are "cold"
-            // We find the "least-worst" cold room to re-check (the one with the highest heat)
-            // This fixes the "stuck loop" (Bug 1)
-            context.hunter.currentBTState = "PLANNER: All rooms 'cold'. Finding least-recently-visited.";
-
-            maxScore = float.NegativeInfinity; // Reset score
-            bestRoom = null; // Reset room
+            // --- Priority 3: Failsafe (Boredom) ---
+            // All rooms are cold, and nothing is nearby. Find the "least worst" room.
+            context.hunter.currentBTState = "PLANNER: Bored. Finding least-recently-visited.";
+            maxScore = float.NegativeInfinity;
+            bestRoom = null;
 
             foreach (RoomInfo room in context.hunter.roomData.Values)
             {
                 float pathCost = GetPathCostToRoom(room);
-                if (pathCost == float.PositiveInfinity) continue; // Skip unreachable
+                if (pathCost == float.PositiveInfinity) continue;
 
-                // Same scoring, but now we're comparing "cold" rooms.
-                // The one with the highest curiosity (from the timer) will win.
                 float score = (room.generalCuriosity * 100f) - (pathCost * pathCostPenalty);
-
                 if (score > maxScore)
                 {
                     maxScore = score;
@@ -658,19 +594,15 @@ public class HunterBehaviorNodes
 
             if (bestRoom != null)
             {
-                // We found the "least-worst" cold room to re-check
                 context.hunter.activeGoal = new HunterGoal(GoalType.SearchRoom, bestRoom);
-                context.hunter.currentBTState = $"PLANNER: Bored. Re-checking {bestRoom.roomName} (Score: {maxScore:F0})";
+                context.hunter.currentBTState = $"PLANNER: Re-checking {bestRoom.roomName}";
                 nodeState = NodeState.SUCCESS;
                 return nodeState;
             }
 
-            // This should only happen if there are no rooms or no reachable rooms
-            context.hunter.currentBTState = "PLANNER: FAILED. No reachable rooms in memory.";
+            context.hunter.currentBTState = "PLANNER: FAILED. No reachable rooms.";
             nodeState = NodeState.FAILURE;
             return nodeState;
         }
     }
 }
-
-
