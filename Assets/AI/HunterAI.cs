@@ -359,7 +359,7 @@ public class HunterAI : MonoBehaviour
                 {
                     // Because 'memory' is a class (a reference type),
                     // this line *directly modifies* the object in the dictionary.
-                    memory.playerProbability = Mathf.Min(0.5f, memory.playerProbability + 0.05f);
+                    memory.playerProbability = Mathf.Min(0.5f, memory.playerProbability + 0.02f);
                 }
 
                 // That's it! The line "patrolPointData[key] = memory;" is
