@@ -165,6 +165,9 @@ public class HunterBehaviorNodes
     // =================================================================
     // 4. TASK: Move to Patrol Point (Finds a new point OR moves to existing one | Re-evalutation added)
     // =================================================================
+    // =================================================================
+    // 4. TASK: Move to Patrol Point (Finds a new point OR moves to existing one | Re-evalutation added)
+    // =================================================================
     public class MoveToPatrolPoint : HunterTask
     {
         private float acceptableDistance = 1.0f;
@@ -175,27 +178,31 @@ public class HunterBehaviorNodes
         public override NodeState Evaluate()
         {
             NavMeshAgent agent = context.agent;
+            string goalPrefix = "PATROL"; // Default prefix, should be overwritten
 
             // --- Step 1A: If we have a ShortPatrol goal, set the NEXT point as current target ---
             if (context.hunter.activeGoal != null &&
                 context.hunter.activeGoal.type == GoalType.ShortPatrol)
             {
+                goalPrefix = "SHORT PATROL";
                 if (context.hunter.activeGoal.patrolSteps != null && context.hunter.activeGoal.patrolSteps.Count > 0)
                 {
                     // The next target is the FIRST element in the steps list
                     context.hunter.currentPatrolTarget = context.hunter.activeGoal.patrolSteps[0];
-                    context.hunter.currentBTState = $"SHORT PATROL: Moving to Step {context.hunter.activeGoal.patrolSteps.Count} Target {context.hunter.currentPatrolTarget.gameObject.name}";
+                    // Updated log message for target acquisition
+                    context.hunter.currentBTState = $"{goalPrefix}: Targeting Step {context.hunter.activeGoal.patrolSteps.Count} Target {context.hunter.currentPatrolTarget.gameObject.name}";
                 }
                 else
                 {
                     // If steps are empty, this patrol step is complete.
-                    context.hunter.currentBTState = "SHORT PATROL: No steps left. Should succeed.";
+                    context.hunter.currentBTState = $"{goalPrefix}: No steps left. Succeeding goal.";
                     return NodeState.SUCCESS;
                 }
             }
             // --- Step 1B: If we have a SearchRoom goal, find the best target in that room (EXISTING LOGIC) ---
             else if (context.hunter.activeGoal != null && context.hunter.activeGoal.type == GoalType.SearchRoom)
             {
+                goalPrefix = "ROOM SEARCH";
                 if (context.hunter.currentPatrolTarget == null)
                 {
                     // Find a new target only if the previous one was cleared
@@ -204,11 +211,12 @@ public class HunterBehaviorNodes
                     if (bestPatrolPoint != null)
                     {
                         context.hunter.currentPatrolTarget = bestPatrolPoint;
-                        context.hunter.currentBTState = $"PATROL: New Target {bestPatrolPoint.gameObject.name}";
+                        // Updated log message for target acquisition
+                        context.hunter.currentBTState = $"{goalPrefix}: New Target {bestPatrolPoint.gameObject.name}";
                     }
                     else
                     {
-                        context.hunter.currentBTState = "PATROL: No Points Found / Stuck";
+                        context.hunter.currentBTState = $"{goalPrefix}: No Points Found / Stuck";
                         nodeState = NodeState.FAILURE; // Cannot move to a non-existent point
                         return nodeState;
                     }
@@ -247,16 +255,18 @@ public class HunterBehaviorNodes
                     context.hunter.activeGoal.patrolSteps.RemoveAt(0);
                 }
 
-                // 3. Clear the current target so the next Evaluate() call 
+                // 3. Clear the current target 
                 context.hunter.currentPatrolTarget = null;
 
-                context.hunter.currentBTState = $"MOVE: Arrived at {context.hunter.currentPatrolTarget.name}";
+                // Updated log message for arrival
+                context.hunter.currentBTState = $"{goalPrefix}: Arrived at {context.hunter.currentPatrolTarget.name}";
                 nodeState = NodeState.SUCCESS; // We are done moving to this step.
                 return nodeState;
             }
 
             // If we are not at the destination, we are still RUNNING.
-            context.hunter.currentBTState = $"MOVE: Moving to {context.hunter.currentPatrolTarget.name}";
+            // Updated log message for running
+            context.hunter.currentBTState = $"{goalPrefix}: Moving to {context.hunter.currentPatrolTarget.name}";
             nodeState = NodeState.RUNNING;
             return nodeState;
         }
