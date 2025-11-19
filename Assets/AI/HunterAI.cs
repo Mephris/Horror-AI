@@ -507,7 +507,7 @@ public class HunterAI : MonoBehaviour
 
             // 3. Check for reachability from the last point in the path (or Hunter's start pos)
             if (!visited.Contains(nextPoint) &&
-                agent.CalculatePath(lastPoint.position, nextPoint.position, NavMesh.AllAreas, path) &&
+                UnityEngine.AI.NavMesh.CalculatePath(lastPoint.position, nextPoint.position, NavMesh.AllAreas, path) &&
                 path.status == NavMeshPathStatus.PathComplete)
             {
                 bestRoute.Add(nextPoint);
