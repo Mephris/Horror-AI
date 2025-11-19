@@ -252,7 +252,7 @@ public class HunterBehaviorNodes
             }
 
             // If we are not at the destination, we are still RUNNING.
-            context.hunter.currentMicroBTState = $"{goalPrefix}: Moving to {context.hunter.currentPatrolTarget.name}";
+            //context.hunter.currentBTState = $"{goalPrefix}: Moving to [{context.hunter.currentPatrolTarget.roomName}] {context.hunter.currentPatrolTarget.name}";
             nodeState = NodeState.RUNNING;
             return nodeState;
         }
