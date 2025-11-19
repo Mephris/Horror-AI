@@ -109,6 +109,7 @@ public class HunterAI : MonoBehaviour
     // --- BT Debugging ---
     [Header("BT Debug")]
     [SerializeField] public string currentBTState = "Initializing";
+    [SerializeField] public string currentMicroBTState = "Initializing";
 
     // Start is called before the first frame update
     void Start()
@@ -445,33 +446,51 @@ public class HunterAI : MonoBehaviour
     // =================================================================================
     // --- GET BEST NEXT POINT (Replacement for Routes) ---
     // =================================================================================
-    // This is the new smart brain for FreePatrol.
-    // It scores points based on Heat - Distance.
+    // =================================================================================
+    // --- GET BEST NEXT POINT (Corrected to use Path Distance) ---
+    // =================================================================================
     public Transform GetBestNextPoint(Vector3 currentPos)
     {
         Transform bestCandidate = null;
         float bestScore = float.NegativeInfinity;
 
-        // Tuning: How much does distance hurt the score?
-        // 1.0 means 10m distance removes 10 points of heat score.
+        // Tuning: How much does walking distance hurt the score?
         float distancePenalty = 1.0f;
+
+        // Optimization: Reuse one path object to reduce garbage collection
+        NavMeshPath path = new NavMeshPath();
 
         foreach (var pair in patrolPointData)
         {
             Transform point = pair.Key;
             HunterPatrolMemory memory = pair.Value;
 
-            // 1. Skip if it is cold (Optimization)
-            // This prevents returning the point we are standing on (since it's now cold)
+            // 1. Skip if it is cold
             if (memory.playerProbability <= baseUncertainty) continue;
 
-            // 2. Calculate Score: (Heat * 100) - (Distance * Penalty)
-            // We use Vector3.Distance (Euclidean) for speed. 
-            float dist = Vector3.Distance(currentPos, point.position);
+            // 2. OPTIMIZATION: Rough Distance Check
+            // Before calculating the expensive NavMesh path, check straight-line distance.
+            // If it's > 40m away through walls, it's definitely > 40m walking, so skip it.
+            if (Vector3.Distance(currentPos, point.position) > 40f) continue;
 
-            float score = (memory.playerProbability * 100f) - (dist * distancePenalty);
+            // 3. Calculate Accurate Walking Distance (Fixes "Seeing through walls")
+            float trueWalkingDistance = float.PositiveInfinity;
 
-            // Optional: Add a bonus if it's a "Worthy" point (Noise/Director hint)
+            // We use the Static NavMesh.CalculatePath because the Agent might be moving/busy
+            if (NavMesh.CalculatePath(currentPos, point.position, NavMesh.AllAreas, path) &&
+                path.status == NavMeshPathStatus.PathComplete)
+            {
+                trueWalkingDistance = CalculatePathCost(path);
+            }
+            else
+            {
+                continue; // Point is unreachable
+            }
+
+            // 4. Calculate Score: (Heat * 100) - (Walking Distance * Penalty)
+            float score = (memory.playerProbability * 100f) - (trueWalkingDistance * distancePenalty);
+
+            // Optional: Add a bonus if it's a "Worthy" point
             if (memory.IsWorthyOfInvestigation) score += 20f;
 
             if (score > bestScore)
