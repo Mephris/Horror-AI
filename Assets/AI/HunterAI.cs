@@ -361,10 +361,6 @@ public class HunterAI : MonoBehaviour
                     // this line *directly modifies* the object in the dictionary.
                     memory.playerProbability = Mathf.Min(0.5f, memory.playerProbability + 0.02f);
                 }
-
-                // That's it! The line "patrolPointData[key] = memory;" is
-                // deleted because we are modifying the object directly
-                // and don't have (or need) a 'key' in this loop.
             }
 
             // After updating all points, update all rooms
