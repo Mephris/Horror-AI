@@ -471,7 +471,7 @@ public class HunterAI : MonoBehaviour
             // 2. OPTIMIZATION: Rough Distance Check
             // Before calculating the expensive NavMesh path, check straight-line distance.
             // If it's > 40m away through walls, it's definitely > 40m walking, so skip it.
-            if (Vector3.Distance(currentPos, point.position) > 40f) continue;
+            if (Vector3.Distance(currentPos, point.position) > 20f) continue;
 
             // 3. Calculate Accurate Walking Distance (Fixes "Seeing through walls")
             float trueWalkingDistance = float.PositiveInfinity;
