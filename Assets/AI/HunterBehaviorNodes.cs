@@ -160,99 +160,119 @@ public class HunterBehaviorNodes
     }
 
     // =================================================================
-    // 4. TASK: Move to Patrol Point (Smart Movement - No Lists)
+    // 4. TASK: Move to Patrol Point (Refill Chain with Corner Cutting)
     // =================================================================
     public class MoveToPatrolPoint : HunterTask
     {
-        private float acceptableDistance = 1.0f;
-        private float velocityStopThreshold = 0.1f;
+        // 1. Hard switch: If we get this close, we switch no matter what.
+        private float proximitySwitchDist = 2.0f;
+
+        // 2. Smart switch: If point is "Cool" AND we are within this range, switch early.
+        private float visualSwitchDist = 10.0f;
+
+        private Transform nextPatrolTarget = null;
 
         public MoveToPatrolPoint(HunterBehaviorNodes context) : base(context) { }
 
         public override NodeState Evaluate()
         {
             NavMeshAgent agent = context.agent;
-            string goalPrefix = "PATROL";
+            string goalPrefix = "CHAIN PATROL";
 
-            // --- Step 1: If we don't have a target, FIND ONE based on the Goal Type ---
+            // --- INITIALIZATION PHASE (Start the Chain) ---
             if (context.hunter.currentPatrolTarget == null)
             {
-                if (context.hunter.activeGoal != null)
-                {
-                    // A. FREE PATROL: Find the best single point nearby (Heat - Distance)
-                    if (context.hunter.activeGoal.type == GoalType.FreePatrol)
-                    {
-                        goalPrefix = "FREE PATROL";
-                        // Use the new simple helper
-                        Transform bestNearby = context.hunter.GetBestNextPoint(context.agent.transform.position);
+                // 1. Pick Point A (From Hunter's current position)
+                context.hunter.currentPatrolTarget = context.hunter.GetBestNextPoint(agent.transform.position);
 
-                        if (bestNearby != null)
-                        {
-                            context.hunter.currentPatrolTarget = bestNearby;
-                            context.hunter.currentBTState = $"{goalPrefix}: Targeting {bestNearby.name} (Reactive)";
-                        }
-                        else
-                        {
-                            // If no points found nearby, Free Patrol fails (triggering Planner to run again)
-                            context.hunter.currentBTState = $"{goalPrefix}: No hot points found nearby.";
-                            return NodeState.FAILURE;
-                        }
-                    }
-                    // B. SEARCH ROOM: Find the best point inside the specific room
-                    else if (context.hunter.activeGoal.type == GoalType.SearchRoom)
-                    {
-                        goalPrefix = "ROOM SEARCH";
-                        Transform bestInRoom = context.hunter.GetBestPatrolPointInRoom(context.hunter.activeGoal.targetRoom);
-
-                        if (bestInRoom != null)
-                        {
-                            context.hunter.currentPatrolTarget = bestInRoom;
-                            context.hunter.currentBTState = $"{goalPrefix}: Targeting {bestInRoom.name}";
-                        }
-                        else
-                        {
-                            context.hunter.currentBTState = $"{goalPrefix}: Room seems empty/cleared.";
-                            return NodeState.FAILURE;
-                        }
-                    }
-                }
-                else
+                if (context.hunter.currentPatrolTarget == null)
                 {
-                    return NodeState.FAILURE; // No Goal
+                    context.hunter.currentBTState = "CHAIN: No points found to start chain.";
+                    return NodeState.FAILURE;
                 }
+
+                // 2. Pick Point B (From Point A's position), ignoring A
+                List<Transform> ignoreList = new List<Transform> { context.hunter.currentPatrolTarget };
+                nextPatrolTarget = context.hunter.GetBestNextPoint(context.hunter.currentPatrolTarget.position, ignoreList);
+
+                // 3. Start Moving to A
+                agent.SetDestination(context.hunter.currentPatrolTarget.position);
+                agent.isStopped = false;
+                context.hunter.currentBTState = $"CHAIN: Starting -> {context.hunter.currentPatrolTarget.name}";
+
+                nodeState = NodeState.RUNNING;
+                return nodeState;
             }
+
+            // --- UPDATE PHASE (Monitor the Chain) ---
 
             // Safety Check
             if (context.hunter.currentPatrolTarget == null) return NodeState.FAILURE;
 
+            // Check Distance
+            float dist = agent.pathPending ? Vector3.Distance(agent.transform.position, context.hunter.currentPatrolTarget.position) : agent.remainingDistance;
 
-            // --- Step 2: Move towards target ---
-            agent.SetDestination(context.hunter.currentPatrolTarget.position);
-            agent.isStopped = false;
+            // --- SWITCH LOGIC EVALUATION ---
+            bool shouldSwitch = false;
 
-            // --- Step 3: Robust Arrival Check ---
-            bool isCloseEnough = agent.remainingDistance <= acceptableDistance;
-            bool isStoppedMoving = agent.velocity.sqrMagnitude < velocityStopThreshold;
-            bool isPathNotPending = !agent.pathPending;
-
-            if (isPathNotPending && isCloseEnough && isStoppedMoving)
+            // Condition 1: Proximity (We physically arrived)
+            if (dist <= proximitySwitchDist)
             {
-                // --- ARRIVAL ACTION ---
-
-                // 1. Record the visit (This cools the point down)
-                context.hunter.RecordPatrolVisit(context.hunter.currentPatrolTarget);
-
-                // 2. Clear the current target immediately.
-                // This forces Step 1 to run again in the next loop, calculating the *next* best step.
-                context.hunter.currentPatrolTarget = null;
-
-                context.hunter.currentBTState = $"{goalPrefix}: Arrived. Scanning next...";
-                nodeState = NodeState.SUCCESS;
-                return nodeState;
+                shouldSwitch = true;
+            }
+            // Condition 2: Visual Clearance (We saw it was empty from nearby)
+            else if (dist <= visualSwitchDist)
+            {
+                // Check the memory heat
+                if (context.hunter.patrolPointData.TryGetValue(context.hunter.currentPatrolTarget, out HunterPatrolMemory memory))
+                {
+                    // If the point is basically cold (base + small buffer), we can skip the final walk
+                    if (memory.playerProbability <= (context.hunter.baseUncertainty + 0.1f))
+                    {
+                        shouldSwitch = true;
+                        // Debug check to see it working
+                        // Debug.Log("Corner Cut Triggered!"); 
+                    }
+                }
             }
 
-            // If we are not at the destination, we are still RUNNING.
-            //context.hunter.currentBTState = $"{goalPrefix}: Moving to [{context.hunter.currentPatrolTarget.roomName}] {context.hunter.currentPatrolTarget.name}";
+            // --- EXECUTE SWITCH ---
+            if (shouldSwitch && !agent.pathPending)
+            {
+                // 1. Record Visit (Ensure it stays cool)
+                context.hunter.RecordPatrolVisit(context.hunter.currentPatrolTarget);
+
+                // 2. Do we have a Next Target buffered?
+                if (nextPatrolTarget != null)
+                {
+                    // A becomes B
+                    context.hunter.currentPatrolTarget = nextPatrolTarget;
+
+                    // Refill B (From new A)
+                    List<Transform> ignoreList = new List<Transform> { context.hunter.currentPatrolTarget };
+                    nextPatrolTarget = context.hunter.GetBestNextPoint(context.hunter.currentPatrolTarget.position, ignoreList);
+
+                    // Update Agent
+                    agent.SetDestination(context.hunter.currentPatrolTarget.position);
+
+                    // Helper for Debug Name
+                    string nextName = nextPatrolTarget != null ? nextPatrolTarget.name : "None";
+                    context.hunter.currentBTState = $"CHAIN: Switched -> {context.hunter.currentPatrolTarget.name} (Next: {nextName})";
+
+                    nodeState = NodeState.RUNNING;
+                    return nodeState;
+                }
+                else
+                {
+                    // End of line
+                    context.hunter.currentPatrolTarget = null;
+                    context.hunter.currentBTState = "CHAIN: Chain finished. Stopping.";
+                    nodeState = NodeState.SUCCESS;
+                    return nodeState;
+                }
+            }
+
+            // --- MOVING PHASE ---
             nodeState = NodeState.RUNNING;
             return nodeState;
         }
@@ -303,9 +323,9 @@ public class HunterBehaviorNodes
     }
 
     // =================================================================
-    // 6. TASK: "SMART" INVESTIGATION NODE
+    // 6. TASK: "SMART" INVESTIGATION NODE - useless right now.
     // =================================================================
-
+    /*
     public class ObserveAndScan : HunterTask
     {
         private float totalScanDuration = 8f;
@@ -435,7 +455,7 @@ public class HunterBehaviorNodes
             return NodeState.SUCCESS;
         }
     }
-
+    */
 
     // =================================================================
     // 7. CONDITION: Does the Hunter have an active, valid goal?

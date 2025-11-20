@@ -390,7 +390,7 @@ public class HunterAI : MonoBehaviour
 
         // --- Patrol/Goal Branch ---
         var moveToPatrolPoint = new HunterBehaviorNodes.MoveToPatrolPoint(btContext);
-        var observeAndScan = new HunterBehaviorNodes.ObserveAndScan(btContext);
+        //var observeAndScan = new HunterBehaviorNodes.ObserveAndScan(btContext);
 
         // --- Planner (New Nodes) ---
         var hasActiveGoal = new HunterBehaviorNodes.HasActiveGoal(btContext);
@@ -415,7 +415,7 @@ public class HunterAI : MonoBehaviour
         var executePatrolStep = new Sequence(new List<Node>
         {
             moveToPatrolPoint,
-            observeAndScan
+            //observeAndScan
         });
 
         // This branch checks if we *have* a goal, and if so, executes it.
@@ -443,13 +443,11 @@ public class HunterAI : MonoBehaviour
         return root;
     }
 
+
     // =================================================================================
-    // --- GET BEST NEXT POINT (Replacement for Routes) ---
+    // --- GET BEST NEXT POINT (With Exclusion List for Chaining) ---
     // =================================================================================
-    // =================================================================================
-    // --- GET BEST NEXT POINT (Corrected to use Path Distance) ---
-    // =================================================================================
-    public Transform GetBestNextPoint(Vector3 currentPos)
+    public Transform GetBestNextPoint(Vector3 currentPos, List<Transform> ignorePoints = null)
     {
         Transform bestCandidate = null;
         float bestScore = float.NegativeInfinity;
@@ -457,7 +455,6 @@ public class HunterAI : MonoBehaviour
         // Tuning: How much does walking distance hurt the score?
         float distancePenalty = 1.0f;
 
-        // Optimization: Reuse one path object to reduce garbage collection
         NavMeshPath path = new NavMeshPath();
 
         foreach (var pair in patrolPointData)
@@ -468,15 +465,15 @@ public class HunterAI : MonoBehaviour
             // 1. Skip if it is cold
             if (memory.playerProbability <= baseUncertainty) continue;
 
-            // 2. OPTIMIZATION: Rough Distance Check
-            // Before calculating the expensive NavMesh path, check straight-line distance.
-            // If it's > 40m away through walls, it's definitely > 40m walking, so skip it.
-            if (Vector3.Distance(currentPos, point.position) > 20f) continue;
+            // 2. Skip if in Ignore List (NEW)
+            if (ignorePoints != null && ignorePoints.Contains(point)) continue;
 
-            // 3. Calculate Accurate Walking Distance (Fixes "Seeing through walls")
+            // 3. OPTIMIZATION: Rough Distance Check (25m)
+            if (Vector3.Distance(currentPos, point.position) > 25f) continue;
+
+            // 4. Calculate Accurate Walking Distance
             float trueWalkingDistance = float.PositiveInfinity;
 
-            // We use the Static NavMesh.CalculatePath because the Agent might be moving/busy
             if (NavMesh.CalculatePath(currentPos, point.position, NavMesh.AllAreas, path) &&
                 path.status == NavMeshPathStatus.PathComplete)
             {
@@ -487,7 +484,7 @@ public class HunterAI : MonoBehaviour
                 continue; // Point is unreachable
             }
 
-            // 4. Calculate Score: (Heat * 100) - (Walking Distance * Penalty)
+            // 5. Calculate Score: (Heat * 100) - (Walking Distance * Penalty)
             float score = (memory.playerProbability * 100f) - (trueWalkingDistance * distancePenalty);
 
             // Optional: Add a bonus if it's a "Worthy" point
