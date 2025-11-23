@@ -2,49 +2,49 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-// You may need to add this if you're using Unity Editor visualization helpers
-// #if UNITY_EDITOR
-// using UnityEditor; 
-// #endif
+// 1. Define the types of points available
+// This Enum needs to be visible to HunterAI.cs, so we define it outside the class
+public enum PointType
+{
+    Standard,   // Normal floor spot
+    Doorway,    // A spot looking into a room (High Priority)
+    HidingSpot, // A spot near a locker/table (Paranoia Priority)
+    Vent        // For future use
+}
 
 public class PatrolPoints : MonoBehaviour
 {
-    // Cache the HunterAI component for Gizmo drawing
-    // This allows the PatrolPoint to query the Hunter's current memory for visualization.
-    private HunterAI hunterAI;
-    private HunterAI HunterAI
-    {
-        get
-        {
-            if (hunterAI == null)
-            {
-                // Find the Hunter in the scene (assuming only one HunterAI exists)
-                hunterAI = FindObjectOfType<HunterAI>();
-            }
-            return hunterAI;
-        }
-    }
+    [Header("Smart Data")]
+    public PointType pointType = PointType.Standard;
+    public Room linkedRoom;
+
+    // --- NEW: Direct Reference to Live Data ---
+    // The HunterAI will plug this in during Start().
+    // We don't Serialize it because it's runtime-only data (Circular ref risk in Editor).
+    [System.NonSerialized]
+    public HunterPatrolMemory runtimeMemory;
+
     private void OnDrawGizmos()
     {
-        // 1. Get the probability score from the Hunter's memory
+        // 1. Default to "Cold" (Green)
         float probability = 0f;
 
-        if (HunterAI != null)
+        // 2. If the game is running and Hunter has given us data, read it directly!
+        if (runtimeMemory != null)
         {
-            // Query the memory via the HunterAI helper method
-            probability = HunterAI.GetProbabilityScore(this.transform);
+            probability = runtimeMemory.playerProbability;
         }
 
-        // 2. Set Gizmo color based on probability (0.0 to 1.0)
-        // Color.Lerp interpolates between two colors:
-        // probability = 0.0 -> Color.green (Low Priority)
-        // probability = 1.0 -> Color.red (High Priority)
+        // 3. Draw Gizmo
         Gizmos.color = Color.Lerp(Color.green, Color.red, probability);
-
-
-        // 3. Draw the Gizmo
-        // Scale the gizmo based on probability to make high-priority points stand out visually.
-        float scale = 0.2f + (probability * 0.15f); // Scale from 0.2 to 0.35
+        float scale = 0.2f + (probability * 0.15f);
         Gizmos.DrawCube(transform.position, Vector3.one * scale);
+
+        // Optional: Draw Doorway direction
+        if (pointType == PointType.Doorway)
+        {
+            Gizmos.color = Color.yellow;
+            Gizmos.DrawRay(transform.position + Vector3.up * 0.5f, transform.forward * 0.5f);
+        }
     }
 }

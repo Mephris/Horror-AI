@@ -1,12 +1,13 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class Room : MonoBehaviour
 {
     public PatrolPoints[] patrolPoint;
 
-    // We can keep exitCount public but now it's calculated, not set.
-    [HideInInspector] // Hide this in the Inspector since it's calculated
-    public int exitCount;
+    [Header("Navigation Graph")]
+    [Tooltip("Drag and drop every Room that is directly reachable from this one.")]
+    public List<Room> neighbors = new List<Room>();
 
     [SerializeField] public bool isNearbyPlayer; // You can keep this serialized
 
@@ -14,28 +15,38 @@ public class Room : MonoBehaviour
     {
         patrolPoint = GetComponentsInChildren<PatrolPoints>();
 
-        // --- NEW LOGIC FOR DYNAMIC EXIT COUNT ---
-        CountExits();
+        FindNeighborsFromDoors();
     }
 
-    private void CountExits()
+    // This adds a right-click option in the Unity Inspector
+    [ContextMenu("Auto-Find Neighbors from Doors")]
+    public void FindNeighborsFromDoors()
     {
-        int count = 0;
+        // 1. Clear current list to avoid duplicates
+        neighbors.Clear();
 
-        // We iterate through all direct children of the Room
-        foreach (Transform child in transform)
+        // 2. Check all patrol points in this room
+        // (Assuming you have a list/array called patrolPoint)
+        foreach (var point in patrolPoint)
         {
-            // Check if the child has the "RoomExit" tag
-            if (child.CompareTag("RoomExit"))
+            // 3. If it's a Doorway AND has a link
+            if (point.pointType == PointType.Doorway && point.linkedRoom != null)
             {
-                count++;
+                // 4. Add the linked room if it's not already in the list
+                if (!neighbors.Contains(point.linkedRoom))
+                {
+                    neighbors.Add(point.linkedRoom);
+                }
+
+                // Optional: Auto-link back? (Make the Hallway know about the Kitchen too)
+                if (!point.linkedRoom.neighbors.Contains(this))
+                {
+                    point.linkedRoom.neighbors.Add(this);
+                }
             }
         }
 
-        this.exitCount = count;
-
-        // You can add a Debug.Log here to verify the count on start!
-        // Debug.Log($"{gameObject.name} found {exitCount} exits.");
+        Debug.Log($"{name}: Found {neighbors.Count} neighbors via Doorways.");
     }
 
 
