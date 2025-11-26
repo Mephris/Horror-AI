@@ -30,31 +30,24 @@ public class HunterBehaviorNodes
     }
 
     // =================================================================
-    // 1. CHASE BRANCH (Priority High)
+    // 1. CHASE BRANCH
     // =================================================================
-
     public class IsPlayerSeen : HunterCondition
     {
         public IsPlayerSeen(HunterBehaviorNodes context) : base(context) { }
 
-        public override NodeState Evaluate()
+        protected override NodeState OnUpdate()
         {
-            if (context.hunter.timeSinceLastSeen == 0.0f)
-            {
-                nodeState = NodeState.SUCCESS;
-                return nodeState;
-            }
+            if (context.hunter.timeSinceLastSeen == 0.0f) return NodeState.SUCCESS;
 
             if (context.hunter.isChasingPlayer &&
                 context.hunter.timeSinceLastSeen < context.hunter.chaseInvestigationTime)
             {
-                nodeState = NodeState.SUCCESS;
-                return nodeState;
+                return NodeState.SUCCESS;
             }
 
             context.hunter.isChasingPlayer = false;
-            nodeState = NodeState.FAILURE;
-            return nodeState;
+            return NodeState.FAILURE;
         }
     }
 
@@ -65,7 +58,7 @@ public class HunterBehaviorNodes
 
         public ChasePlayer(HunterBehaviorNodes context) : base(context) { }
 
-        public override NodeState Evaluate()
+        protected override NodeState OnUpdate()
         {
             NavMeshAgent agent = context.agent;
             Transform targetTransform = context.hunter.targetPos;
@@ -82,107 +75,290 @@ public class HunterBehaviorNodes
             if (isPathNotPending && isCloseEnough && isStoppedMoving)
             {
                 agent.isStopped = true;
-                context.hunter.currentBTState = "CHASING: Arrived at Last Seen. Investigating...";
-                nodeState = NodeState.RUNNING; // Hold state until timer expires in HunterAI
-                return nodeState;
+                context.hunter.currentBTState = "CHASING: Investigating Last Seen...";
+                return NodeState.RUNNING;
             }
             else
             {
                 agent.isStopped = false;
-                context.hunter.currentBTState = "CHASING: Moving to Last Seen Position";
+                context.hunter.currentBTState = "CHASING: Moving to Last Seen...";
             }
 
-            nodeState = NodeState.RUNNING;
-            return nodeState;
+            return NodeState.RUNNING;
         }
     }
 
     // =================================================================
-    // 2. PATROL BRANCH (The Reactive Loop)
+    // 2. PATROL MOVEMENT
     // =================================================================
-
-    // NEW NODE: Replaces the "Planner". 
-    // It simply finds the best target available right now.
     public class AcquirePatrolTarget : HunterTask
     {
         public AcquirePatrolTarget(HunterBehaviorNodes context) : base(context) { }
 
-        public override NodeState Evaluate()
+        protected override NodeState OnUpdate()
         {
-            // 1. Check if we already have a valid target we are moving towards
+            // 1. Check if we have a valid target
             if (context.hunter.currentPatrolTarget != null)
             {
-                // If we are far enough away, keep it.
                 float dist = Vector3.Distance(context.agent.transform.position, context.hunter.currentPatrolTarget.position);
-                if (dist > 3.0f)
-                {
-                    nodeState = NodeState.SUCCESS;
-                    return nodeState;
-                }
 
-                // If we are close (within 3m), mark visited and force a re-pick.
-                context.hunter.RecordPatrolVisit(context.hunter.currentPatrolTarget);
-                context.hunter.currentPatrolTarget = null;
+                if (dist <= 3.0f) return NodeState.SUCCESS;
+
+                if (context.hunter.patrolPointData.TryGetValue(context.hunter.currentPatrolTarget, out HunterPatrolMemory mem))
+                {
+                    // COMMITMENT LOGIC
+                    if (mem.pointType != PointType.Standard) return NodeState.SUCCESS;
+
+                    // CORNER CUTTING
+                    if (mem.playerProbability <= context.hunter.baseUncertainty + 0.05f)
+                    {
+                        context.hunter.currentBTState = $"PATROL: {context.hunter.currentPatrolTarget.name} cooled. Switching...";
+                        context.hunter.currentPatrolTarget = null;
+                    }
+                    else
+                    {
+                        return NodeState.SUCCESS;
+                    }
+                }
             }
 
-            // 2. Find the BEST next target
-            // This function (in HunterAI.cs) now handles Heat, Distance, Doors, and Momentum.
+            // 2. Find BEST next target
             Transform bestPoint = context.hunter.GetBestNextPoint(context.agent.transform.position);
 
             if (bestPoint != null)
             {
                 context.hunter.currentPatrolTarget = bestPoint;
-
-                // Debug Name
                 string roomName = "Hallway";
                 if (context.hunter.patrolPointData.TryGetValue(bestPoint, out HunterPatrolMemory mem) && mem.parentRoom != null)
                 {
                     roomName = mem.parentRoom.roomName;
                 }
-
                 context.hunter.currentBTState = $"PATROL: Locked on [{roomName}] {bestPoint.name}";
-                nodeState = NodeState.SUCCESS;
-                return nodeState;
+                return NodeState.SUCCESS;
             }
 
-            // 3. Failsafe
             context.hunter.currentBTState = "PATROL: No valid targets found (Idle)";
-            nodeState = NodeState.FAILURE;
-            return nodeState;
+            return NodeState.FAILURE;
         }
     }
 
-    // UPDATED NODE: Simple continuous movement
     public class MoveToPatrolPoint : HunterTask
     {
-        private float switchDistance = 2.0f; // Don't stop, switch early
+        private float switchDistance = 2.0f;
+        private NavMeshPath pathContainer;
 
-        public MoveToPatrolPoint(HunterBehaviorNodes context) : base(context) { }
+        public MoveToPatrolPoint(HunterBehaviorNodes context) : base(context)
+        {
+            pathContainer = new NavMeshPath();
+        }
 
-        public override NodeState Evaluate()
+        protected override NodeState OnUpdate()
         {
             if (context.hunter.currentPatrolTarget == null) return NodeState.FAILURE;
 
             NavMeshAgent agent = context.agent;
-            agent.SetDestination(context.hunter.currentPatrolTarget.position);
-            agent.isStopped = false;
+            Vector3 finalTarget = context.hunter.currentPatrolTarget.position;
 
-            float dist = agent.pathPending ? Vector3.Distance(agent.transform.position, context.hunter.currentPatrolTarget.position) : agent.remainingDistance;
+            // CALCULATE DRIFT PATH
+            agent.CalculatePath(finalTarget, pathContainer);
 
-            // --- CONTINUOUS FLOW LOGIC ---
-            if (dist <= switchDistance && !agent.pathPending)
+            if (pathContainer.status == NavMeshPathStatus.PathComplete || pathContainer.status == NavMeshPathStatus.PathPartial)
             {
-                // We are close enough. Return SUCCESS.
-                // This causes the Sequence to finish and restart immediately.
-                // The 'AcquirePatrolTarget' node will see we are close, mark it visited, and pick a NEW target.
-                nodeState = NodeState.SUCCESS;
-                return nodeState;
+                Vector3 carrotPos = GetPointOnPath(pathContainer, context.hunter.pathLookAheadDistance, agent.transform.position);
+                Vector3 forward = (carrotPos - agent.transform.position).normalized;
+                if (forward == Vector3.zero) forward = agent.transform.forward;
+                Vector3 right = Vector3.Cross(Vector3.up, forward);
+
+                float wave = Mathf.Sin(Time.time * context.hunter.driftFrequency) * context.hunter.driftAmplitude;
+                Vector3 driftTarget = carrotPos + (right * wave);
+
+                NavMeshHit hit;
+                if (NavMesh.SamplePosition(driftTarget, out hit, 2.0f, NavMesh.AllAreas))
+                    agent.SetDestination(hit.position);
+                else
+                    agent.SetDestination(carrotPos);
+            }
+            else
+            {
+                agent.SetDestination(finalTarget);
             }
 
-            // Keep moving
-            // context.hunter.currentBTState = $"MOVING: {dist:F1}m to target"; 
-            nodeState = NodeState.RUNNING;
-            return nodeState;
+            agent.isStopped = false;
+
+            float dist = Vector3.Distance(agent.transform.position, finalTarget);
+            if (dist <= switchDistance) return NodeState.SUCCESS;
+
+            return NodeState.RUNNING;
+        }
+
+        private Vector3 GetPointOnPath(NavMeshPath path, float distAhead, Vector3 currentPos)
+        {
+            if (path.corners.Length < 2) return currentPos;
+            float distRemaining = distAhead;
+            Vector3 previousPoint = currentPos;
+
+            for (int i = 0; i < path.corners.Length; i++)
+            {
+                Vector3 nextPoint = path.corners[i];
+                float distToNext = Vector3.Distance(previousPoint, nextPoint);
+                if (distToNext > distRemaining)
+                {
+                    Vector3 dir = (nextPoint - previousPoint).normalized;
+                    return previousPoint + (dir * distRemaining);
+                }
+                distRemaining -= distToNext;
+                previousPoint = nextPoint;
+            }
+            return path.corners[path.corners.Length - 1];
+        }
+    }
+
+    // =================================================================
+    // 3. ACTION BRANCH
+    // =================================================================
+
+    public class IsPatrolPointType : HunterCondition
+    {
+        private PointType targetType;
+
+        public IsPatrolPointType(HunterBehaviorNodes context, PointType type) : base(context)
+        {
+            this.targetType = type;
+        }
+
+        protected override NodeState OnUpdate()
+        {
+            if (context.hunter.currentPatrolTarget == null) return NodeState.FAILURE;
+
+            if (context.hunter.patrolPointData.TryGetValue(context.hunter.currentPatrolTarget, out HunterPatrolMemory mem))
+            {
+                if (mem.pointType == targetType) return NodeState.SUCCESS;
+            }
+
+            return NodeState.FAILURE;
+        }
+    }
+
+
+    // =================================================================
+    // ACTION: Creep & Peek (Event-Driven Version)
+    // =================================================================
+    public class PerformDoorwayPeek : HunterTask
+    {
+        private float timer = 0f;
+        private float originalSpeed;
+        private float originalStoppingDist;
+
+        // Settings
+        private float creepSpeed = 0.5f;
+        private float maxCreepDist = 1.5f; // Now actually used!
+        private float peekDuration = 4.5f;
+
+        // Debug
+        private Vector3 debugTargetPos;
+        private bool isValidTarget;
+
+        public PerformDoorwayPeek(HunterBehaviorNodes context) : base(context) { }
+
+        protected override void OnEnter()
+        {
+            NavMeshAgent agent = context.agent;
+
+            // 1. Capture State
+            originalSpeed = agent.speed;
+            originalStoppingDist = agent.stoppingDistance;
+
+            // 2. Apply Settings
+            agent.speed = creepSpeed;
+            agent.stoppingDistance = 0.1f;
+            agent.isStopped = false;
+
+            // 3. CALCULATE VALID TARGET (Iterative Fallback)
+            Vector3 startPos = context.hunter.currentPatrolTarget.position;
+            Vector3 forwardDir = context.hunter.currentPatrolTarget.forward;
+
+            bool foundPath = false;
+
+            // FIX: Use the variable 'maxCreepDist' instead of hardcoded 1.5f
+            float[] tryDistances = new float[] { maxCreepDist, 1.0f, 0.5f, 0.2f };
+
+            foreach (float dist in tryDistances)
+            {
+                // Calculate test point (Lifted slightly to avoid floor clipping)
+                Vector3 testPos = startPos + (forwardDir * dist) + (Vector3.up * 0.2f);
+                NavMeshHit hit;
+
+                // A. Does a floor exist here?
+                if (NavMesh.SamplePosition(testPos, out hit, 1.0f, NavMesh.AllAreas))
+                {
+                    // B. Can we actually WALK here?
+                    NavMeshPath path = new NavMeshPath();
+                    agent.CalculatePath(hit.position, path);
+
+                    if (path.status == NavMeshPathStatus.PathComplete)
+                    {
+                        // Success! We found a reachable spot.
+                        agent.SetDestination(hit.position);
+                        debugTargetPos = hit.position;
+                        isValidTarget = true;
+                        foundPath = true;
+                        break; // Stop searching
+                    }
+                }
+            }
+
+            if (!foundPath)
+            {
+                // Fallback
+                agent.SetDestination(startPos);
+                debugTargetPos = startPos;
+                isValidTarget = false;
+                Debug.LogWarning("[PerformDoorwayPeek] Could not find ANY walkable path into room. Standing still.");
+            }
+
+            timer = peekDuration;
+            context.hunter.currentBTState = "ACTION: Creeping...";
+        }
+
+        protected override NodeState OnUpdate()
+        {
+            // Visuals: Green = Moving, Yellow = Path Failed, Red = No Target Found
+            Color color = isValidTarget ? Color.green : Color.red;
+            if (isValidTarget && !context.agent.hasPath && !context.agent.pathPending) color = Color.yellow;
+
+            Debug.DrawLine(context.agent.transform.position, debugTargetPos, color);
+            Debug.DrawRay(debugTargetPos, Vector3.up, color);
+
+            timer -= Time.deltaTime;
+            if (timer > 0f) return NodeState.RUNNING;
+            return NodeState.SUCCESS;
+        }
+
+        protected override void OnExit()
+        {
+            context.agent.speed = originalSpeed;
+            context.agent.stoppingDistance = originalStoppingDist;
+
+            if (timer <= 0f && context.hunter.currentPatrolTarget != null)
+            {
+                context.hunter.RecordPatrolVisit(context.hunter.currentPatrolTarget);
+                context.hunter.currentPatrolTarget = null;
+            }
+        }
+    }
+
+    public class PerformStandardAction : HunterTask
+    {
+        public PerformStandardAction(HunterBehaviorNodes context) : base(context) { }
+
+        protected override NodeState OnUpdate()
+        {
+            if (context.hunter.currentPatrolTarget != null)
+            {
+                context.hunter.RecordPatrolVisit(context.hunter.currentPatrolTarget);
+                context.hunter.currentPatrolTarget = null;
+            }
+            return NodeState.SUCCESS;
         }
     }
 }

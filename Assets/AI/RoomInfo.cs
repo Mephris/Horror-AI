@@ -28,20 +28,25 @@ public class RoomInfo
     // This method is called by HunterAI to update the room's "heat."
     public void UpdateGeneralCuriosity()
     {
-        if (patrolPoints.Count == 0)
-        {
-            generalCuriosity = 0;
-            return;
-        }
+        if (patrolPoints.Count == 0) return;
 
-        // Calculate the "heat" (e.g., average probability of all points)
         float totalProbability = 0f;
+        int count = 0;
+
         foreach (HunterPatrolMemory pointMemory in patrolPoints)
         {
+            // OPTIONAL: Exclude doorways from the room's average heat
+            // This prevents a "Hot Door" (from a Director tip) from making the room look hot fake-ly.
+            if (pointMemory.pointType == PointType.Doorway) continue;
+
             totalProbability += pointMemory.playerProbability;
+            count++;
         }
 
-        generalCuriosity = totalProbability / patrolPoints.Count;
+        if (count > 0)
+            generalCuriosity = totalProbability / count;
+        else
+            generalCuriosity = 0f;
     }
 
     // Helper to check if all points in this room are "cold."

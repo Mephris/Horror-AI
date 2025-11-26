@@ -17,13 +17,11 @@ using UnityEditor;
 public class HunterPatrolMemory
 {
     public Transform patrolpointTransform;
-
     public PointType pointType;
 
     public float lastPatrolTime = 0f;
     public float playerProbability = 0f;
 
-    // Discrete memory tags
     public bool hasHeardNoise = false;
     public bool hasDirectorTip = false;
 
@@ -31,11 +29,8 @@ public class HunterPatrolMemory
 
     public float calculatedPriorityScore = 0f;
 
-    // Link to the parent room (The room this point physically sits inside)
-    [System.NonSerialized] public RoomInfo parentRoom;
-
-    // NEW: Link to the target room (The room a Doorway looks INTO)
-    [System.NonSerialized] public RoomInfo linkedRoomInfo;
+    [System.NonSerialized] public RoomInfo parentRoom;      // Where the point physically sits
+    [System.NonSerialized] public RoomInfo linkedRoomInfo;  // Where a door looks into
 }
 
 // =================================================================
@@ -53,6 +48,25 @@ public class HunterAI : MonoBehaviour
 
     private NavMeshAgent agent;
 
+    [Header("Movement Dynamics")]
+    [Tooltip("How far ahead on the path the 'Ghost Target' is placed.")]
+    public float pathLookAheadDistance = 4.0f;
+    [Tooltip("How wide the Hunter weaves (Sine Wave Amplitude).")]
+    public float driftAmplitude = 1.5f;
+    [Tooltip("How fast the Hunter weaves (Sine Wave Frequency).")]
+    public float driftFrequency = 1.0f;
+    // Creep Settings, basically allow him to slowly walk in during peeks (doorways observation into the room). 
+    [Tooltip("Speed when peeking into a room.")]
+    public float creepSpeed = 0.5f; // Very slow walk
+    [Tooltip("Distance to drift into the room while peeking.")]
+    public float creepDistance = 1.5f; // 1.5 meters past the door frame
+
+    [Header("Head Dynamics")]
+    [Tooltip("How long he stares at a random spot before picking a new one.")]
+    public float idleLookInterval = 2.0f;
+    [Tooltip("How fast the head moves when just looking around (slower = creepier).")]
+    public float idleHeadTurnSpeed = 2.0f;
+
     // --- Memory Data ---
     private Room[] rooms;
 
@@ -66,11 +80,7 @@ public class HunterAI : MonoBehaviour
     [Header("Decision Scoring")]
     [Tooltip("Multiplier for points in the same room as the Hunter. Keeps him focused.")]
     [Range(1.0f, 2.0f)]
-    public float sameRoomMultiplier = 1.2f;
-
-    [Tooltip("Multiplier for Doorway points. Encourages peeking before entering.")]
-    [Range(1.0f, 2.0f)]
-    public float doorwayMultiplier = 1.3f;
+    public float sameRoomMultiplier = 1.1f;
 
     [Tooltip("How much Distance reduces the score. Higher = Lazier Hunter.")]
     public float distancePenalty = 1.0f;
@@ -78,14 +88,24 @@ public class HunterAI : MonoBehaviour
     [Header("Probability Settings")]
     [HideInInspector] public float baseUncertainty = 0.2f;
     [SerializeField] private float probabilityUpdateInterval = 1f;
-    [SerializeField] private float wanderRange = 5f;
     private WaitForSeconds probabilityWait;
+
+    // Track room history to prevent immediate backtracking
+    private RoomInfo currentRoomInfo = null;
+    private RoomInfo previousRoomInfo = null;
+
+    [Header("Behavior Settings")]
+    [Tooltip("After peeking a door, how long until he allows himself to peek another?")]
+    public float peekSkillCooldown = 15.0f;
+    private float nextPeekTime = 0f;
 
     // --- Chase Settings ---
     [Header("Chase Settings")]
     [SerializeField] public float chaseInvestigationTime = 7.0f;
     [HideInInspector] public float timeSinceLastSeen = 999.0f;
     [HideInInspector] public bool isChasingPlayer = false;
+
+
 
     // --- Director Settings ---
     [Header("Director Interaction")]
@@ -98,25 +118,41 @@ public class HunterAI : MonoBehaviour
     void Start()
     {
         agent = GetComponent<NavMeshAgent>();
-        rooms = FindObjectsOfType<Room>();
 
-        Debug.Log($"[HunterAI.Start] Found {rooms.Length} Room objects.");
+        // 1. Find Components
+        rooms = FindObjectsOfType<Room>();
+        PatrolPoints[] allPointsInScene = FindObjectsOfType<PatrolPoints>();
+
+        Debug.Log($"[HunterAI] Found {rooms.Length} Rooms and {allPointsInScene.Length} Points.");
 
         probabilityWait = new WaitForSeconds(probabilityUpdateInterval);
 
-        // --- BUILD MEMORY ---
+        // 2. Initialize Room Data Buckets
         foreach (Room room in rooms)
         {
             int exits = 1;
             RoomInfo newRoomInfo = new RoomInfo(room, exits);
-
             if (!roomData.ContainsKey(newRoomInfo.roomName))
             {
                 roomData.Add(newRoomInfo.roomName, newRoomInfo);
             }
+        }
 
-            // Loop through points in the room
-            foreach (PatrolPoints point in room.patrolPoint)
+        // 3. Sort Points into Rooms
+        foreach (PatrolPoints point in allPointsInScene)
+        {
+            Room ownerRoom = null;
+
+            if (point.manualRoomOwner != null)
+            {
+                ownerRoom = point.manualRoomOwner;
+            }
+            else
+            {
+                ownerRoom = point.GetComponentInParent<Room>();
+            }
+
+            if (ownerRoom != null && roomData.TryGetValue(ownerRoom.name, out RoomInfo ownerInfo))
             {
                 if (!patrolPointData.ContainsKey(point.transform))
                 {
@@ -126,31 +162,31 @@ public class HunterAI : MonoBehaviour
                         pointType = point.pointType,
                         playerProbability = 0.5f,
                         lastPatrolTime = Time.time,
-                        parentRoom = newRoomInfo
+                        parentRoom = ownerInfo
                     };
 
-                    // --- NEW: Direct Injection for PatrolPoints.cs ---
                     point.runtimeMemory = newMemory;
-
                     patrolPointData.Add(point.transform, newMemory);
-                    newRoomInfo.patrolPoints.Add(newMemory);
+                    ownerInfo.patrolPoints.Add(newMemory);
                 }
+            }
+            else
+            {
+                Debug.LogWarning($"[HunterAI] Point '{point.name}' has no Room! Assign 'Manual Room Owner' or parent it to a Room.");
             }
         }
 
-        // --- SECOND PASS: LINK DOORS ---
-        // We do this after all RoomInfos are created so we can find them by name
-        foreach (Room room in rooms)
+        // 4. Link Doors
+        foreach (var kvp in patrolPointData)
         {
-            foreach (PatrolPoints point in room.patrolPoint)
+            PatrolPoints pointScript = kvp.Key.GetComponent<PatrolPoints>();
+            HunterPatrolMemory memory = kvp.Value;
+
+            if (pointScript.pointType == PointType.Doorway && pointScript.linkedRoom != null)
             {
-                if (point.pointType == PointType.Doorway && point.linkedRoom != null)
+                if (roomData.TryGetValue(pointScript.linkedRoom.name, out RoomInfo targetRoomInfo))
                 {
-                    if (roomData.TryGetValue(point.linkedRoom.name, out RoomInfo targetRoomInfo))
-                    {
-                        // Link the memory!
-                        patrolPointData[point.transform].linkedRoomInfo = targetRoomInfo;
-                    }
+                    memory.linkedRoomInfo = targetRoomInfo;
                 }
             }
         }
@@ -171,6 +207,7 @@ public class HunterAI : MonoBehaviour
 
     void Update()
     {
+        // FIX: Call the public Evaluate() method, which wraps OnUpdate()
         if (rootNode != null)
         {
             rootNode.Evaluate();
@@ -189,7 +226,7 @@ public class HunterAI : MonoBehaviour
     }
 
     // =================================================================================
-    // --- THE SMART BRAIN: Get Best Next Point ---
+    // --- THE BRAIN: Get Best Next Point (Clean Version) ---
     // =================================================================================
     public Transform GetBestNextPoint(Vector3 currentPos, List<Transform> ignorePoints = null)
     {
@@ -198,11 +235,17 @@ public class HunterAI : MonoBehaviour
 
         NavMeshPath path = new NavMeshPath();
 
-        // MOMENTUM CONTEXT: What room is the Hunter currently "In"?
+        // MOMENTUM CONTEXT
         RoomInfo currentRoomContext = null;
+        RoomInfo secondaryContext = null;
+
         if (currentPatrolTarget != null && patrolPointData.TryGetValue(currentPatrolTarget, out HunterPatrolMemory currMem))
         {
             currentRoomContext = currMem.parentRoom;
+            if (currMem.pointType == PointType.Doorway && currMem.linkedRoomInfo != null)
+            {
+                secondaryContext = currMem.linkedRoomInfo;
+            }
         }
 
         foreach (var pair in patrolPointData)
@@ -210,13 +253,19 @@ public class HunterAI : MonoBehaviour
             Transform point = pair.Key;
             HunterPatrolMemory memory = pair.Value;
 
+            // --- STANDARD FILTERS ---
             if (memory.playerProbability <= baseUncertainty) continue;
             if (ignorePoints != null && ignorePoints.Contains(point)) continue;
 
-            // Optimization: Rough Distance Check
+            // 1. Distance Filter
             if (Vector3.Distance(currentPos, point.position) > 25f) continue;
+            // 2. Peek Cooldown Filter
+            if (memory.pointType == PointType.Doorway && Time.time < nextPeekTime) // If it is a Doorway AND the "Peek Skill" is on cooldown... 
+            {
+                continue; // SKIP IT. Do not calculate heat. It does not exist to us.
+            }
 
-            // Optimization: Path Calculation
+            // Path Calculation
             float trueWalkingDistance = float.PositiveInfinity;
             if (NavMesh.CalculatePath(currentPos, point.position, NavMesh.AllAreas, path) &&
                 path.status == NavMeshPathStatus.PathComplete)
@@ -230,37 +279,53 @@ public class HunterAI : MonoBehaviour
 
             // --- SCORING FORMULA ---
 
-            // A. Base Heat
-            float score = memory.playerProbability * 100f;
+            // --- SCORING FORMULA ---
+            float score = 0f;
 
-            // B. Type Bonus (Smart Door Logic)
-            if (memory.pointType == PointType.Doorway)
+            // 1. BASE HEAT
+            // If Door: Use Room Heat. If Standard: Use Point Heat.
+            if (memory.pointType == PointType.Doorway && memory.linkedRoomInfo != null)
             {
-                // If this door looks INTO the room we are already in, it's useless.
-                // (e.g., Kitchen Door looking into Kitchen, while we are standing in Kitchen)
-                if (currentRoomContext != null && memory.linkedRoomInfo == currentRoomContext)
+                // GLOBAL COOLDOWN (Keep this if you want the hard limit, remove if you want pure heat)
+                if (Time.time < nextPeekTime)
                 {
-                    // No Bonus. In fact, maybe penalty? For now, just standard heat.
+                    score = -1000f;
+                }
+                // BACKTRACK CHECK (Keep this to prevent turning around instantly)
+                else if (memory.linkedRoomInfo == previousRoomInfo)
+                {
+                    score = -1000f;
                 }
                 else
                 {
-                    // It looks into a NEW room (or out to the Hallway), so it's high value.
-                    score *= doorwayMultiplier;
+                    // PURE ROOM HEAT
+                    score = memory.linkedRoomInfo.generalCuriosity * 100f;
+                }
+            }
+            else
+            {
+                // Standard Point Heat
+                score = memory.playerProbability * 100f;
+            }
+
+            // 2. MOMENTUM BONUS (The Natural Bridge)
+            // This replaces the Door Multiplier.
+            // If the point is in my current room OR connected to it (Bridge), boost it.
+            if (memory.parentRoom != null)
+            {
+                if (memory.parentRoom == currentRoomContext || memory.parentRoom == secondaryContext)
+                {
+                    score *= sameRoomMultiplier; // e.g. 1.2x
                 }
             }
 
-            // C. Momentum Bonus (Incentivize Same Room)
-            if (currentRoomContext != null && memory.parentRoom == currentRoomContext)
-            {
-                score *= sameRoomMultiplier;
-            }
-
-            // D. Distance Penalty
+            // 3. DISTANCE PENALTY
             score -= (trueWalkingDistance * distancePenalty);
 
-            // E. Priority Override
+            // 4. PRIORITY OVERRIDE
             if (memory.IsWorthyOfInvestigation) score += 50f;
 
+            // --- CHECK BEST ---
             if (score > bestScore)
             {
                 bestScore = score;
@@ -278,16 +343,29 @@ public class HunterAI : MonoBehaviour
     {
         btContext = new HunterBehaviorNodes(this, agent);
 
+        // NODES
         var isPlayerSeen = new HunterBehaviorNodes.IsPlayerSeen(btContext);
         var chasePlayer = new HunterBehaviorNodes.ChasePlayer(btContext);
         var acquireTarget = new HunterBehaviorNodes.AcquirePatrolTarget(btContext);
         var movePatrol = new HunterBehaviorNodes.MoveToPatrolPoint(btContext);
 
-        var chaseBranch = new Sequence(new List<Node> { isPlayerSeen, chasePlayer });
-        var patrolBranch = new Sequence(new List<Node> { acquireTarget, movePatrol });
+        // CONTEXT ACTIONS
+        var isDoorway = new HunterBehaviorNodes.IsPatrolPointType(btContext, PointType.Doorway);
+        var peekAction = new HunterBehaviorNodes.PerformDoorwayPeek(btContext);
+        var standardAction = new HunterBehaviorNodes.PerformStandardAction(btContext);
 
-        var root = new Selector(new List<Node> { chaseBranch, patrolBranch });
-        return root;
+        // BRANCHES
+        var chaseBranch = new Sequence("CHASE LOGIC", "High Priority: If player is visible, chase.", new List<Node> { isPlayerSeen, chasePlayer });
+
+        var actionSelector = new Selector("CONTEXT ACTION", "Decides behavior based on point type.", new List<Node>
+        {
+            new Sequence("DOOR BEHAVIOR", "Peek into the room.", new List<Node> { isDoorway, peekAction }),
+            standardAction
+        });
+
+        var patrolBranch = new Sequence("PATROL LOOP", "Find target, move, perform action.", new List<Node> { acquireTarget, movePatrol, actionSelector });
+
+        return new Selector("ROOT AI", "Main Brain.", new List<Node> { chaseBranch, patrolBranch });
     }
 
     // =====================================================================
@@ -297,11 +375,31 @@ public class HunterAI : MonoBehaviour
     {
         if (patrolPointData.TryGetValue(point, out HunterPatrolMemory memory))
         {
+            // If this point belongs to a room, and it's different from where we thought we were...
+            if (memory.parentRoom != null && memory.parentRoom != currentRoomInfo)
+            {
+                // We just switched rooms!
+                previousRoomInfo = currentRoomInfo; // Remember where we came from
+                currentRoomInfo = memory.parentRoom; // Update current
+
+                // Optional Debug
+                // string prevName = previousRoomInfo != null ? previousRoomInfo.roomName : "None";
+                // Debug.Log($"[HunterAI] Moved Room: {prevName} -> {currentRoomInfo.roomName}");
+            }
+
+            // 1. Standard Cool Down
             memory.lastPatrolTime = Time.time;
             memory.playerProbability = baseUncertainty;
             memory.hasDirectorTip = false;
             memory.hasHeardNoise = false;
             if (memory.parentRoom != null) memory.parentRoom.UpdateGeneralCuriosity();
+
+            // 2. COOLDOWN TRIGGER
+            // If we just visited (Peeked) a Doorway, disable the skill globally.
+            if (memory.pointType == PointType.Doorway)
+            {
+                nextPeekTime = Time.time + peekSkillCooldown;
+            }
         }
     }
 
@@ -311,15 +409,6 @@ public class HunterAI : MonoBehaviour
             .Where(p => p.playerProbability > baseUncertainty && Vector3.Distance(center, p.patrolpointTransform.position) <= radius)
             .OrderByDescending(p => p.playerProbability)
             .ToList();
-    }
-
-    public Vector3 GetRandomWanderPoint(Vector3 center, float range)
-    {
-        Vector3 randomPoint = center + UnityEngine.Random.insideUnitSphere * range;
-        NavMeshHit hit;
-        if (UnityEngine.AI.NavMesh.SamplePosition(randomPoint, out hit, range, UnityEngine.AI.NavMesh.AllAreas))
-            return hit.position;
-        return Vector3.zero;
     }
 
     public float CalculatePathCost(NavMeshPath path)
@@ -378,6 +467,7 @@ public class HunterAI : MonoBehaviour
     {
         if (patrolPointData.TryGetValue(seenPointTransform, out HunterPatrolMemory memory))
         {
+            // Standard cooling logic (No Immunity)
             memory.lastPatrolTime = Time.time;
             if (memory.playerProbability > baseUncertainty)
             {
