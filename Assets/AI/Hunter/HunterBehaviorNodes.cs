@@ -98,13 +98,13 @@ public class HunterBehaviorNodes
         protected override NodeState OnUpdate()
         {
             // 1. Check if we have a valid target
-            if (context.hunter.currentPatrolTarget != null)
+            if (context.hunter.currentInterestTarget != null)
             {
-                float dist = Vector3.Distance(context.agent.transform.position, context.hunter.currentPatrolTarget.position);
+                float dist = Vector3.Distance(context.agent.transform.position, context.hunter.currentInterestTarget.position);
 
                 if (dist <= 3.0f) return NodeState.SUCCESS;
 
-                if (context.hunter.patrolPointData.TryGetValue(context.hunter.currentPatrolTarget, out HunterPatrolMemory mem))
+                if (context.hunter.patrolPointData.TryGetValue(context.hunter.currentInterestTarget, out HunterPatrolMemory mem))
                 {
                     // COMMITMENT LOGIC
                     if (mem.pointType != PointType.Standard) return NodeState.SUCCESS;
@@ -112,8 +112,8 @@ public class HunterBehaviorNodes
                     // CORNER CUTTING
                     if (mem.playerProbability <= context.hunter.baseUncertainty + 0.05f)
                     {
-                        context.hunter.currentBTState = $"PATROL: {context.hunter.currentPatrolTarget.name} cooled. Switching...";
-                        context.hunter.currentPatrolTarget = null;
+                        context.hunter.currentBTState = $"PATROL: {context.hunter.currentInterestTarget.name} cooled. Switching...";
+                        context.hunter.currentInterestTarget = null;
                     }
                     else
                     {
@@ -127,7 +127,7 @@ public class HunterBehaviorNodes
 
             if (bestPoint != null)
             {
-                context.hunter.currentPatrolTarget = bestPoint;
+                context.hunter.currentInterestTarget = bestPoint;
                 string roomName = "Hallway";
                 if (context.hunter.patrolPointData.TryGetValue(bestPoint, out HunterPatrolMemory mem) && mem.parentRoom != null)
                 {
@@ -154,10 +154,10 @@ public class HunterBehaviorNodes
 
         protected override NodeState OnUpdate()
         {
-            if (context.hunter.currentPatrolTarget == null) return NodeState.FAILURE;
+            if (context.hunter.currentInterestTarget == null) return NodeState.FAILURE;
 
             NavMeshAgent agent = context.agent;
-            Vector3 finalTarget = context.hunter.currentPatrolTarget.position;
+            Vector3 finalTarget = context.hunter.currentInterestTarget.position;
 
             // CALCULATE DRIFT PATH
             agent.CalculatePath(finalTarget, pathContainer);
@@ -228,9 +228,9 @@ public class HunterBehaviorNodes
 
         protected override NodeState OnUpdate()
         {
-            if (context.hunter.currentPatrolTarget == null) return NodeState.FAILURE;
+            if (context.hunter.currentInterestTarget == null) return NodeState.FAILURE;
 
-            if (context.hunter.patrolPointData.TryGetValue(context.hunter.currentPatrolTarget, out HunterPatrolMemory mem))
+            if (context.hunter.patrolPointData.TryGetValue(context.hunter.currentInterestTarget, out HunterPatrolMemory mem))
             {
                 if (mem.pointType == targetType) return NodeState.SUCCESS;
             }
@@ -274,8 +274,8 @@ public class HunterBehaviorNodes
             agent.isStopped = false;
 
             // 3. CALCULATE VALID TARGET (Iterative Fallback)
-            Vector3 startPos = context.hunter.currentPatrolTarget.position;
-            Vector3 forwardDir = context.hunter.currentPatrolTarget.forward;
+            Vector3 startPos = context.hunter.currentInterestTarget.position;
+            Vector3 forwardDir = context.hunter.currentInterestTarget.forward;
 
             bool foundPath = false;
 
@@ -339,10 +339,10 @@ public class HunterBehaviorNodes
             context.agent.speed = originalSpeed;
             context.agent.stoppingDistance = originalStoppingDist;
 
-            if (timer <= 0f && context.hunter.currentPatrolTarget != null)
+            if (timer <= 0f && context.hunter.currentInterestTarget != null)
             {
-                context.hunter.RecordPatrolVisit(context.hunter.currentPatrolTarget);
-                context.hunter.currentPatrolTarget = null;
+                context.hunter.RecordPatrolVisit(context.hunter.currentInterestTarget);
+                context.hunter.currentInterestTarget = null;
             }
         }
     }
@@ -353,10 +353,10 @@ public class HunterBehaviorNodes
 
         protected override NodeState OnUpdate()
         {
-            if (context.hunter.currentPatrolTarget != null)
+            if (context.hunter.currentInterestTarget != null)
             {
-                context.hunter.RecordPatrolVisit(context.hunter.currentPatrolTarget);
-                context.hunter.currentPatrolTarget = null;
+                context.hunter.RecordPatrolVisit(context.hunter.currentInterestTarget);
+                context.hunter.currentInterestTarget = null;
             }
             return NodeState.SUCCESS;
         }

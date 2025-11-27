@@ -55,7 +55,7 @@ public class HunterHeadController : MonoBehaviour
         foreach (var mem in nearbyPoints)
         {
             Transform pointT = mem.patrolpointTransform;
-            if (pointT == hunterAI.currentPatrolTarget) continue; // Don't look at walk target
+            if (pointT == hunterAI.currentInterestTarget) continue; // Don't look at walk target
 
             Vector3 dirToPoint = (pointT.position - headTransform.position).normalized;
             float angle = Vector3.Angle(transform.forward, dirToPoint);
