@@ -125,12 +125,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "notes/Changelog/26.11.2025 - Prowler behavior and doors..md",
+                "file": "notes/GDD/Untitled.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "26.11.2025 - Prowler behavior and doors."
+              "title": "Untitled"
             }
           },
           {
@@ -268,13 +268,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "notes/Changelog/26.11.2025 - Prowler behavior and doors..md",
+                "file": "notes/GDD/Untitled.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline of 26.11.2025 - Prowler behavior and doors."
+              "title": "Outline of Untitled"
             }
           }
         ],
@@ -298,8 +298,12 @@
   },
   "active": "6add487562a1e403",
   "lastOpenFiles": [
-    "notes/Changelog/20.11.2025.md",
     "notes/Changelog/26.11.2025 - Prowler behavior and doors..md",
+    "notes/GDD/Untitled.md",
+    "notes/Director.md",
+    "notes/Hunter.md",
+    "notes/GDD/Patrol Points.md",
+    "notes/Changelog/20.11.2025.md",
     "notes/Changelog/19.11.2025 - Removed Planning.md",
     "Temp/UnityTempFile-837eaae427291044d8feeceb61a3620f",
     "Temp/UnityTempFile-33d406412982bde4dbbc669b5cf7b78d",
@@ -314,16 +318,13 @@
     "Temp/UnityTempFile-3d9eaa44699086649827b0aac90f9913",
     "notes/Changelog/14.11.2025 - Hunter.Investigation.md",
     "notes/Changelog/13.11.2025 - Fucking Logic M8.. Hunter.md",
-    "notes/Hunter.md",
     "notes/Changelog/13.11.2025.md",
-    "notes/Director.md",
     "notes/Changelog/12.11.2025 - Hunter AI Tuning & Emergent Behaviors.md",
     "notes/Changelog/11.11.2025 - Hunter.md",
     "notes/Changelog/12.11.2025 - AI Tuning & Emergent Behaviors.md",
     "notes/Changelog/7.11.2025 - Switching from FSM to BT.md",
     "notes/ForNextDay-AI.md",
-    "notes/Patrol/Roam System.md",
-    "notes/Patrol/Patrol Points.md",
+    "notes/GDD/Roam System.md",
     "notes/Changelog/10.11.2025 - Hunter.md",
     "notes/Changelog/6.11.2025 - Patrol Point Changes.md",
     "notes/Changelog/5.11.2025 - Patroling Behavior Changes.md",
