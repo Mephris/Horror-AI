@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq; // Added for Where/OrderBy functions
 
 public class HunterHeadController : MonoBehaviour
 {
@@ -18,8 +19,7 @@ public class HunterHeadController : MonoBehaviour
     [SerializeField] private LayerMask obstructionMask;
 
     // State
-    private Transform priorityTarget; // Actual Patrol Point
-    private Vector3 idleTarget;       // Random spot in the roomdsgrfggfdgdfdgfgdfdfggdfdgfdgfdgf
+    private Transform priorityTarget;
     private Vector3 idleLocalOffset; // Relative to the Hunter (e.g., "Forward 10, Up 1")
     private float targetChangeTimer = 0f;
     private float idleTimer = 0f;
@@ -48,6 +48,7 @@ public class HunterHeadController : MonoBehaviour
         targetChangeTimer = 0.2f; // Check for hot targets 5 times a second
 
         // 1. PRIORITY CHECK: Look for Hot Patrol Points
+        // FIX: The function is now correctly called on the HunterAI instance.
         List<HunterPatrolMemory> nearbyPoints = hunterAI.GetLocalHotPoints(transform.position, lookRadius);
         Transform bestCandidate = null;
         float highestHeat = -1f;
@@ -55,7 +56,8 @@ public class HunterHeadController : MonoBehaviour
         foreach (var mem in nearbyPoints)
         {
             Transform pointT = mem.patrolpointTransform;
-            if (pointT == hunterAI.currentInterestTarget) continue; // Don't look at walk target
+            // FIX: Uses the new variable name
+            if (pointT == hunterAI.currentInterestTarget) continue;
 
             Vector3 dirToPoint = (pointT.position - headTransform.position).normalized;
             float angle = Vector3.Angle(transform.forward, dirToPoint);
@@ -76,7 +78,7 @@ public class HunterHeadController : MonoBehaviour
 
         priorityTarget = bestCandidate;
 
-        // 2. IDLE CHECK
+        // 2. IDLE CHECK (Runs if no hot points were found)
         if (priorityTarget == null)
         {
             isIdling = true;
@@ -84,17 +86,14 @@ public class HunterHeadController : MonoBehaviour
 
             if (idleTimer <= 0f)
             {
-                // PICK NEW RANDOM OFFSET (Relative to Body)
-                // Instead of a world point, we pick a direction relative to "Forward"
-
-                // Randomize slightly left/right (X) and up/down (Y)
-                // We keep Z (Forward) strong so he mostly looks ahead while walking
+                // PICK NEW RANDOM OFFSET
                 float randomX = Random.Range(-5f, 5f);
-                float randomY = Random.Range(-1f, 2f); // Look slightly up at head height
+                float randomY = Random.Range(-1f, 2f);
                 float forwardDist = 10f;
 
                 idleLocalOffset = new Vector3(randomX, randomY, forwardDist);
 
+                // FIX: Uses the now-required setting from HunterAI
                 idleTimer = hunterAI.idleLookInterval + Random.Range(-0.5f, 0.5f);
             }
         }
@@ -104,32 +103,29 @@ public class HunterHeadController : MonoBehaviour
         }
     }
 
-private void RotateHead()
+    private void RotateHead()
     {
         Quaternion targetRotation;
         float speed = turnSpeed;
 
         if (priorityTarget != null)
         {
-            // PRIORITY: Look at specific world object
             Vector3 direction = priorityTarget.position - headTransform.position;
             targetRotation = Quaternion.LookRotation(direction);
         }
         else
         {
-            // IDLE: Look at the Moving Target
-            // 1. Convert Local Offset to World Space based on current Body Position/Rotation
-            // This effectively treats the target as a "Child" of the Hunter
+            // IDLE: Look at the Moving Target (Virtual Child)
             Vector3 worldIdleTarget = transform.TransformPoint(idleLocalOffset);
 
-            // 2. Calculate direction
             Vector3 direction = worldIdleTarget - headTransform.position;
-            
+
             if (direction != Vector3.zero)
                 targetRotation = Quaternion.LookRotation(direction);
             else
                 targetRotation = Quaternion.LookRotation(transform.forward);
-                
+
+            // FIX: Uses the now-required setting from HunterAI
             speed = hunterAI.idleHeadTurnSpeed;
         }
 
@@ -151,7 +147,6 @@ private void RotateHead()
 
         if (isIdling)
         {
-            // Visualize where the "Virtual Child" is currently floating
             Vector3 worldIdleTarget = transform.TransformPoint(idleLocalOffset);
 
             Gizmos.color = Color.cyan;

@@ -38,6 +38,7 @@ public class HunterPatrolMemory
 // =================================================================
 public class HunterAI : MonoBehaviour
 {
+    
     // --- Behavior Tree Fields ---
     private Node rootNode;
     private HunterBehaviorNodes btContext;
@@ -72,6 +73,12 @@ public class HunterAI : MonoBehaviour
     public float peekSkillCooldown = 15.0f;
     private float nextPeekTime = 0f; // Global cooldown timer
 
+    // REQUIRED FOR HEAD CONTROLLER
+    [Tooltip("Time between selecting new random gaze points.")]
+    public float idleLookInterval = 2.0f;
+    [Tooltip("Speed of head rotation when performing idle scan.")]
+    public float idleHeadTurnSpeed = 2.0f;
+
     // Track room history to prevent immediate backtracking
     private RoomInfo currentRoomInfo = null;
     private RoomInfo previousRoomInfo = null;
@@ -101,6 +108,9 @@ public class HunterAI : MonoBehaviour
     public float creepSpeed = 0.5f;
     [Tooltip("Distance to drift into the room while peeking.")]
     public float creepDistance = 1.5f;
+
+    // --- Memory Data ---
+    private Room[] rooms;
 
 
     void Start()
@@ -308,6 +318,17 @@ public class HunterAI : MonoBehaviour
     // =================================================================================
     // --- UTILITY & HELPERS ---
     // =================================================================================
+
+    // Helper for HunterHead to find hot points nearby
+    public List<HunterPatrolMemory> GetLocalHotPoints(Vector3 center, float radius)
+    {
+        // Finds points that are hot, within radius, and returns them sorted by probability
+        return patrolPointData.Values
+            .Where(p => p.playerProbability > baseUncertainty && Vector3.Distance(center, p.patrolpointTransform.position) <= radius)
+            .OrderByDescending(p => p.playerProbability)
+            .ToList();
+    }
+
     public void RecordPatrolVisit(Transform point)
     {
         if (patrolPointData.TryGetValue(point, out HunterPatrolMemory memory))
