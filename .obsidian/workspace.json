@@ -125,12 +125,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "notes/Changelog/20.11.2025.md",
+                "file": "notes/Changelog/26.11.2025 - Prowler behavior and doors..md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "20.11.2025"
+              "title": "26.11.2025 - Prowler behavior and doors."
             }
           },
           {
@@ -268,13 +268,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "notes/Changelog/20.11.2025.md",
+                "file": "notes/Changelog/26.11.2025 - Prowler behavior and doors..md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline of 20.11.2025"
+              "title": "Outline of 26.11.2025 - Prowler behavior and doors."
             }
           }
         ],
@@ -298,8 +298,9 @@
   },
   "active": "6add487562a1e403",
   "lastOpenFiles": [
-    "notes/Changelog/19.11.2025 - Removed Planning.md",
     "notes/Changelog/20.11.2025.md",
+    "notes/Changelog/26.11.2025 - Prowler behavior and doors..md",
+    "notes/Changelog/19.11.2025 - Removed Planning.md",
     "Temp/UnityTempFile-837eaae427291044d8feeceb61a3620f",
     "Temp/UnityTempFile-33d406412982bde4dbbc669b5cf7b78d",
     "Assets/AI/xrtca2xe.uuo~",
