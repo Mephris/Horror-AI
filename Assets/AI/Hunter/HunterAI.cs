@@ -1,3 +1,4 @@
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -103,6 +104,8 @@ public class HunterAI : MonoBehaviour
     [Tooltip("Distance to drift into the room while peeking.")]
     public float creepDistance = 1.5f;
 
+    // --- Memory Data ---
+    private Room[] rooms;
 
     void Start()
     {
@@ -111,23 +114,94 @@ public class HunterAI : MonoBehaviour
         PatrolPoints[] allPointsInScene = FindObjectsOfType<PatrolPoints>();
         probabilityWait = new WaitForSeconds(probabilityUpdateInterval);
 
-        // Initialization Logic (Omitted for brevity, but includes memory and link setup)
-        // ... (This section includes memory building and link assignment) ... 
+        // 2. Initialize Room Data Buckets
+        foreach (Room room in rooms)
+        {
+            int exits = 1;
+            RoomInfo newRoomInfo = new RoomInfo(room, exits);
+            if (!roomData.ContainsKey(newRoomInfo.roomName))
+            {
+                roomData.Add(newRoomInfo.roomName, newRoomInfo);
+            }
+        }
+
+        // 3. Sort Points into Rooms
+        foreach (PatrolPoints point in allPointsInScene)
+        {
+            Room ownerRoom = null;
+
+            if (point.manualRoomOwner != null)
+            {
+                ownerRoom = point.manualRoomOwner;
+            }
+            else
+            {
+                ownerRoom = point.GetComponentInParent<Room>();
+            }
+
+            if (ownerRoom != null && roomData.TryGetValue(ownerRoom.name, out RoomInfo ownerInfo))
+            {
+                if (!patrolPointData.ContainsKey(point.transform))
+                {
+                    HunterPatrolMemory newMemory = new HunterPatrolMemory
+                    {
+                        patrolpointTransform = point.transform,
+                        pointType = point.pointType,
+                        playerProbability = 0.5f,
+                        lastPatrolTime = Time.time,
+                        parentRoom = ownerInfo
+                    };
+
+                    point.runtimeMemory = newMemory;
+                    patrolPointData.Add(point.transform, newMemory);
+                    ownerInfo.patrolPoints.Add(newMemory);
+                }
+            }
+            else
+            {
+                Debug.LogWarning($"[HunterAI] Point '{point.name}' has no Room! Assign 'Manual Room Owner' or parent it to a Room.");
+            }
+        }
+
+        // 4. Link Doors
+        foreach (var kvp in patrolPointData)
+        {
+            PatrolPoints pointScript = kvp.Key.GetComponent<PatrolPoints>();
+            HunterPatrolMemory memory = kvp.Value;
+
+            if (pointScript.pointType == PointType.Doorway && pointScript.linkedRoom != null)
+            {
+                if (roomData.TryGetValue(pointScript.linkedRoom.name, out RoomInfo targetRoomInfo))
+                {
+                    memory.linkedRoomInfo = targetRoomInfo;
+                }
+            }
+        }
 
         if (targetPos == null) targetPos = new GameObject("PlayerChaseTarget_Dynamic").transform;
 
         StartCoroutine(UpdateCuriosityRoutine());
         rootNode = SetupBehaviorTree();
 
-        // Event Subscriptions
         Actions.HighPriorityCommandToMove += OnHighPriorityCommandToMove;
-        // ... (other event subscriptions) ...
+        Actions.CommandToMove += OnCommandToMove;
+        Actions.HunterCanSeePlayer += OnSeePlayer;
+        Actions.HunterSawPatrolPoint += OnPatrolPointSeen;
     }
 
     void Update()
     {
+        // FIX: Call the public Evaluate() method, which wraps OnUpdate()
         if (rootNode != null) rootNode.Evaluate();
-        // ... (Timer logic) ...
+
+        if (timeSinceLastSeen > 0.0f) timeSinceLastSeen += Time.deltaTime;
+
+
+        if (isChasingPlayer && timeSinceLastSeen >= chaseInvestigationTime)
+        {
+            isChasingPlayer = false;
+            timeSinceLastSeen = 999.0f;
+        }
     }
 
     // =================================================================================
@@ -137,20 +211,27 @@ public class HunterAI : MonoBehaviour
     public bool IsPathValid(Vector3 target, out float cost)
     {
         NavMeshPath path = new NavMeshPath();
+
+        // CalculatePath uses the agent's current position as the start point.
         if (agent.CalculatePath(target, path) && path.status == NavMeshPathStatus.PathComplete)
         {
             cost = CalculatePathCost(path);
             return true;
         }
+
         cost = float.PositiveInfinity;
         return false;
     }
 
     // 2. FLOOR SAMPLING & VALIDATION (The Lifted Target Fix)
+    // Ensures all targets are snapped to a valid, walkable floor point.
     public bool GetValidFloorPosition(Vector3 targetPos, float radius, out Vector3 snappedPos)
     {
+        // Add a vertical offset to prevent sampling issues (point inside floor)
         Vector3 liftedTarget = targetPos + (Vector3.up * 0.2f);
+
         NavMeshHit hit;
+        // Search for a valid floor position within the specified radius
         if (NavMesh.SamplePosition(liftedTarget, out hit, radius, NavMesh.AllAreas))
         {
             snappedPos = hit.position;
@@ -164,6 +245,7 @@ public class HunterAI : MonoBehaviour
     // =================================================================================
     // --- THE BRAIN: Get Best Next Point (Final Scoring Logic) ---
     // =================================================================================
+    // Note: Signature uses currentInterestTarget for context
     public Transform GetBestNextPoint(Vector3 currentPos, List<Transform> ignorePoints = null)
     {
         Transform bestCandidate = null;
@@ -177,7 +259,9 @@ public class HunterAI : MonoBehaviour
         {
             primaryContext = currMem.parentRoom;
             if (currMem.pointType == PointType.Doorway && currMem.linkedRoomInfo != null)
+            {
                 secondaryContext = currMem.linkedRoomInfo;
+            }
         }
 
         foreach (var pair in patrolPointData)
@@ -189,33 +273,32 @@ public class HunterAI : MonoBehaviour
             if (memory.playerProbability <= baseUncertainty) continue;
             if (ignorePoints != null && ignorePoints.Contains(point)) continue;
 
-            // 1. GLOBAL COOLDOWN FILTER (Hard Stop)
-            if (memory.pointType == PointType.Doorway && Time.time < nextPeekTime)
-            {
-                continue; // SKIPPED - Cannot use this skill right now.
-            }
-            // 2. BACKTRACK FILTER
-            else if (memory.pointType == PointType.Doorway && memory.linkedRoomInfo == previousRoomInfo)
-            {
-                continue; // SKIPPED - Just came from here.
-            }
-
             // Path Calculation (Filter)
             float trueWalkingDistance = float.PositiveInfinity;
             if (!IsPathValid(point.position, out trueWalkingDistance)) continue;
 
+            // --- BEHAVIOR FILTERS ---
+            // 1. GLOBAL COOLDOWN FILTER (Hard Stop)
+            if (memory.pointType == PointType.Doorway && Time.time < nextPeekTime)
+            {
+                continue;
+            }
+            // 2. BACKTRACK FILTER
+            else if (memory.pointType == PointType.Doorway && memory.linkedRoomInfo == previousRoomInfo)
+            {
+                continue;
+            }
+
             // --- SCORING FORMULA ---
             float score = 0f;
 
-            // A. BASE HEAT (Room Heat or Point Heat)
+            // 1. BASE HEAT (Room Heat or Point Heat)
             if (memory.pointType == PointType.Doorway && memory.linkedRoomInfo != null)
                 score = memory.linkedRoomInfo.generalCuriosity * 100f;
             else
                 score = memory.playerProbability * 100f;
 
-            // B. MOMENTUM BONUS (Dual Context)
-            bool appliedDoorBonus = false; // Used to prevent redundant stacking
-
+            // 2. MOMENTUM BONUS (Dual Context)
             if (memory.parentRoom != null)
             {
                 if (memory.parentRoom == primaryContext || memory.parentRoom == secondaryContext)
@@ -224,7 +307,7 @@ public class HunterAI : MonoBehaviour
                 }
             }
 
-            // C. DISTANCE PENALTY & PRIORITY
+            // 3. PENALTY & PRIORITY
             score -= (trueWalkingDistance * distancePenalty);
             if (memory.IsWorthyOfInvestigation) score += 50f;
 
@@ -245,7 +328,7 @@ public class HunterAI : MonoBehaviour
     {
         if (patrolPointData.TryGetValue(point, out HunterPatrolMemory memory))
         {
-            // 1. Update Room History
+            // 1. Update Room History (Needed for Backtrack Filter)
             if (memory.parentRoom != null && memory.parentRoom != currentRoomInfo)
             {
                 previousRoomInfo = currentRoomInfo;
@@ -276,7 +359,144 @@ public class HunterAI : MonoBehaviour
         }
         return cost;
     }
+    private Node SetupBehaviorTree()
+    {
+        btContext = new HunterBehaviorNodes(this, agent);
 
-    // [SetupBehaviorTree, UpdateCuriosityRoutine, Event Handlers omitted for brevity, but exist]
-    // ...
+        // NODES
+        var isPlayerSeen = new HunterBehaviorNodes.IsPlayerSeen(btContext);
+        var chasePlayer = new HunterBehaviorNodes.ChasePlayer(btContext);
+        var acquireTarget = new HunterBehaviorNodes.AcquirePatrolTarget(btContext);
+        var movePatrol = new HunterBehaviorNodes.MoveToPatrolPoint(btContext);
+
+        // CONTEXT ACTIONS
+        var isDoorway = new HunterBehaviorNodes.IsPatrolPointType(btContext, PointType.Doorway);
+        var peekAction = new HunterBehaviorNodes.PerformDoorwayPeek(btContext);
+        var standardAction = new HunterBehaviorNodes.PerformStandardAction(btContext);
+
+        // BRANCHES
+        var chaseBranch = new Sequence("CHASE LOGIC", "High Priority: If player is visible, chase.", new List<Node> { isPlayerSeen, chasePlayer });
+
+        var actionSelector = new Selector("CONTEXT ACTION", "Decides behavior based on point type.", new List<Node>
+        {
+            new Sequence("DOOR BEHAVIOR", "Peek into the room.", new List<Node> { isDoorway, peekAction }),
+            standardAction
+        });
+
+        var patrolBranch = new Sequence("PATROL LOOP", "Find target, move, perform action.", new List<Node> { acquireTarget, movePatrol, actionSelector });
+
+        return new Selector("ROOT AI", "Main Brain.", new List<Node> { chaseBranch, patrolBranch });
+    }
+
+ 
+
+    public List<HunterPatrolMemory> GetLocalHotPoints(Vector3 center, float radius)
+    {
+        return patrolPointData.Values
+            .Where(p => p.playerProbability > baseUncertainty && Vector3.Distance(center, p.patrolpointTransform.position) <= radius)
+            .OrderByDescending(p => p.playerProbability)
+            .ToList();
+    }
+
+    private IEnumerator UpdateCuriosityRoutine()
+    {
+        while (true)
+        {
+            yield return probabilityWait;
+            foreach (HunterPatrolMemory memory in patrolPointData.Values)
+            {
+                float timeSinceLastVisit = Time.time - memory.lastPatrolTime;
+                if (timeSinceLastVisit > 30f)
+                {
+                    memory.playerProbability = Mathf.Min(0.5f, memory.playerProbability + 0.02f);
+                }
+            }
+            foreach (RoomInfo room in roomData.Values)
+            {
+                room.UpdateGeneralCuriosity();
+            }
+        }
+    }
+
+    // ===========================================
+    // --- EVENT HANDLERS ---
+    // ===========================================
+
+    private void OnCommandToMove(Vector3 target) => ModifyMemoryNearLocation(target, 0.2f, false);
+    private void OnHighPriorityCommandToMove(Vector3 target) => ModifyMemoryNearLocation(target, 0.5f, true);
+
+    private void OnSeePlayer(bool isVisible, Vector3 lastPlayerLocation)
+    {
+        if (isVisible)
+        {
+            targetPos.position = lastPlayerLocation;
+            timeSinceLastSeen = 0.0f;
+            isChasingPlayer = true;
+            agent.isStopped = false;
+        }
+        else if (isChasingPlayer && timeSinceLastSeen == 0.0f)
+        {
+            timeSinceLastSeen = Time.deltaTime;
+        }
+    }
+
+    private void OnPatrolPointSeen(Transform seenPointTransform)
+    {
+        if (patrolPointData.TryGetValue(seenPointTransform, out HunterPatrolMemory memory))
+        {
+            // Standard cooling logic (No Immunity)
+            memory.lastPatrolTime = Time.time;
+            if (memory.playerProbability > baseUncertainty)
+            {
+                float distance = Vector3.Distance(transform.position, seenPointTransform.position);
+                float scale = Mathf.InverseLerp(25f, 5f, distance);
+                float clearAmount = Mathf.Lerp(0.02f, 0.12f, scale);
+
+                if (clearAmount > 0)
+                    memory.playerProbability = Mathf.Max(baseUncertainty, memory.playerProbability - clearAmount);
+            }
+            if (memory.parentRoom != null) memory.parentRoom.UpdateGeneralCuriosity();
+        }
+    }
+
+    private void ModifyMemoryNearLocation(Vector3 location, float probabilityIncrease, bool setDirectorTip)
+    {
+        List<Transform> pointsToUpdate = new List<Transform>();
+        NavMeshPath path = new NavMeshPath();
+
+        foreach (var pair in patrolPointData)
+        {
+            if (NavMesh.CalculatePath(location, pair.Key.position, NavMesh.AllAreas, path) &&
+                path.status == NavMeshPathStatus.PathComplete)
+            {
+                if (CalculatePathCost(path) <= directorCommandPathCostThreshold)
+                    pointsToUpdate.Add(pair.Key);
+            }
+        }
+
+        foreach (Transform t in pointsToUpdate)
+        {
+            HunterPatrolMemory mem = patrolPointData[t];
+            mem.playerProbability = Mathf.Clamp01(mem.playerProbability + probabilityIncrease);
+            if (setDirectorTip) mem.hasDirectorTip = true;
+            if (mem.parentRoom != null) mem.parentRoom.UpdateGeneralCuriosity();
+        }
+    }
+
+    void OnDrawGizmos()
+    {
+        if (roomData == null || roomData.Count == 0) return;
+#if UNITY_EDITOR
+        foreach (RoomInfo room in roomData.Values)
+        {
+            if (room.roomRef != null)
+            {
+                Vector3 roomCenter = room.roomRef.transform.position;
+                Gizmos.color = Color.Lerp(Color.blue, Color.red, room.generalCuriosity);
+                Gizmos.DrawWireSphere(roomCenter, 0.5f);
+                Handles.Label(roomCenter + Vector3.up * 2.0f, $"{room.roomName}\n{room.generalCuriosity:F2}");
+            }
+        }
+#endif
+    }
 }
