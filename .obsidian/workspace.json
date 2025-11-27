@@ -125,12 +125,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "notes/GDD/Untitled.md",
+                "file": "notes/GDD/HunterBehaviorNodes.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Untitled"
+              "title": "HunterBehaviorNodes"
             }
           },
           {
@@ -268,13 +268,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "notes/GDD/Untitled.md",
+                "file": "notes/GDD/HunterBehaviorNodes.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline of Untitled"
+              "title": "Outline of HunterBehaviorNodes"
             }
           }
         ],
@@ -298,6 +298,11 @@
   },
   "active": "6add487562a1e403",
   "lastOpenFiles": [
+    "notes/GDD/HunterAI Functions.md",
+    "notes/GDD/HunterBehaviorNodes.md",
+    "notes/Changelog/27.11.2025 - Code audit.md",
+    "Temp/__Backupscenes/0.backup",
+    "Temp/__Backupscenes",
     "Library/Bee/TundraBuildState.state",
     "Temp/ADB-Refreshe771eb5ab46688c4b9222d01991397d2",
     "Temp/ADB-Refresh4652e465da048cf4a9f85eeb066510fb",
@@ -305,7 +310,6 @@
     "Temp/ADB-Refreshfc6ba7eb221b48643ab676a9c1cd5fab",
     "Temp/ADB-Refresh535517bc24c72a14daa08b2a0ae2dd0a",
     "notes/Changelog/26.11.2025 - Prowler behavior and doors..md",
-    "notes/GDD/Untitled.md",
     "notes/Director.md",
     "notes/Hunter.md",
     "notes/GDD/Patrol Points.md",
@@ -313,10 +317,7 @@
     "notes/Changelog/19.11.2025 - Removed Planning.md",
     "Temp/UnityTempFile-837eaae427291044d8feeceb61a3620f",
     "Temp/UnityTempFile-33d406412982bde4dbbc669b5cf7b78d",
-    "Assets/AI/xrtca2xe.uuo~",
-    "Assets/AI/ie2zd3hk.cu5~",
     "notes/Changelog/19.11.2025 - Hunter.Planning.md",
-    "Temp/UnityTempFile-512e02ada70c96d4ca585983ece7ac1e",
     "notes/Changelog/14.11.2025 - Hunter.Investigation.md",
     "notes/Changelog/13.11.2025 - Fucking Logic M8.. Hunter.md",
     "notes/Changelog/13.11.2025.md",
