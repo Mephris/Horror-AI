@@ -125,12 +125,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "notes/Roadmap.md",
+                "file": "notes/GDD/Hunter AI Structure Plan.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Roadmap"
+              "title": "Hunter AI Structure Plan"
             }
           },
           {
@@ -268,13 +268,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "notes/Roadmap.md",
+                "file": "notes/GDD/Hunter AI Structure Plan.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline of Roadmap"
+              "title": "Outline of Hunter AI Structure Plan"
             }
           }
         ],
@@ -299,8 +299,8 @@
   "active": "6add487562a1e403",
   "lastOpenFiles": [
     "notes/GDD/Utility Mapping.md",
-    "notes/GDD/Hunter AI Structure Plan.md",
     "notes/Roadmap.md",
+    "notes/GDD/Hunter AI Structure Plan.md",
     "Temp/UnityTempFile-cb416767b1d03ba4b90a640760eafb38",
     "Library/Bee/TundraBuildState.state",
     "Temp/ADB-Refreshb05e7799cc1ef0d4397be83f972331eb",
