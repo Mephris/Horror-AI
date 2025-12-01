@@ -23,6 +23,10 @@
     - Algorithm: Calculate a spot (e.g., 3m away, clear Line of Sight, NavMesh snapped).
 - [ ] **Update `AcquirePatrolTarget`**:
     - Logic: Use `GetVantagePosition` to calculate the `currentNavDestination` *before* moving.
+-  **Update ```Creeping``` in Doorway behavior. 
+	- Logic: Create a function or update get vantage point so that 
+  
+
 
 ## Phase 2: Planning & Execution (The Job System)
 
