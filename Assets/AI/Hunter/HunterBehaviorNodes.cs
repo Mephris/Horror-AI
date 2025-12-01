@@ -221,7 +221,6 @@ public class HunterBehaviorNodes
 
         // Settings
         private float creepSpeed = 0.5f;
-        private float creepDistance = 1.5f; // Used for backup calc
         private float peekDuration = 4.5f;
 
         public PerformDoorwayPeek(HunterBehaviorNodes context) : base(context) { }
