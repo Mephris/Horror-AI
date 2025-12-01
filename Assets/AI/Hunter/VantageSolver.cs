@@ -50,7 +50,7 @@ public static class VantageSolver
         // Recursive call with smaller distance
         if (idealDistance > 1.5f)
         {
-            return GetVantagePosition(target, hunterPos, 1.5f);
+            return GetVantagePosition(target, hunterPos, idealDistance/2.0f);
         }
 
         // FINAL FALLBACK: Just go to the object itself

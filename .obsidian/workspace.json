@@ -125,12 +125,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "notes/GDD/Hunter/VantageSolver (vantage point finder).md",
+                "file": "notes/GDD/Hunter/HunterJob Functions.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "VantageSolver (vantage point finder)"
+              "title": "HunterJob Functions"
             }
           },
           {
@@ -268,13 +268,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "notes/GDD/Hunter/VantageSolver (vantage point finder).md",
+                "file": "notes/GDD/Hunter/HunterJob Functions.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline of VantageSolver (vantage point finder)"
+              "title": "Outline of HunterJob Functions"
             }
           }
         ],
@@ -298,21 +298,20 @@
   },
   "active": "6add487562a1e403",
   "lastOpenFiles": [
+    "notes/GDD/Hunter/VantageSolver (vantage point finder).md",
+    "Library/Bee/TundraBuildState.state",
+    "Assets/AI/Hunter/z1u23mws.l2s~",
+    "Temp/UnityTempFile-08812f1b07b359d4fa32ad06320d9907",
+    "Temp/UnityTempFile-8d0aebe03ee9a6e46853332a9d8daa45",
+    "Temp/UnityTempFile-ada98c4b8d536ef4880c2f21544055fa",
     "Temp/UnityTempFile-7ba0a89274381a44e92c82434fa99b91",
     "Temp/UnityTempFile-6b1766208cc25574ea1b3252dceb7f61",
     "Temp/UnityTempFile-5f8fd75d70871264a9e62247b8891427",
     "Library/Artifacts/f9/f955ebd9d4ddf9da5a398b734992ee2d",
     "Library/Artifacts/4d/4d43eb6274df945376118d13c170c89f",
-    "Temp/UnityTempFile-a5104655cf76ac5449ae0911f3999ede",
-    "Library/Bee/TundraBuildState.state",
     "notes/GDD/Utility Mapping.md",
-    "notes/GDD/Hunter/VantageSolver (vantage point finder).md",
     "notes/GDD/Hunter AI Structure Plan.md",
     "notes/Roadmap.md",
-    "Temp/UnityTempFile-5eea89b3e61a13e45ac96b4bbceae591",
-    "Library/Artifacts/8e/8e2551546db60d69e84fa3c44ae3a8f5",
-    "Library/TempArtifacts/Extra/879c971eb92e3e149ba99514985e025c.info",
-    "Library/Artifacts/57/57b9e9cdceb7f6fb7c837c240e30f8e4",
     "Pasted image 20251201142630.png",
     "notes/GDD/Hunter/HunterAI Functions.md",
     "notes/GDD/Hunter/HunterJob Functions.md",
