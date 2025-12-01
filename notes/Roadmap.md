@@ -24,9 +24,6 @@
 - [ ] **Update `AcquirePatrolTarget`**:
     - Logic: Use `GetVantagePosition` to calculate the `currentNavDestination` *before* moving.
 
-  
-
-
 ## Phase 2: Planning & Execution (The Job System)
 
 ### Step 3: The Job Class & Queue (Short-Term Memory)
@@ -46,8 +43,8 @@
 - [ ] **Rewrite `AcquirePatrolTarget` (ExecuteNextJob):**
     - Logic: If `jobQueue` is empty, call `JobGenerator.GenerateRoomClear(bestRoom)`.
     - Logic: Pop the next job and assign its data to `currentInterestTarget` and `currentNavDestination`.
-[x] **Update ```Creeping``` in Doorway behavior. 
-	- Logic: Create a function or update get vantage point so that 
+- [ ] **Update ```Creeping``` in Doorway job so it works. 
+	- It needs re-designing
 
 ## Phase 3: Personality & Pacing (Utility & Director)
 
