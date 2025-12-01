@@ -90,3 +90,31 @@ While the plan is solid, here are the potential pitfalls to watch out for:
 - [ ] **Update `Director.cs`**:
     - Implement the "Tension Bucket" or "Pacing Curve" logic.
     - **New Action:** Director calls a Hunter function that forces a "Release" job (e.g., `HunterAI.StartLongRest()`) if Tension is too high, overriding the current plan.
+
+## 🧠 Gemini Notes: Architectural Guard Rails
+
+**1. The "Action Atomic" Rule**
+* **Mistake:** We tried to make `PerformDoorwayPeek` handle movement logic (Creep), which fought the NavMesh and caused jittering.
+* **Rule:** **Actions must NOT move the Agent.**
+    * `Move` Jobs handle *Positioning*.
+    * `Action` Jobs handle *Animation/Wait*.
+    * **Never** combine them. If the Hunter needs to "Creep," that is a `MoveTo` job with `speed=0.5`, followed by a `Peek` job.
+
+**2. The "Memory Prediction" Rule**
+* **Mistake:** We tried to force the Hunter to enter a room based on "Commitment," even if his sensors told him it was empty.
+* **Rule:** **The Planner predicts; The Sensor corrects.**
+    * The HTN generates a chain: `Peek -> Enter -> Search`.
+    * Each step must validate the *current* memory before starting.
+    * If `Peek` cools the room heat to 0, the `Enter` job must be auto-aborted by the Executor before it starts.
+
+**3. The "Vantage" Rule**
+* **Mistake:** Walking to the exact coordinate of a patrol point (inside a door frame) caused physics clipping and "Wall Staring."
+* **Rule:** **Never path to an object.**
+    * Always path to a `VantagePosition` calculated by the Solver.
+    * The `TargetOfInterest` is for the Head (Looking), not the Body (Walking).
+
+**4. The "Director" Rule**
+* **Mistake:** Making the Director control the Hunter's legs.
+* **Rule:** **The Director controls Mood, not Motor.**
+    * Director: "Be Aggressive."
+    * Hunter Brain: "Okay, I will generate 'Kick Door' jobs instead of 'Peek' jobs."

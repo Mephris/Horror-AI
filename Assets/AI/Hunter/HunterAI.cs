@@ -99,7 +99,7 @@ public class HunterAI : MonoBehaviour
     [HideInInspector] public Dictionary<string, RoomInfo> roomData = new Dictionary<string, RoomInfo>();
     private Room[] rooms;
 
-    // Job System (HTN-like)
+    // --- JOB SYSTEM (HTN Plan) ---
     public Queue<HunterJob> jobQueue = new Queue<HunterJob>();
     public HunterJob currentActiveJob = null; // The job currently being executed
 
