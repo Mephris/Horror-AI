@@ -298,6 +298,7 @@
   },
   "active": "6add487562a1e403",
   "lastOpenFiles": [
+    "Library/Bee/TundraBuildState.state",
     "notes/GDD/Utility Mapping.md",
     "notes/Roadmap.md",
     "notes/GDD/Hunter/HunterAI Functions.md",
@@ -307,7 +308,6 @@
     "notes/Changelog/27.11.2025 - Code audit.md",
     "Temp/__Backupscenes/0.backup",
     "Temp/__Backupscenes",
-    "Library/Bee/TundraBuildState.state",
     "Temp/ADB-Refreshe771eb5ab46688c4b9222d01991397d2",
     "Temp/ADB-Refresh4652e465da048cf4a9f85eeb066510fb",
     "Temp/ADB-Refresh5f6ec9df64dad9949939714ee71a202d",
@@ -333,7 +333,6 @@
     "notes/Changelog/10.11.2025 - Hunter.md",
     "notes/Changelog/6.11.2025 - Patrol Point Changes.md",
     "notes/Changelog/5.11.2025 - Patroling Behavior Changes.md",
-    "Pasted image 20251110194027.png",
-    "README.md"
+    "Pasted image 20251110194027.png"
   ]
 }

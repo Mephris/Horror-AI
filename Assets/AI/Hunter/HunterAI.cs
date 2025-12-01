@@ -318,7 +318,7 @@ public class HunterAI : MonoBehaviour
     // =================================================================================
     // --- UTILITY & HELPERS ---
     // =================================================================================
-
+    
     // Helper for HunterHead to find hot points nearby
     public List<HunterPatrolMemory> GetLocalHotPoints(Vector3 center, float radius)
     {
