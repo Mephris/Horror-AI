@@ -9,6 +9,7 @@ So we will be implementing additional systems alongside it, the idea is to creat
 	- For most of the time Director will simply manipulate the data in Hunter's memory in order to softly influence how the game will be played. However, if there is big problem, like tension flatlining or player getting bored or too cocky etc etc, the GOAL will be given, the Movie moment, made in order to stop the "Interact(Locker)" and make him stand there looking at it for few moments. Or for cinematic/story progression. 
 	- **Input**: Game Tension, Game Time
 	- **Output**: High level goal (searching zones and moving hunter around in order to keep the loosely horror movie tension theory), Manipulating Game Data (**Utility Moods & Room "Heat"**)
+
 2. **The Brain - Strategist, Utility system and HTN (planning jobs)**
 	- **Utility** - a layer that keeps the moods of HunterAI, basically when hunter will patrol or see some events he will keep track of his inner variables such as aggression, caution, frustration etc. etc.
 		- It will decide how he currently moves, is he stealthy or more erratic based on mood he is currently in. 
@@ -21,11 +22,19 @@ So we will be implementing additional systems alongside it, the idea is to creat
 				Peek(Door) > Interact(Locker) > Vantage(Table)'
 	- **Input:** Optional goals from director, local stimuli (noise/events)
 	- **Output:** A queue of `HunterJobs` (e.g., `[Peek Door]`, `[Check Table]`, `[Wait]`).
-3. The Body (behavior tree) 
+
+
+3. **The Body (behavior tree)** 
 	- Reactive decision making, executing smallest decisions for the current job since its good at doing that... lets not make behavior tree do the thinking. It handles the moment-to-moment logic: "Am I at the destination? Did I see the player? Is the path blocked?"
-	- **Crucial Change:** It no longer decides _where_ to go. It just asks the Brain: "What is my next task?" and does it.
+	- **Big Fucking Change:** It no longer decides _where_ to go. It just asks the Brain: "What is my next task?" and does it.
 	- **Input:** The current `HunterJob`.
     - **Output:** `Move()`, `PlayAnimation()`, or `Interrupt()` (Current active nodes basically).
+
 4. The Motor 
 	- The stupid one of the 4, he just cares about navigating on navmesh. 
 	- The Muscles and Eyes (Navmesh agent and `HunterHeadController`)
+	- Anything else I might wanna add that will be stupid but required in order to do some jobs. 
+
+Main reason for doing this will be just letting all components do their separate jobs and not collide with each other. 
+
+If Behavior Tree stops to all actions all the damn time as it was because of the `re-evaluate` it wont do anything properly. 

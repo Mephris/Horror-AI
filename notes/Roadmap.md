@@ -23,8 +23,7 @@
     - Algorithm: Calculate a spot (e.g., 3m away, clear Line of Sight, NavMesh snapped).
 - [ ] **Update `AcquirePatrolTarget`**:
     - Logic: Use `GetVantagePosition` to calculate the `currentNavDestination` *before* moving.
--  **Update ```Creeping``` in Doorway behavior. 
-	- Logic: Create a function or update get vantage point so that 
+
   
 
 
@@ -47,6 +46,8 @@
 - [ ] **Rewrite `AcquirePatrolTarget` (ExecuteNextJob):**
     - Logic: If `jobQueue` is empty, call `JobGenerator.GenerateRoomClear(bestRoom)`.
     - Logic: Pop the next job and assign its data to `currentInterestTarget` and `currentNavDestination`.
+[x] **Update ```Creeping``` in Doorway behavior. 
+	- Logic: Create a function or update get vantage point so that 
 
 ## Phase 3: Personality & Pacing (Utility & Director)
 
