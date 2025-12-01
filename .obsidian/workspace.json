@@ -125,12 +125,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "notes/Changelog/2025.12.1 - The Vantage Point.md",
+                "file": "notes/Roadmap.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "2025.12.1 - The Vantage Point"
+              "title": "Roadmap"
             }
           },
           {
@@ -268,13 +268,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "notes/Changelog/2025.12.1 - The Vantage Point.md",
+                "file": "notes/Roadmap.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline of 2025.12.1 - The Vantage Point"
+              "title": "Outline of Roadmap"
             }
           }
         ],
@@ -298,10 +298,11 @@
   },
   "active": "6add487562a1e403",
   "lastOpenFiles": [
+    "notes/GDD/Hunter AI Structure Plan.md",
+    "notes/Changelog/2025.12.1 - The Vantage Point.md",
     "notes/Changelog/2025.11.19 - Hunter Planning.md",
     "notes/Changelog/2025.11.14 - Hunter Investigation.md",
     "notes/Changelog/2025.11.13- More Logic ffs.md",
-    "notes/Changelog/2025.12.1 - The Vantage Point.md",
     "notes/Changelog/2025.11.5 - Patroling Behavior Changes.md",
     "notes/Changelog/2025.11.27 - Code audit.md",
     "notes/Changelog/2025.11.26 - Prowler behavior and doors..md",
@@ -328,7 +329,6 @@
     "Temp/UnityTempFile-6b1766208cc25574ea1b3252dceb7f61",
     "Temp/UnityTempFile-5f8fd75d70871264a9e62247b8891427",
     "notes/GDD/Utility Mapping.md",
-    "notes/GDD/Hunter AI Structure Plan.md",
     "Pasted image 20251201142630.png",
     "notes/Director.md",
     "notes/Hunter.md",
