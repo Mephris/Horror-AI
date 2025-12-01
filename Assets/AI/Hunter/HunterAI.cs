@@ -99,6 +99,10 @@ public class HunterAI : MonoBehaviour
     [HideInInspector] public Dictionary<string, RoomInfo> roomData = new Dictionary<string, RoomInfo>();
     private Room[] rooms;
 
+    // Job System (HTN-like)
+    public Queue<HunterJob> jobQueue = new Queue<HunterJob>();
+    public HunterJob currentActiveJob = null; // The job currently being executed
+
     // Components
     private NavMeshAgent agent;
     private Node rootNode;
@@ -399,6 +403,34 @@ public class HunterAI : MonoBehaviour
         Actions.CommandToMove += OnCommandToMove;
         Actions.HunterCanSeePlayer += OnSeePlayer;
         Actions.HunterSawPatrolPoint += OnPatrolPointSeen;
+    }
+
+    // --- JOB MANAGEMENT ---
+    public void AddJob(HunterJob job)
+    {
+        jobQueue.Enqueue(job);
+    }
+
+    public HunterJob GetNextJob()
+    {
+        if (jobQueue.Count > 0)
+        {
+            currentActiveJob = jobQueue.Dequeue();
+            return currentActiveJob;
+        }
+        currentActiveJob = null;
+        return null;
+    }
+
+    public void ClearJobs()
+    {
+        jobQueue.Clear();
+        currentActiveJob = null;
+    }
+
+    public bool HasJobs()
+    {
+        return jobQueue.Count > 0 || currentActiveJob != null;
     }
 
     #endregion

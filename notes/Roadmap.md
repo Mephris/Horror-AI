@@ -28,10 +28,10 @@
 
 ### Step 3: The Job Class & Queue (Short-Term Memory)
 **Objective:** Create the structure for chained plans that can be aborted.
-- [ ] **Create `HunterJob.cs`** (Non-MonoBehaviour Class):
+- [x] **Create `HunterJob.cs`** (Non-MonoBehaviour Class):
     - Enum `JobType`: { `MoveToVantage`, `Peek`, `Interact`, `Wait`, `Chase` }.
     - Variables: `Target`, `Duration`, `Type`.
-- [ ] **Update `HunterAI.cs`**:
+- [x] **Update `HunterAI.cs`**:
     - Add `Queue<HunterJob> jobQueue`.
     - Add basic queue methods (`AddJob()`, `GetNextJob()`, `ClearJobs()`).
 
