@@ -67,6 +67,14 @@ public class HunterAI : MonoBehaviour
     [SerializeField] private float probabilityUpdateInterval = 1f;
     private WaitForSeconds probabilityWait;
 
+    // --- THE JOB SYSTEM (HTN Plan) ---
+    [Header("Job System")]
+    // The list of pending instructions
+    public Queue<HunterJob> jobQueue = new Queue<HunterJob>();
+
+    // The job currently being executed by the Behavior Tree
+    public HunterJob currentActiveJob = null;
+
     // --- BEHAVIOR & COOLDOWN ---
     [Header("Behavior Settings")]
     [Tooltip("After peeking a door, how long until he allows himself to peek another.")]
@@ -95,6 +103,8 @@ public class HunterAI : MonoBehaviour
 
     [Header("BT Debug")]
     [SerializeField] public string currentBTState = "Initializing";
+
+
 
     // --- MOVEMENT DYNAMICS (Wiggly Carrot) ---
     [Header("Movement Dynamics")]
