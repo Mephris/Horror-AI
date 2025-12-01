@@ -3,44 +3,57 @@ using UnityEngine.AI;
 
 public static class VantageSolver
 {
-    // Finds a valid position on the NavMesh 'distance' meters away from the target
-    // in the direction of the observer (Hunter).
-    public static Vector3 GetVantagePosition(Transform target, Vector3 observerPosition, float optimalDistance = 3.0f)
+    // Settings for the "Query"
+    private static float eyeHeight = 1.6f; // Hunter's eye level
+    private static int raycastMask = LayerMask.GetMask("Default", "Wall", "Environment"); // What blocks vision?
+
+    public static Vector3 GetVantagePosition(Transform target, Vector3 hunterPos, float idealDistance = 3.0f)
     {
-        if (target == null) return observerPosition;
+        if (target == null) return hunterPos;
 
-        // 1. Calculate the ideal vector (Backing away from the target towards the Hunter)
         Vector3 targetPos = target.position;
-        Vector3 dirToHunter = (observerPosition - targetPos).normalized;
-
-        // If hunter is exactly on top of target, pick a random direction
+        Vector3 dirToHunter = (hunterPos - targetPos).normalized;
         if (dirToHunter == Vector3.zero) dirToHunter = Vector3.forward;
 
-        // 2. Determine the Ideal Point
-        Vector3 idealPoint = targetPos + (dirToHunter * optimalDistance);
+        // --- 1. GENERATE CANDIDATES (The Semi-Circle) ---
+        // We try 3 angles: Direct (0), Left (-45), Right (+45)
+        float[] angles = { 0f, -45f, 45f };
 
-        // 3. Snap to NavMesh (Finding the floor)
-        NavMeshHit hit;
-        // Search within 2.0f of the ideal point to find valid ground
-        if (NavMesh.SamplePosition(idealPoint, out hit, 2.0f, NavMesh.AllAreas))
+        foreach (float angle in angles)
         {
-            // 4. Line of Sight Check (Optional but recommended)
-            // Ensure no wall exists between the Vantage Point and the Target
-            // We lift the check 1.5m up to simulate "Eye Level"
-            Vector3 eyeLevelStart = hit.position + Vector3.up * 1.5f;
-            Vector3 eyeLevelEnd = targetPos + Vector3.up * 1.5f;
+            // Rotate the direction vector
+            Vector3 candidateDir = Quaternion.Euler(0, angle, 0) * dirToHunter;
+            Vector3 candidatePos = targetPos + (candidateDir * idealDistance);
 
-            // Simple raycast check (Blocked by Default/Walls)
-            // (You might need to adjust the layer mask based on your project layers)
-            if (!Physics.Linecast(eyeLevelStart, eyeLevelEnd, LayerMask.GetMask("Default")))
+            // --- 2. FILTER (NavMesh Validity) ---
+            NavMeshHit hit;
+            // Check if point is on NavMesh (Search radius 1.0m)
+            if (NavMesh.SamplePosition(candidatePos, out hit, 1.0f, NavMesh.AllAreas))
             {
-                return hit.position; // Found a perfect spot!
+                Vector3 validFloorPos = hit.position;
+
+                // --- 3. FILTER (Visibility / 3D Raycast) ---
+                // Check if we can actually SEE the target from here
+                Vector3 rayStart = validFloorPos + Vector3.up * eyeHeight;
+                Vector3 rayEnd = targetPos + Vector3.up * (eyeHeight * 0.8f); // Look slightly below top
+
+                if (!Physics.Linecast(rayStart, rayEnd, raycastMask))
+                {
+                    // SUCCESS: Found a valid, visible, walkable point.
+                    // Since we check "0" angle first, this is automatically the best one.
+                    return validFloorPos;
+                }
             }
         }
 
-        // 5. Fallback
-        // If the 3m spot is invalid (inside a wall or blocked), we default to 
-        // the object's actual position so the Hunter at least goes there.
+        // FALLBACK: If all 3m spots are blocked (tight corner), try closer (1.5m)
+        // Recursive call with smaller distance
+        if (idealDistance > 1.5f)
+        {
+            return GetVantagePosition(target, hunterPos, 1.5f);
+        }
+
+        // FINAL FALLBACK: Just go to the object itself
         return targetPos;
     }
 }
