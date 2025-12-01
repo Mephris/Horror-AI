@@ -137,7 +137,6 @@ public class HunterAI : MonoBehaviour
         if (targetPos == null) targetPos = new GameObject("PlayerChaseTarget_Dynamic").transform;
         probabilityWait = new WaitForSeconds(probabilityUpdateInterval);
     }
-
     private void BuildMemoryMap()
     {
         rooms = FindObjectsOfType<Room>();

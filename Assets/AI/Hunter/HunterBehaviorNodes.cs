@@ -14,9 +14,8 @@ public class HunterBehaviorNodes
         this.agent = navAgent;
     }
 
-    // =================================================================
-    // BASE CLASSES
-    // =================================================================
+    #region --- BASE CLASSES ---
+
     public abstract class HunterTask : Node
     {
         protected HunterBehaviorNodes context;
@@ -29,28 +28,34 @@ public class HunterBehaviorNodes
         public HunterCondition(HunterBehaviorNodes context) => this.context = context;
     }
 
-    // =================================================================
-    // 1. CHASE BRANCH
-    // =================================================================
+    #endregion
+
+    #region --- CHASE BRANCH ---
+
+    // 1. CONDITION: IS PLAYER SEEN?
     public class IsPlayerSeen : HunterCondition
     {
         public IsPlayerSeen(HunterBehaviorNodes context) : base(context) { }
 
         protected override NodeState OnUpdate()
         {
+            // Immediate Sighting
             if (context.hunter.timeSinceLastSeen == 0.0f) return NodeState.SUCCESS;
 
+            // Investigation Timer Active
             if (context.hunter.isChasingPlayer &&
                 context.hunter.timeSinceLastSeen < context.hunter.chaseInvestigationTime)
             {
                 return NodeState.SUCCESS;
             }
 
+            // Lost
             context.hunter.isChasingPlayer = false;
             return NodeState.FAILURE;
         }
     }
 
+    // 2. ACTION: CHASE MOVEMENT
     public class ChasePlayer : HunterTask
     {
         private float acceptableDistance = 1.0f;
@@ -76,7 +81,7 @@ public class HunterBehaviorNodes
             {
                 agent.isStopped = true;
                 context.hunter.currentBTState = "CHASING: Investigating Last Seen...";
-                return NodeState.RUNNING;
+                return NodeState.RUNNING; // Stay here until timer expires
             }
             else
             {
@@ -88,28 +93,33 @@ public class HunterBehaviorNodes
         }
     }
 
-    // =================================================================
-    // 2. PATROL MOVEMENT (Vantage Logic)
-    // =================================================================
+    #endregion
+
+    #region --- PATROL MOVEMENT BRANCH ---
+
+    // 3. ACTION: ACQUIRE TARGET (The Brain Connector)
+    // Calculates Vantage Points and locks onto targets.
     public class AcquirePatrolTarget : HunterTask
     {
         public AcquirePatrolTarget(HunterBehaviorNodes context) : base(context) { }
 
         protected override NodeState OnUpdate()
         {
-            // 1. Check if we have a valid target
+            // A. Check Existing Target validity
             if (context.hunter.currentInterestTarget != null)
             {
-                // CHECK DISTANCE TO THE CALCULATED VANTAGE POINT (Not the object)
+                // Check Distance to VANTAGE POINT (Not Object)
                 float dist = Vector3.Distance(context.agent.transform.position, context.hunter.currentNavDestination);
 
-                // If close to the vantage point, success (allow Action to run)
+                // If close to vantage point, allow Action to run
                 if (dist <= 1.5f) return NodeState.SUCCESS;
 
                 if (context.hunter.patrolPointData.TryGetValue(context.hunter.currentInterestTarget, out HunterPatrolMemory mem))
                 {
+                    // Commitment: Special points must be visited
                     if (mem.pointType != PointType.Standard) return NodeState.SUCCESS;
 
+                    // Standard: Drop if cooled visually
                     if (mem.playerProbability <= context.hunter.baseUncertainty + 0.05f)
                     {
                         context.hunter.currentBTState = $"PATROL: {context.hunter.currentInterestTarget.name} cooled. Switching...";
@@ -122,16 +132,14 @@ public class HunterBehaviorNodes
                 }
             }
 
-            // 2. Find BEST next target
+            // B. Find New Target
             Transform bestPoint = context.hunter.GetBestNextPoint(context.agent.transform.position);
 
             if (bestPoint != null)
             {
-                // A. Set the Interest (Data)
                 context.hunter.currentInterestTarget = bestPoint;
 
-                // B. Calculate the Vantage Point (Navigation)
-                // This is the key "Stalker" update!
+                // VANTAGE CALCULATION (Stalker Logic)
                 context.hunter.currentNavDestination = VantageSolver.GetVantagePosition(bestPoint, context.agent.transform.position, 3.0f);
 
                 string roomName = "Hallway";
@@ -149,9 +157,10 @@ public class HunterBehaviorNodes
         }
     }
 
+    // 4. ACTION: MOVE TO VANTAGE POINT
     public class MoveToPatrolPoint : HunterTask
     {
-        private float switchDistance = 1.5f; // Slightly tighter for vantage points
+        private float switchDistance = 1.5f; // Tighter for Vantage Points
 
         public MoveToPatrolPoint(HunterBehaviorNodes context) : base(context) { }
 
@@ -161,11 +170,10 @@ public class HunterBehaviorNodes
 
             NavMeshAgent agent = context.agent;
 
-            // MOVE TO VANTAGE POINT (Not the object)
+            // Move to VANTAGE point
             agent.SetDestination(context.hunter.currentNavDestination);
             agent.isStopped = false;
 
-            // Check distance to VANTAGE POINT
             float dist = Vector3.Distance(agent.transform.position, context.hunter.currentNavDestination);
 
             if (dist <= switchDistance) return NodeState.SUCCESS;
@@ -174,10 +182,11 @@ public class HunterBehaviorNodes
         }
     }
 
-    // =================================================================
-    // 3. ACTION BRANCH
-    // =================================================================
+    #endregion
 
+    #region --- CONTEXT ACTIONS BRANCH ---
+
+    // 5. CONDITION: CHECK TYPE
     public class IsPatrolPointType : HunterCondition
     {
         private PointType targetType;
@@ -200,18 +209,20 @@ public class HunterBehaviorNodes
         }
     }
 
-    // ACTION: Creep & Peek (Event-Driven)
+    // 6. ACTION: PEEK / CREEP (Partner Point Version)
     public class PerformDoorwayPeek : HunterTask
     {
+        // State
         private float timer = 0f;
         private float originalSpeed;
         private float originalStoppingDist;
-
-        private float creepSpeed = 0.5f;
-        private float peekDuration = 4.5f;
-
-        private Vector3 debugTargetPos;
         private bool isValidTarget;
+        private Vector3 debugTargetPos;
+
+        // Settings
+        private float creepSpeed = 0.5f;
+        private float creepDistance = 1.5f; // Used for backup calc
+        private float peekDuration = 4.5f;
 
         public PerformDoorwayPeek(HunterBehaviorNodes context) : base(context) { }
 
@@ -219,38 +230,38 @@ public class HunterBehaviorNodes
         {
             NavMeshAgent agent = context.agent;
 
+            // 1. Capture State
             originalSpeed = agent.speed;
             originalStoppingDist = agent.stoppingDistance;
 
+            // 2. Apply Slow Settings
             agent.speed = creepSpeed;
             agent.stoppingDistance = 0.1f;
             agent.isStopped = false;
+            isValidTarget = false;
 
-            // Target Calculation using Partner Point or Lifted Vector
-            // (Using the logic we finalized earlier)
+            // 3. Calculate Creep Target (Partner Point Logic)
             if (context.hunter.currentInterestTarget != null)
             {
                 Vector3 startPos = context.hunter.currentInterestTarget.position;
                 Vector3 forwardDir = context.hunter.currentInterestTarget.forward;
 
-                // Try to find partner first
-                PatrolPoints pointScript = context.hunter.currentInterestTarget.GetComponent<PatrolPoints>();
-                Vector3 rawTarget = startPos + (forwardDir * 1.5f); // Default forward
+                // Default: Lifted Forward Vector
+                Vector3 rawTarget = startPos + (forwardDir * 1.5f);
 
+                // Try to use Partner Point (Preferred)
+                PatrolPoints pointScript = context.hunter.currentInterestTarget.GetComponent<PatrolPoints>();
                 if (pointScript != null && pointScript.partnerPoint != null)
                 {
                     rawTarget = pointScript.partnerPoint.transform.position;
                 }
 
-                // Lift & Snap
+                // Lift & Snap (The Floor Fix)
                 NavMeshHit hit;
-                if (NavMesh.SamplePosition(rawTarget + Vector3.up * 0.5f, out hit, 2.0f, NavMesh.AllAreas))
+                if (NavMesh.SamplePosition(rawTarget + Vector3.up * 0.5f, out hit, 3.0f, NavMesh.AllAreas))
                 {
-                    // Check path validity
-                    NavMeshPath path = new NavMeshPath();
-                    agent.CalculatePath(hit.position, path);
-
-                    if (path.status == NavMeshPathStatus.PathComplete)
+                    // Check Path Validity
+                    if (context.hunter.IsPathValid(hit.position, out float cost))
                     {
                         agent.SetDestination(hit.position);
                         debugTargetPos = hit.position;
@@ -258,7 +269,8 @@ public class HunterBehaviorNodes
                     }
                     else
                     {
-                        agent.SetDestination(startPos); // Fallback
+                        // Fallback: Stand at threshold
+                        agent.SetDestination(startPos);
                     }
                 }
                 else
@@ -273,21 +285,25 @@ public class HunterBehaviorNodes
 
         protected override NodeState OnUpdate()
         {
-            // Debug Draw
+            // Debug Visuals
             Color color = isValidTarget ? Color.green : Color.red;
             if (isValidTarget && !context.agent.hasPath && !context.agent.pathPending) color = Color.yellow;
             Debug.DrawLine(context.agent.transform.position, debugTargetPos, color);
 
             timer -= Time.deltaTime;
+
             if (timer > 0f) return NodeState.RUNNING;
+
             return NodeState.SUCCESS;
         }
 
         protected override void OnExit()
         {
+            // Restore State
             context.agent.speed = originalSpeed;
             context.agent.stoppingDistance = originalStoppingDist;
 
+            // Mark Visited & Cool
             if (timer <= 0f && context.hunter.currentInterestTarget != null)
             {
                 context.hunter.RecordPatrolVisit(context.hunter.currentInterestTarget);
@@ -296,6 +312,7 @@ public class HunterBehaviorNodes
         }
     }
 
+    // 7. ACTION: STANDARD (Walk-by)
     public class PerformStandardAction : HunterTask
     {
         public PerformStandardAction(HunterBehaviorNodes context) : base(context) { }
@@ -310,4 +327,6 @@ public class HunterBehaviorNodes
             return NodeState.SUCCESS;
         }
     }
+
+    #endregion
 }
