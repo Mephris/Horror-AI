@@ -2877,11 +2877,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8675915457954794083, guid: 3fc537e92bf3d2449b5be72cfd6cb447, type: 3}
       propertyPath: velocity.x
-      value: -0.736654
+      value: 0.33940244
       objectReference: {fileID: 0}
     - target: {fileID: 8675915457954794083, guid: 3fc537e92bf3d2449b5be72cfd6cb447, type: 3}
       propertyPath: velocity.z
-      value: 0.20963416
+      value: -0.75445634
       objectReference: {fileID: 0}
     - target: {fileID: 8675915457954794083, guid: 3fc537e92bf3d2449b5be72cfd6cb447, type: 3}
       propertyPath: partsPerLeg
@@ -2935,7 +2935,7 @@ PrefabInstance:
     m_RemovedGameObjects: []
     m_AddedGameObjects:
     - targetCorrespondingSourceObject: {fileID: 8675915457954794082, guid: 3fc537e92bf3d2449b5be72cfd6cb447, type: 3}
-      insertIndex: -1
+      insertIndex: 0
       addedObject: {fileID: 324744351}
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 8675915457954794080, guid: 3fc537e92bf3d2449b5be72cfd6cb447, type: 3}
@@ -14200,26 +14200,29 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8bb8565cb90980441966fe63b69f2415, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  currentInterestTarget: {fileID: 0}
-  currentNavDestination: {x: 0, y: 0, z: 0}
-  targetPos: {fileID: 0}
   sameRoomMultiplier: 1.1
   distancePenalty: 1
-  baseUncertainty: 0.2
-  probabilityUpdateInterval: 1
   peekSkillCooldown: 5
   idleLookInterval: 1
   idleHeadTurnSpeed: 2
-  chaseInvestigationTime: 7
-  timeSinceLastSeen: 999
-  isChasingPlayer: 0
-  directorCommandPathCostThreshold: 40
-  currentBTState: Initializing
-  pathLookAheadDistance: 4
-  driftAmplitude: 1.5
-  driftFrequency: 1
   creepSpeed: 0.5
   creepDistance: 3
+  baseUncertainty: 0.2
+  probabilityUpdateInterval: 1
+  chaseInvestigationTime: 7
+  directorCommandPathCostThreshold: 40
+  currentBTState: Initializing
+  currentInterestTarget: {fileID: 0}
+  currentNavDestination: {x: 0, y: 0, z: 0}
+  targetPos: {fileID: 0}
+  timeSinceLastSeen: 999
+  isChasingPlayer: 0
+  currentActiveJob:
+    jobType: 0
+    duration: 0
+    vantagePosition: {x: 0, y: 0, z: 0}
+    targetInterest: {fileID: 0}
+    moveSpeed: 3.5
 --- !u!114 &1165612977
 MonoBehaviour:
   m_ObjectHideFlags: 0

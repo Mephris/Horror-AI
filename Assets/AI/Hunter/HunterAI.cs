@@ -497,6 +497,8 @@ public class HunterAI : MonoBehaviour
         }
     }
 
+    #endregion
+
     void OnDrawGizmos()
     {
         if (roomData == null || roomData.Count == 0) return;
@@ -511,7 +513,36 @@ public class HunterAI : MonoBehaviour
                 Handles.Label(roomCenter + Vector3.up * 2.0f, $"{room.roomName}\n{room.generalCuriosity:F2}");
             }
         }
+        // --- VANTAGE SOLVER DEBUG ---
+        // Draw the candidates from the last calculation
+        if (VantageSolver.DebugCandidates != null)
+        {
+            for (int i = 0; i < VantageSolver.DebugCandidates.Count; i++)
+            {
+                Vector3 pos = VantageSolver.DebugCandidates[i];
+                string label = VantageSolver.DebugLabels[i];
+
+                // Is this the winner?
+                bool isWinner = (Vector3.Distance(pos, VantageSolver.DebugBestPoint) < 0.5f);
+
+                // Color Logic
+                Gizmos.color = isWinner ? Color.green : Color.yellow;
+
+                // Draw Sphere
+                Gizmos.DrawWireSphere(pos, 0.3f);
+                if (isWinner) Gizmos.DrawSphere(pos, 0.3f);
+
+                // Draw Label
+                Handles.Label(pos + Vector3.up * 0.5f, label);
+
+                // Draw line to target to show the "Cone" shape
+                if (currentInterestTarget != null)
+                {
+                    Gizmos.color = new Color(1, 0.92f, 0.016f, 0.3f); // Faint yellow
+                    Gizmos.DrawLine(currentInterestTarget.position, pos);
+                }
+            }
+        }
 #endif
     }
-    #endregion
 }
