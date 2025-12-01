@@ -18,10 +18,10 @@
 
 ### Step 2: The Vantage Solver (The Stalking Brain)
 **Objective:** Give the Hunter the ability to calculate a "viewing spot" dynamically.
-- [ ] **Create `VantageSolver.cs`** (Static Helper):
+- [x] **Create `VantageSolver.cs`** (Static Helper):
     - Function: `GetVantagePosition(Transform targetInterestObject)`.
     - Algorithm: Calculate a spot (e.g., 3m away, clear Line of Sight, NavMesh snapped).
-- [ ] **Update `AcquirePatrolTarget`**:
+- [x] **Update `AcquirePatrolTarget`**:
     - Logic: Use `GetVantagePosition` to calculate the `currentNavDestination` *before* moving.
 
 ## Phase 2: Planning & Execution (The Job System)

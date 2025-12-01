@@ -89,7 +89,7 @@ public class HunterBehaviorNodes
     }
 
     // =================================================================
-    // 2. PATROL MOVEMENT
+    // 2. PATROL MOVEMENT (Vantage Logic)
     // =================================================================
     public class AcquirePatrolTarget : HunterTask
     {
@@ -100,16 +100,16 @@ public class HunterBehaviorNodes
             // 1. Check if we have a valid target
             if (context.hunter.currentInterestTarget != null)
             {
+                // CHECK DISTANCE TO THE CALCULATED VANTAGE POINT (Not the object)
                 float dist = Vector3.Distance(context.agent.transform.position, context.hunter.currentNavDestination);
 
-                if (dist <= 3.0f) return NodeState.SUCCESS;
+                // If close to the vantage point, success (allow Action to run)
+                if (dist <= 1.5f) return NodeState.SUCCESS;
 
                 if (context.hunter.patrolPointData.TryGetValue(context.hunter.currentInterestTarget, out HunterPatrolMemory mem))
                 {
-                    // COMMITMENT LOGIC
                     if (mem.pointType != PointType.Standard) return NodeState.SUCCESS;
 
-                    // CORNER CUTTING
                     if (mem.playerProbability <= context.hunter.baseUncertainty + 0.05f)
                     {
                         context.hunter.currentBTState = $"PATROL: {context.hunter.currentInterestTarget.name} cooled. Switching...";
@@ -123,15 +123,15 @@ public class HunterBehaviorNodes
             }
 
             // 2. Find BEST next target
-            // Note: GetBestNextPoint now returns the Interest Target (Transform).
             Transform bestPoint = context.hunter.GetBestNextPoint(context.agent.transform.position);
 
             if (bestPoint != null)
             {
+                // A. Set the Interest (Data)
                 context.hunter.currentInterestTarget = bestPoint;
 
-                // CALC VANTAGE POINT (Destination)
-                // Use the VantageSolver to find where to stand
+                // B. Calculate the Vantage Point (Navigation)
+                // This is the key "Stalker" update!
                 context.hunter.currentNavDestination = VantageSolver.GetVantagePosition(bestPoint, context.agent.transform.position, 3.0f);
 
                 string roomName = "Hallway";
@@ -139,7 +139,8 @@ public class HunterBehaviorNodes
                 {
                     roomName = mem.parentRoom.roomName;
                 }
-                context.hunter.currentBTState = $"PATROL: Locked on [{roomName}] {bestPoint.name}";
+
+                context.hunter.currentBTState = $"PATROL: Stalking [{roomName}] {bestPoint.name}";
                 return NodeState.SUCCESS;
             }
 
@@ -150,7 +151,7 @@ public class HunterBehaviorNodes
 
     public class MoveToPatrolPoint : HunterTask
     {
-        private float switchDistance = 2.0f;
+        private float switchDistance = 1.5f; // Slightly tighter for vantage points
 
         public MoveToPatrolPoint(HunterBehaviorNodes context) : base(context) { }
 
@@ -160,12 +161,13 @@ public class HunterBehaviorNodes
 
             NavMeshAgent agent = context.agent;
 
-            // DIRECT MOVEMENT (No Wiggle)
-            // We move to the Vantage Point calculated by AcquirePatrolTarget
+            // MOVE TO VANTAGE POINT (Not the object)
             agent.SetDestination(context.hunter.currentNavDestination);
             agent.isStopped = false;
 
+            // Check distance to VANTAGE POINT
             float dist = Vector3.Distance(agent.transform.position, context.hunter.currentNavDestination);
+
             if (dist <= switchDistance) return NodeState.SUCCESS;
 
             return NodeState.RUNNING;
@@ -198,21 +200,18 @@ public class HunterBehaviorNodes
         }
     }
 
-    // --- PEEK NODE (No Debug, No Stop) ---
+    // ACTION: Creep & Peek (Event-Driven)
     public class PerformDoorwayPeek : HunterTask
     {
         private float timer = 0f;
         private float originalSpeed;
         private float originalStoppingDist;
 
-        // Settings
         private float creepSpeed = 0.5f;
-        private float maxCreepDist = 1.5f;
         private float peekDuration = 4.5f;
 
-        // State
-        private Vector3 creepTargetPos;
-        private bool hasValidCreepTarget;
+        private Vector3 debugTargetPos;
+        private bool isValidTarget;
 
         public PerformDoorwayPeek(HunterBehaviorNodes context) : base(context) { }
 
@@ -220,54 +219,64 @@ public class HunterBehaviorNodes
         {
             NavMeshAgent agent = context.agent;
 
-            // 1. Capture State
             originalSpeed = agent.speed;
             originalStoppingDist = agent.stoppingDistance;
 
-            // 2. Apply Settings
             agent.speed = creepSpeed;
             agent.stoppingDistance = 0.1f;
             agent.isStopped = false;
 
-            // 3. CALCULATE VALID TARGET (Iterative Fallback)
-            Vector3 startPos = context.hunter.currentInterestTarget.position;
-            Vector3 forwardDir = context.hunter.currentInterestTarget.forward;
-
-            hasValidCreepTarget = false;
-            float[] tryDistances = new float[] { maxCreepDist, 1.0f, 0.5f, 0.2f };
-
-            foreach (float dist in tryDistances)
+            // Target Calculation using Partner Point or Lifted Vector
+            // (Using the logic we finalized earlier)
+            if (context.hunter.currentInterestTarget != null)
             {
-                // Lifted target check
-                Vector3 testPos = startPos + (forwardDir * dist) + (Vector3.up * 0.2f);
-                NavMeshHit hit;
+                Vector3 startPos = context.hunter.currentInterestTarget.position;
+                Vector3 forwardDir = context.hunter.currentInterestTarget.forward;
 
-                if (NavMesh.SamplePosition(testPos, out hit, 1.0f, NavMesh.AllAreas))
+                // Try to find partner first
+                PatrolPoints pointScript = context.hunter.currentInterestTarget.GetComponent<PatrolPoints>();
+                Vector3 rawTarget = startPos + (forwardDir * 1.5f); // Default forward
+
+                if (pointScript != null && pointScript.partnerPoint != null)
                 {
-                    // Check path reachability
-                    if (context.hunter.IsPathValid(hit.position, out float cost))
+                    rawTarget = pointScript.partnerPoint.transform.position;
+                }
+
+                // Lift & Snap
+                NavMeshHit hit;
+                if (NavMesh.SamplePosition(rawTarget + Vector3.up * 0.5f, out hit, 2.0f, NavMesh.AllAreas))
+                {
+                    // Check path validity
+                    NavMeshPath path = new NavMeshPath();
+                    agent.CalculatePath(hit.position, path);
+
+                    if (path.status == NavMeshPathStatus.PathComplete)
                     {
                         agent.SetDestination(hit.position);
-                        creepTargetPos = hit.position;
-                        hasValidCreepTarget = true;
-                        break;
+                        debugTargetPos = hit.position;
+                        isValidTarget = true;
                     }
+                    else
+                    {
+                        agent.SetDestination(startPos); // Fallback
+                    }
+                }
+                else
+                {
+                    agent.SetDestination(startPos);
                 }
             }
 
-            if (!hasValidCreepTarget)
-            {
-                // Fallback: Stand at the patrol point itself
-                agent.SetDestination(startPos);
-            }
-
             timer = peekDuration;
-            context.hunter.currentBTState = "ACTION: Creeping...";
+            context.hunter.currentBTState = "ACTION: Creeping into Room...";
         }
 
         protected override NodeState OnUpdate()
         {
-            // (Debug Lines Removed for cleaner view)
+            // Debug Draw
+            Color color = isValidTarget ? Color.green : Color.red;
+            if (isValidTarget && !context.agent.hasPath && !context.agent.pathPending) color = Color.yellow;
+            Debug.DrawLine(context.agent.transform.position, debugTargetPos, color);
 
             timer -= Time.deltaTime;
             if (timer > 0f) return NodeState.RUNNING;
