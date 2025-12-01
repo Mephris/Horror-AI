@@ -51,3 +51,12 @@ Each candidate point must pass two strict tests to be accepted:
     
 - **Final Fallback:** If even the 1.5m check fails, it returns the **Target's actual position**. (The Hunter is forced to walk directly to the object as a last resort).
 
+
+### In-Game Behavior (The Result)
+
+- **In Open Space:** The Hunter stops 3 meters away from the table, looking professional and observant.
+    
+- **Around Corners:** The Hunter naturally "slices the pie," picking a vantage point that allows him to see around the doorframe without exposing himself fully.
+    
+- **In Clutter:** The Hunter steps to the side (45°) to look around a pillar blocking his view.
+
