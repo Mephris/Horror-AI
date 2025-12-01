@@ -23,3 +23,8 @@ So we will be implementing additional systems alongside it, the idea is to creat
 3. The Body (behavior tree) 
 	- Reactive decision making, executing smallest decisions for the current job since its good at doing that... lets not make behavior tree do the thinking. It handles the moment-to-moment logic: "Am I at the destination? Did I see the player? Is the path blocked?"
 	- **Crucial Change:** It no longer decides _where_ to go. It just asks the Brain: "What is my next task?" and does it.
+	- **Input:** The current `HunterJob`.
+    - **Output:** `Move()`, `PlayAnimation()`, or `Interrupt()` (Current active nodes basically).
+4. The Motor 
+	- The stupid one of the 4, he just cares about navigating on navmesh. 
+	- The Muscles and Eyes (Navmesh agent and `HunterHeadController`)
