@@ -46,6 +46,29 @@
 - [ ] **Update ```Creeping``` in Doorway job so it works. 
 	- It needs re-designing
 
+Things to Keep In mind
+```
+While the plan is solid, here are the potential pitfalls to watch out for:
+
+- **Mistake 1: Over-Engineering the Job System**
+    
+    - _Risk:_ Building a full, generic HTN solver (like _Killzone_'s) is a massive undertaking.
+        
+    - _Correction:_ Stick to a **Domain-Specific HTN**. Don't write a generic solver that can solve _any_ problem. Write a simple `JobGenerator` that knows specifically how to clear rooms. You don't need a recursive planner yet; a simple "Recipe" system is enough.
+        
+- **Mistake 2: Syncing Data**
+    
+    - _Risk:_ The Brain (Planner) generates a plan based on the world state at Time A. By the time the Body executes Step 3 (Time B), the world might have changed (e.g., door closed, player moved).
+        
+    - _Correction:_ Ensure every Job has a **Pre-Condition Check**. Before executing a job from the queue, the Behavior Tree must ask: "Is this still valid?" (e.g., Is the door still there? Is the room still hot?).
+        
+- **Mistake 3: Utility vs. Planning Conflict**
+    
+    - _Risk:_ If the Utility system (Moods) changes mid-plan (e.g., Frustration spikes), does it abort the current plan?
+        
+    - _Correction:_ Decide on an interrupt rule. Usually, you finish the current _atomic_ job (e.g., finish the Peek) before switching strategies, unless it's a high-priority interrupt (Chase).
+```
+
 ## Phase 3: Personality & Pacing (Utility & Director)
 
 ### Step 5: Utility Stats (The Moods)
