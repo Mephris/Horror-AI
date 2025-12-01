@@ -298,6 +298,12 @@
   },
   "active": "6add487562a1e403",
   "lastOpenFiles": [
+    "Library/Artifacts/80/8072a49d2ea444cd065ee91e6a4c5c08",
+    "Library/Bee/TundraBuildState.state",
+    "Library/Artifacts/de/deedd6bf97d32a0be8011424e7df4a07",
+    "Assets/AI/Hunter/HunterJob.cs.meta",
+    "Assets/AI/Hunter/HunterJob.cs",
+    "Library/Bee/buildprogram0.traceevents",
     "notes/GDD/Hunter AI Structure Plan.md",
     "notes/Changelog/2025.12.1 - The Vantage Point.md",
     "notes/Changelog/2025.11.19 - Hunter Planning.md",
@@ -315,7 +321,6 @@
     "notes/Changelog/2025.11.6- Patrol Point Changes.md",
     "notes/Roadmap.md",
     "Temp/UnityTempFile-6fab3ff9b2304834aa95105783603548",
-    "Library/Bee/TundraBuildState.state",
     "notes/GDD/Hunter/VantageSolver (vantage point finder).md",
     "Temp/UnityTempFile-9e576f654888caa4fb9e673c5db8868a",
     "notes/GDD/Hunter/HunterAI Functions.md",
@@ -324,17 +329,12 @@
     "Assets/AI/Hunter/z1u23mws.l2s~",
     "Temp/UnityTempFile-08812f1b07b359d4fa32ad06320d9907",
     "Temp/UnityTempFile-8d0aebe03ee9a6e46853332a9d8daa45",
-    "Temp/UnityTempFile-ada98c4b8d536ef4880c2f21544055fa",
-    "Temp/UnityTempFile-7ba0a89274381a44e92c82434fa99b91",
-    "Temp/UnityTempFile-6b1766208cc25574ea1b3252dceb7f61",
-    "Temp/UnityTempFile-5f8fd75d70871264a9e62247b8891427",
     "notes/GDD/Utility Mapping.md",
     "Pasted image 20251201142630.png",
     "notes/Director.md",
     "notes/Hunter.md",
     "notes/GDD/Patrol Points.md",
     "notes/Changelog/13.11.2025.md",
-    "notes/Changelog/12.11.2025 - AI Tuning & Emergent Behaviors.md",
     "Pasted image 20251110194027.png"
   ]
 }
