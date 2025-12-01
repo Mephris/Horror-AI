@@ -261,8 +261,8 @@ public class HunterBehaviorNodes
 
         // Settings
         private float creepSpeed = 0.5f;
-        private float maxCreepDist = 1.5f; // Now actually used!
-        private float peekDuration = 4.5f;
+        private float creepDistance = 2.0f; // Increased distance to ensure he crosses threshold
+        private float peekDuration = 4.0f;
 
         // Debug
         private Vector3 debugTargetPos;
@@ -273,83 +273,70 @@ public class HunterBehaviorNodes
         protected override void OnEnter()
         {
             NavMeshAgent agent = context.agent;
-
-            // 1. Capture State
             originalSpeed = agent.speed;
             originalStoppingDist = agent.stoppingDistance;
 
-            // 2. Apply Settings
+            // 1. Slow Down (The Creep)
             agent.speed = creepSpeed;
-            agent.stoppingDistance = 0.1f;
+            agent.stoppingDistance = 0.0f;
             agent.isStopped = false;
 
-            // 3. CALCULATE VALID TARGET (Iterative Fallback)
-            Vector3 startPos = context.hunter.currentInterestTarget.position;
-            Vector3 forwardDir = context.hunter.currentInterestTarget.forward;
-
-            bool foundPath = false;
-
-            // FIX: Use the variable 'maxCreepDist' instead of hardcoded 1.5f
-            float[] tryDistances = new float[] { maxCreepDist, 1.0f, 0.5f, 0.2f };
-
-            foreach (float dist in tryDistances)
+            // 2. Calculate Target (Along the Yellow Arrow)
+            // We use the PatrolPoint's forward vector which points INTO the linked room
+            if (context.hunter.currentInterestTarget != null)
             {
-                // Calculate test point (Lifted slightly to avoid floor clipping)
-                Vector3 testPos = startPos + (forwardDir * dist) + (Vector3.up * 0.2f);
+                Vector3 startPos = context.hunter.currentInterestTarget.position;
+                Vector3 forwardDir = context.hunter.currentInterestTarget.forward;
+
+                // Lifted Target Fix (+0.5y)
+                Vector3 rawTarget = startPos + (forwardDir * creepDistance) + (Vector3.up * 0.5f);
+
                 NavMeshHit hit;
-
-                // A. Does a floor exist here?
-                if (NavMesh.SamplePosition(testPos, out hit, 1.0f, NavMesh.AllAreas))
+                if (NavMesh.SamplePosition(rawTarget, out hit, 3.0f, NavMesh.AllAreas))
                 {
-                    // B. Can we actually WALK here?
-                    NavMeshPath path = new NavMeshPath();
-                    agent.CalculatePath(hit.position, path);
-
-                    if (path.status == NavMeshPathStatus.PathComplete)
-                    {
-                        // Success! We found a reachable spot.
-                        agent.SetDestination(hit.position);
-                        debugTargetPos = hit.position;
-                        isValidTarget = true;
-                        foundPath = true;
-                        break; // Stop searching
-                    }
+                    agent.SetDestination(hit.position);
+                    debugTargetPos = hit.position;
+                    isValidTarget = true;
+                }
+                else
+                {
+                    // Fallback: Just stand at the threshold
+                    agent.SetDestination(startPos);
+                    debugTargetPos = startPos;
+                    isValidTarget = false;
                 }
             }
 
-            if (!foundPath)
-            {
-                // Fallback
-                agent.SetDestination(startPos);
-                debugTargetPos = startPos;
-                isValidTarget = false;
-                Debug.LogWarning("[PerformDoorwayPeek] Could not find ANY walkable path into room. Standing still.");
-            }
-
             timer = peekDuration;
-            context.hunter.currentBTState = "ACTION: Creeping...";
+            context.hunter.currentBTState = "ACTION: Creeping & Scanning...";
         }
 
         protected override NodeState OnUpdate()
         {
-            // Visuals: Green = Moving, Yellow = Path Failed, Red = No Target Found
-            Color color = isValidTarget ? Color.green : Color.red;
-            if (isValidTarget && !context.agent.hasPath && !context.agent.pathPending) color = Color.yellow;
+            // --- OPTIONAL: FORCE HEAD LOOK ---
+            // If you want him to stare at the destination instead of scanning randomly:
+            // context.hunter.GetComponent<HunterHeadController>().OverrideLookTarget(debugTargetPos);
 
+            // Visuals
+            Color color = isValidTarget ? Color.green : Color.red;
+            if (isValidTarget && !context.agent.hasPath) color = Color.yellow;
             Debug.DrawLine(context.agent.transform.position, debugTargetPos, color);
-            Debug.DrawRay(debugTargetPos, Vector3.up, color);
 
             timer -= Time.deltaTime;
+
             if (timer > 0f) return NodeState.RUNNING;
+
             return NodeState.SUCCESS;
         }
 
         protected override void OnExit()
         {
+            // Restore
             context.agent.speed = originalSpeed;
             context.agent.stoppingDistance = originalStoppingDist;
 
-            if (timer <= 0f && context.hunter.currentInterestTarget != null)
+            // Mark Visited
+            if (context.hunter.currentInterestTarget != null)
             {
                 context.hunter.RecordPatrolVisit(context.hunter.currentInterestTarget);
                 context.hunter.currentInterestTarget = null;
