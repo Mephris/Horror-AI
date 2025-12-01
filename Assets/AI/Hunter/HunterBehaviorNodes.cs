@@ -100,7 +100,8 @@ public class HunterBehaviorNodes
             // 1. Check if we have a valid target
             if (context.hunter.currentInterestTarget != null)
             {
-                float dist = Vector3.Distance(context.agent.transform.position, context.hunter.currentInterestTarget.position);
+                // DISTANCE CHECK: We now check distance to the NAV DESTINATION, not the object
+                float dist = Vector3.Distance(context.agent.transform.position, context.hunter.currentNavDestination);
 
                 if (dist <= 3.0f) return NodeState.SUCCESS;
 
@@ -127,13 +128,20 @@ public class HunterBehaviorNodes
 
             if (bestPoint != null)
             {
+                // SET THE INTEREST (Data)
                 context.hunter.currentInterestTarget = bestPoint;
+
+                // SET THE DESTINATION (Vantage Logic)
+                // "Find a spot 3 meters away from the point so I can see it"
+                context.hunter.currentNavDestination = VantageSolver.GetVantagePosition(bestPoint, context.agent.transform.position, 3.0f);
+
                 string roomName = "Hallway";
                 if (context.hunter.patrolPointData.TryGetValue(bestPoint, out HunterPatrolMemory mem) && mem.parentRoom != null)
                 {
                     roomName = mem.parentRoom.roomName;
                 }
-                context.hunter.currentBTState = $"PATROL: Locked on [{roomName}] {bestPoint.name}";
+
+                context.hunter.currentBTState = $"PATROL: Stalking [{roomName}] {bestPoint.name}";
                 return NodeState.SUCCESS;
             }
 
@@ -157,7 +165,9 @@ public class HunterBehaviorNodes
             if (context.hunter.currentInterestTarget == null) return NodeState.FAILURE;
 
             NavMeshAgent agent = context.agent;
-            Vector3 finalTarget = context.hunter.currentInterestTarget.position;
+
+            // FIX: Move to the calculated VANTAGE point, not the object itself
+            Vector3 finalTarget = context.hunter.currentNavDestination;
 
             // CALCULATE DRIFT PATH
             agent.CalculatePath(finalTarget, pathContainer);
