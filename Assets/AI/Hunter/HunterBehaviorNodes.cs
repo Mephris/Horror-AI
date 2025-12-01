@@ -253,77 +253,84 @@ public class HunterBehaviorNodes
     // =================================================================
     // ACTION: Creep & Peek (Event-Driven Version)
     // =================================================================
+    // ACTION: Creep & Peek (Partner Point Version)
     public class PerformDoorwayPeek : HunterTask
     {
-        private float timer = 0f;
+        // State
+        private float timer;
         private float originalSpeed;
         private float originalStoppingDist;
+        private bool isValidTarget;
+        private Vector3 debugTargetPos;
 
         // Settings
         private float creepSpeed = 0.5f;
-        private float creepDistance = 2.0f; // Increased distance to ensure he crosses threshold
         private float peekDuration = 4.0f;
-
-        // Debug
-        private Vector3 debugTargetPos;
-        private bool isValidTarget;
 
         public PerformDoorwayPeek(HunterBehaviorNodes context) : base(context) { }
 
         protected override void OnEnter()
         {
             NavMeshAgent agent = context.agent;
+            Transform currentTarget = context.hunter.currentInterestTarget;
+
+            // 1. Capture State
             originalSpeed = agent.speed;
             originalStoppingDist = agent.stoppingDistance;
 
-            // 1. Slow Down (The Creep)
+            // 2. Apply Slow Settings
             agent.speed = creepSpeed;
-            agent.stoppingDistance = 0.0f;
+            agent.stoppingDistance = 0.1f;
             agent.isStopped = false;
 
-            // 2. Calculate Target (Along the Yellow Arrow)
-            // We use the PatrolPoint's forward vector which points INTO the linked room
-            if (context.hunter.currentInterestTarget != null)
+            isValidTarget = false;
+
+            // 3. Find Partner Point (The "Inside" Spot)
+            if (currentTarget != null)
             {
-                Vector3 startPos = context.hunter.currentInterestTarget.position;
-                Vector3 forwardDir = context.hunter.currentInterestTarget.forward;
+                PatrolPoints pointScript = currentTarget.GetComponent<PatrolPoints>();
 
-                // Lifted Target Fix (+0.5y)
-                Vector3 rawTarget = startPos + (forwardDir * creepDistance) + (Vector3.up * 0.5f);
-
-                NavMeshHit hit;
-                if (NavMesh.SamplePosition(rawTarget, out hit, 3.0f, NavMesh.AllAreas))
+                if (pointScript != null && pointScript.partnerPoint != null)
                 {
-                    agent.SetDestination(hit.position);
-                    debugTargetPos = hit.position;
-                    isValidTarget = true;
+                    // TARGET IS THE PARTNER (Point B)
+                    Vector3 rawTarget = pointScript.partnerPoint.transform.position;
+
+                    // Validate Floor (Lift Fix + Sample)
+                    // Even though Point B exists, we verify it's reachable on NavMesh
+                    NavMeshHit hit;
+                    if (NavMesh.SamplePosition(rawTarget + Vector3.up * 0.5f, out hit, 2.0f, NavMesh.AllAreas))
+                    {
+                        agent.SetDestination(hit.position);
+                        debugTargetPos = hit.position;
+                        isValidTarget = true;
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"[Peek] Partner Point {pointScript.partnerPoint.name} is off-mesh!");
+                        agent.SetDestination(rawTarget); // Try anyway
+                    }
                 }
                 else
                 {
-                    // Fallback: Just stand at the threshold
-                    agent.SetDestination(startPos);
-                    debugTargetPos = startPos;
-                    isValidTarget = false;
+                    // Fallback: If no partner, just stand here (or use old forward logic)
+                    Debug.LogWarning($"[Peek] Point {currentTarget.name} has no Partner linked!");
+                    agent.SetDestination(currentTarget.position);
                 }
             }
 
             timer = peekDuration;
-            context.hunter.currentBTState = "ACTION: Creeping & Scanning...";
+            context.hunter.currentBTState = "ACTION: Creeping to Partner Point...";
         }
 
         protected override NodeState OnUpdate()
         {
-            // --- OPTIONAL: FORCE HEAD LOOK ---
-            // If you want him to stare at the destination instead of scanning randomly:
-            // context.hunter.GetComponent<HunterHeadController>().OverrideLookTarget(debugTargetPos);
-
             // Visuals
             Color color = isValidTarget ? Color.green : Color.red;
-            if (isValidTarget && !context.agent.hasPath) color = Color.yellow;
+            if (isValidTarget && !context.agent.hasPath && !context.agent.pathPending) color = Color.yellow;
+
             Debug.DrawLine(context.agent.transform.position, debugTargetPos, color);
 
             timer -= Time.deltaTime;
-
             if (timer > 0f) return NodeState.RUNNING;
 
             return NodeState.SUCCESS;
@@ -335,7 +342,8 @@ public class HunterBehaviorNodes
             context.agent.speed = originalSpeed;
             context.agent.stoppingDistance = originalStoppingDist;
 
-            // Mark Visited
+            // Mark the MAIN target (Point A) as visited
+            // (The partner Point B will be auto-cooled by the Twin Check in HunterAI)
             if (context.hunter.currentInterestTarget != null)
             {
                 context.hunter.RecordPatrolVisit(context.hunter.currentInterestTarget);
