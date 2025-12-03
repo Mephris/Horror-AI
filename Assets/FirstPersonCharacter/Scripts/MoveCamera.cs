@@ -81,7 +81,7 @@ public class MoveCamera : MonoBehaviour
         shakeSpeedUsed = Mathf.Lerp(shakeSpeedUsed, targetShakeSpeed, Time.deltaTime * 5f);
         shakeIntensityUsed = Mathf.Lerp(shakeIntensityUsed, targetShakeIntensity, Time.deltaTime * 5f);
 
-        if (PlayerRigidBody.velocity.magnitude > 0.1f || previousState != cameraState)
+        if (PlayerRigidBody.linearVelocity.magnitude > 0.1f || previousState != cameraState)
         {
 
             previousState = cameraState;
