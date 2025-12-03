@@ -125,12 +125,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "notes/GDD/Hunter AI Structure Plan.md",
+                "file": "notes/Changelog/2025.12.1 - The Vantage Point.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Hunter AI Structure Plan"
+              "title": "2025.12.1 - The Vantage Point"
             }
           },
           {
@@ -268,13 +268,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "notes/GDD/Hunter AI Structure Plan.md",
+                "file": "notes/Changelog/2025.12.1 - The Vantage Point.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline of Hunter AI Structure Plan"
+              "title": "Outline of 2025.12.1 - The Vantage Point"
             }
           }
         ],
@@ -298,6 +298,11 @@
   },
   "active": "6add487562a1e403",
   "lastOpenFiles": [
+    "Temp/FSTimeGet-bda66321869337f45bc6748bf40b4c3b",
+    "Library/LibraryInitializing",
+    "Temp/UnityLockfile",
+    "Temp",
+    "notes/GDD/Hunter AI Structure Plan.md",
     "notes/GDD/Hunter/VantageSolver (vantage point finder).md",
     "notes/GDD/Hunter/HunterJob Functions.md",
     "notes/GDD/Hunter/HunterBehaviorNodes.md",
@@ -318,11 +323,7 @@
     "Temp/ADB-Refresha53522a97c285354e98ded9825da53d1",
     "Library/ShaderCache.db-journal",
     "Temp/ADB-Refreshe3c5cf346e4cd184dbe83def4a6b7f32",
-    "Temp/UnityTempFile-09d1d03f2a8f40b4cb93cd1e43600883",
     "notes/Roadmap.md",
-    "Temp/ADB-Refresh6439e24b5ee8c6749b940926fa5d87e6",
-    "Library/Artifacts/80/8072a49d2ea444cd065ee91e6a4c5c08",
-    "notes/GDD/Hunter AI Structure Plan.md",
     "notes/Changelog/2025.11.12 - Hunter AI Tuning & Emergent Behaviors.md",
     "notes/Changelog/2025.11.11 - Hunter.md",
     "notes/Changelog/2025.11.10 - Hunter.md",
