@@ -125,12 +125,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "notes/GDD/Hunter/HunterBehaviorNodes.md",
+                "file": "notes/GDD/Hunter AI Structure Plan.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "HunterBehaviorNodes"
+              "title": "Hunter AI Structure Plan"
             }
           },
           {
@@ -268,13 +268,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "notes/GDD/Hunter/HunterBehaviorNodes.md",
+                "file": "notes/GDD/Hunter AI Structure Plan.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline of HunterBehaviorNodes"
+              "title": "Outline of Hunter AI Structure Plan"
             }
           }
         ],
@@ -298,11 +298,13 @@
   },
   "active": "6add487562a1e403",
   "lastOpenFiles": [
+    "notes/GDD/Hunter/VantageSolver (vantage point finder).md",
+    "notes/GDD/Hunter/HunterJob Functions.md",
+    "notes/GDD/Hunter/HunterBehaviorNodes.md",
     "notes/Changelog/2025.12.1 - The Vantage Point.md",
     "notes/Changelog/2025.11.26 - Prowler behavior and doors..md",
     "notes/Changelog/2025.11.19 - Hunter Planning.md",
     "notes/Changelog/2025.11.27 - Code audit.md",
-    "notes/GDD/Hunter/VantageSolver (vantage point finder).md",
     "notes/Changelog/2025.11.20 - Patrol & Independent Vision.md",
     "notes/Changelog/2025.11.13- More Logic ffs.md",
     "notes/Changelog/2025.11.6- Patrol Point Changes.md",
@@ -326,8 +328,6 @@
     "notes/Changelog/2025.11.10 - Hunter.md",
     "notes/Changelog/2025.11.7 - Switching from FSM to BT.md",
     "notes/GDD/Hunter/HunterAI Functions.md",
-    "notes/GDD/Hunter/HunterBehaviorNodes.md",
-    "notes/GDD/Hunter/HunterJob Functions.md",
     "notes/GDD/Utility Mapping.md",
     "Pasted image 20251201142630.png",
     "notes/Director.md",
