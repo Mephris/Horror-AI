@@ -136,7 +136,7 @@ public class Rooms : MonoBehaviour
 
         // This pattern relies on the Director component being present and having a public hunterAgent.
         // It's generally safer to pass the agent/position, but we maintain the existing FindObjectOfType structure.
-        NavMeshAgent hunterAgent = FindObjectOfType<Director>()?.hunterAgent;
+        NavMeshAgent hunterAgent = FindAnyObjectByType<Director>()?.hunterAgent;
 
         if (hunterAgent != null && targetRoom != null && hunterAgent.CalculatePath(targetRoom.transform.position, path))
         {

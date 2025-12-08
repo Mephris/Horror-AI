@@ -1,57 +1,73 @@
 using UnityEngine;
 
-// Defines the atomic actions the Hunter can perform
-public enum HunterJobType
+// 1. The Main Verb (What to do?)
+public enum JobType
 {
-    MoveTo,     // Walk to a specific floor coordinate (Vantage Point)
-    Peek,       // Stop and look at an object (Target)
-    Interact,   // Play an animation at an object (Open/Kick)
-    Wait        // Idle for a duration
+    Move,       // Locomotion
+    Action,     // Animation (Peek, Search, Taunt)
+    Wait        // Idling
+}
+
+// 2. The Strategy (How to do it?) - "The Last of Us" Style Intent
+public enum MoveStrategy
+{
+    Direct,     // Go exactly to target (e.g., entering a trigger)
+    Vantage,    // Find a tactical viewing spot (Stalking logic)
+    Creep       // Slow, silent approach (Future use)
 }
 
 [System.Serializable]
 public class HunterJob
 {
-    [Header("Instruction")]
-    public HunterJobType jobType;
-    public float duration;           // How long to Peek/Wait
+    [Header("The Task")]
+    public JobType jobType;
+    public MoveStrategy moveStrategy; // Only used if Type == Move
 
-    [Header("Data")]
-    public Vector3 vantagePosition;  // WHERE to stand (The calculated floor spot)
-    public Transform targetInterest; // WHAT to look at (The Door/Table)
-    public float moveSpeed = 3.5f;   // Speed override for this specific job
+    [Header("The Context")]
+    // The "Anchor" - The Director/Planner points at this object.
+    // The Executor will figure out the actual floor position later.
+    public Transform targetInterest;
 
-    // --- CONSTRUCTORS (Helpers for easy creation) ---
+    // Optional: If we want to go to a blank point in space (no object)
+    public Vector3? fallbackPosition;
 
-    // 1. Movement Job (Go to the Vantage Point)
-    public static HunterJob CreateMove(Vector3 destination, float speed = 3.5f)
+    [Header("Parameters")]
+    public float duration; // For Wait/Action
+    public float speed;    // 0.5 = Walk, 1.0 = Run
+
+    // --- FACTORY HELPERS (The "Nanojob" Recipes) ---
+
+    // Recipe 1: Stalk an Object (Vantage Logic)
+    public static HunterJob CreateStalk(Transform target)
     {
         return new HunterJob
         {
-            jobType = HunterJobType.MoveTo,
-            vantagePosition = destination,
-            moveSpeed = speed,
-            targetInterest = null
+            jobType = JobType.Move,
+            moveStrategy = MoveStrategy.Vantage,
+            targetInterest = target,
+            speed = 0.5f // Creepy walk
         };
     }
 
-    // 2. Peek Job (Stand still and look at the Object)
-    public static HunterJob CreatePeek(Transform targetToLookAt, float time = 4.0f)
+    // Recipe 2: Go To Location (Direct Logic)
+    public static HunterJob CreateMoveTo(Vector3 pos)
     {
         return new HunterJob
         {
-            jobType = HunterJobType.Peek,
-            targetInterest = targetToLookAt,
-            duration = time
+            jobType = JobType.Move,
+            moveStrategy = MoveStrategy.Direct,
+            fallbackPosition = pos,
+            speed = 0.6f
         };
     }
 
-    // 3. Wait Job (Just pause)
-    public static HunterJob CreateWait(float time)
+    // Recipe 3: Perform Action (Peek/Search)
+    public static HunterJob CreateAction(JobType type, Transform target, float time)
     {
         return new HunterJob
         {
-            jobType = HunterJobType.Wait,
+            jobType = type,
+            targetInterest = target,
             duration = time
         };
     }

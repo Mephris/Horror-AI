@@ -55,7 +55,7 @@ public class HunterHeadController : MonoBehaviour
 
         foreach (var mem in nearbyPoints)
         {
-            Transform pointT = mem.patrolpointTransform;
+            Transform pointT = mem.pointTransform;
             // FIX: Uses the new variable name
             if (pointT == hunterAI.currentInterestTarget) continue;
 

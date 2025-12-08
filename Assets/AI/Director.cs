@@ -66,7 +66,7 @@ public class Director : MonoBehaviour
     private void Awake()
     {
         calculationInterval = calculationTime;
-        roomToTarget = FindObjectOfType<Rooms>();
+        roomToTarget = FindAnyObjectByType<Rooms>();
     }
 
     private void Start()
@@ -162,7 +162,7 @@ public class Director : MonoBehaviour
     {
         Room targetRoom = roomToTarget.ClosestRoomComponent();
         NavMeshPath path = new NavMeshPath();
-        if (FindObjectOfType<Director>().hunterAgent.CalculatePath(targetRoom.transform.position, path))
+        if (FindAnyObjectByType<Director>().hunterAgent.CalculatePath(targetRoom.transform.position, path))
         {
             // If the path has multiple corners, we target the second to last corner
             if (path.corners.Length > 1)
@@ -182,7 +182,7 @@ public class Director : MonoBehaviour
     {
         Room targetRoom = roomToTarget.MostCostMovement(player.transform.position);
         NavMeshPath path = new NavMeshPath();
-        if (FindObjectOfType<Director>().hunterAgent.CalculatePath(targetRoom.transform.position, path))
+        if (FindAnyObjectByType<Director>().hunterAgent.CalculatePath(targetRoom.transform.position, path))
         {
 
             if (path.corners.Length > 1) // Ensure there is more than one corner

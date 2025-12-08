@@ -16,7 +16,7 @@ using UnityEditor;
 [System.Serializable]
 public class HunterPatrolMemory
 {
-    public Transform patrolpointTransform;
+    public Transform pointTransform;
     public PointType pointType;
 
     public float lastPatrolTime = 0f;
@@ -99,9 +99,9 @@ public class HunterAI : MonoBehaviour
     [HideInInspector] public Dictionary<string, RoomInfo> roomData = new Dictionary<string, RoomInfo>();
     private Room[] rooms;
 
-    // --- JOB SYSTEM (HTN Plan) ---
+    // --- JOB SYSTEM (Placeholder for now) ---
     public Queue<HunterJob> jobQueue = new Queue<HunterJob>();
-    public HunterJob currentActiveJob = null; // The job currently being executed
+    public HunterJob currentActiveJob = null;
 
     // Components
     private NavMeshAgent agent;
@@ -143,8 +143,8 @@ public class HunterAI : MonoBehaviour
     }
     private void BuildMemoryMap()
     {
-        rooms = FindObjectsOfType<Room>();
-        PatrolPoints[] allPointsInScene = FindObjectsOfType<PatrolPoints>();
+        rooms = FindObjectsByType<Room>(FindObjectsSortMode.None);
+        PatrolPoints[] allPointsInScene = FindObjectsByType<PatrolPoints>(FindObjectsSortMode.None);
 
         Debug.Log($"[HunterAI] Found {rooms.Length} Rooms and {allPointsInScene.Length} Points.");
 
@@ -168,7 +168,7 @@ public class HunterAI : MonoBehaviour
                 {
                     HunterPatrolMemory newMemory = new HunterPatrolMemory
                     {
-                        patrolpointTransform = point.transform,
+                        pointTransform = point.transform,
                         pointType = point.pointType,
                         playerProbability = 0.5f,
                         lastPatrolTime = Time.time,
@@ -204,6 +204,7 @@ public class HunterAI : MonoBehaviour
 
     #region --- CORE AI BRAIN (SCORING) ---
 
+    // THIS IS THE ORIGINAL SCORING FUNCTION
     public Transform GetBestNextPoint(Vector3 currentPos, List<Transform> ignorePoints = null)
     {
         Transform bestCandidate = null;
@@ -287,7 +288,6 @@ public class HunterAI : MonoBehaviour
         return false;
     }
 
-    // FIX: Corrected syntax for out parameter assignment
     public bool GetValidFloorPosition(Vector3 targetPos, float radius, out Vector3 snappedPos)
     {
         Vector3 liftedTarget = targetPos + (Vector3.up * 0.2f);
@@ -314,7 +314,7 @@ public class HunterAI : MonoBehaviour
     public List<HunterPatrolMemory> GetLocalHotPoints(Vector3 center, float radius)
     {
         return patrolPointData.Values
-            .Where(p => p.playerProbability > baseUncertainty && Vector3.Distance(center, p.patrolpointTransform.position) <= radius)
+            .Where(p => p.playerProbability > baseUncertainty && Vector3.Distance(center, p.pointTransform.position) <= radius)
             .OrderByDescending(p => p.playerProbability)
             .ToList();
     }
@@ -372,6 +372,8 @@ public class HunterAI : MonoBehaviour
         // Nodes
         var isPlayerSeen = new HunterBehaviorNodes.IsPlayerSeen(btContext);
         var chasePlayer = new HunterBehaviorNodes.ChasePlayer(btContext);
+
+        // ORIGINAL NODES
         var acquireTarget = new HunterBehaviorNodes.AcquirePatrolTarget(btContext);
         var movePatrol = new HunterBehaviorNodes.MoveToPatrolPoint(btContext);
 
@@ -405,33 +407,11 @@ public class HunterAI : MonoBehaviour
         Actions.HunterSawPatrolPoint += OnPatrolPointSeen;
     }
 
-    // --- JOB MANAGEMENT ---
-    public void AddJob(HunterJob job)
-    {
-        jobQueue.Enqueue(job);
-    }
-
-    public HunterJob GetNextJob()
-    {
-        if (jobQueue.Count > 0)
-        {
-            currentActiveJob = jobQueue.Dequeue();
-            return currentActiveJob;
-        }
-        currentActiveJob = null;
-        return null;
-    }
-
-    public void ClearJobs()
-    {
-        jobQueue.Clear();
-        currentActiveJob = null;
-    }
-
-    public bool HasJobs()
-    {
-        return jobQueue.Count > 0 || currentActiveJob != null;
-    }
+    // --- JOB MANAGEMENT (Kept generic, not used in old logic) ---
+    public void AddJob(HunterJob job) { jobQueue.Enqueue(job); }
+    public HunterJob GetNextJob() { return jobQueue.Count > 0 ? jobQueue.Dequeue() : null; }
+    public void ClearJobs() { jobQueue.Clear(); }
+    public bool HasJobs() { return jobQueue.Count > 0 || currentActiveJob != null; }
 
     #endregion
 
@@ -513,34 +493,17 @@ public class HunterAI : MonoBehaviour
                 Handles.Label(roomCenter + Vector3.up * 2.0f, $"{room.roomName}\n{room.generalCuriosity:F2}");
             }
         }
-        // --- VANTAGE SOLVER DEBUG ---
-        // Draw the candidates from the last calculation
         if (VantageSolver.DebugCandidates != null)
         {
             for (int i = 0; i < VantageSolver.DebugCandidates.Count; i++)
             {
                 Vector3 pos = VantageSolver.DebugCandidates[i];
                 string label = VantageSolver.DebugLabels[i];
-
-                // Is this the winner?
                 bool isWinner = (Vector3.Distance(pos, VantageSolver.DebugBestPoint) < 0.5f);
-
-                // Color Logic
                 Gizmos.color = isWinner ? Color.green : Color.yellow;
-
-                // Draw Sphere
                 Gizmos.DrawWireSphere(pos, 0.3f);
                 if (isWinner) Gizmos.DrawSphere(pos, 0.3f);
-
-                // Draw Label
                 Handles.Label(pos + Vector3.up * 0.5f, label);
-
-                // Draw line to target to show the "Cone" shape
-                if (currentInterestTarget != null)
-                {
-                    Gizmos.color = new Color(1, 0.92f, 0.016f, 0.3f); // Faint yellow
-                    Gizmos.DrawLine(currentInterestTarget.position, pos);
-                }
             }
         }
 #endif
