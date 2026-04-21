@@ -134,6 +134,20 @@
             }
           },
           {
+            "id": "c4010b56ace42012",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Untitled.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Untitled"
+            }
+          },
+          {
             "id": "068ea6db08495b3b",
             "type": "leaf",
             "state": {
@@ -148,7 +162,7 @@
             }
           }
         ],
-        "currentTab": 8
+        "currentTab": 9
       }
     ],
     "direction": "vertical"
@@ -268,13 +282,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "notes/Changelog/2025.12.1 - The Vantage Point.md",
+                "file": "Untitled.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline of 2025.12.1 - The Vantage Point"
+              "title": "Outline of Untitled"
             }
           }
         ],
@@ -296,19 +310,22 @@
       "obsidian-git:Open Git source control": false
     }
   },
-  "active": "6add487562a1e403",
+  "active": "c4010b56ace42012",
   "lastOpenFiles": [
-    "Temp/UnityTempFile-ce12f4818aa577544bc37452411b6d7e",
-    "Temp/ADB-Refresh8128b4e1e8ba6464d8207f47383dbc4a",
-    "Temp/ADB-Refresh4349489e12d97264ca0b79f024b1cfbf",
-    "Temp/ADB-Refresh185d753b658d1e442b3c65677554744a",
-    "Temp/ADB-Refresh070bc5ef1344f1549bb0575f2fdc1718",
-    "Temp/ADB-Refresha59af7fad10e9fd4c96feef20988727e",
-    "Temp/ADB-Refreshf97c5362ea4e7304ea91f884d67232b5",
-    "Temp/ADB-Refresh2d155ecad0ebae645b97af0fc301879d",
-    "Temp/ADB-Refresh8508046413430384989fe178d1584c78",
-    "Temp/ADB-Refreshf7854fcd70975bc40a0fbde0886521ef",
-    "Temp/ADB-Refresh54c9faadd8caa3d44b4a051cf32260a6",
+    "Temp/__Backupscenes/0.backup",
+    "Temp/UnityTempFile-d96c6c54fab583249b109b9379af5078",
+    "Temp/__Backupscenes",
+    "Library/UndoStack.bin",
+    "Library/UndoData.bin",
+    "Temp/ProcessJobs",
+    "Library/EditorInstance.json",
+    "Logs/shadercompiler-UnityShaderCompiler.exe-0.log",
+    "Library/Bee/TundraBuildState.state",
+    "Library/Bee/artifacts/1900b0aE.dag/Assembly-CSharp.ref.dll",
+    "Library/Bee/artifacts/1900b0aE.dag/Assembly-CSharp.pdb",
+    "Przyk.canvas",
+    "Untitled.md",
+    "notes/Changelog/2025.12.1 - The Vantage Point.md",
     "Library/PackageCache/com.unity.ai.navigation@5218e4bf7edc/Samples~/Terrains/LightmapWithFog.png",
     "Library/PackageCache/com.unity.ai.navigation@5218e4bf7edc/Samples~/Materials/modify_crosshair.png",
     "Library/PackageCache/com.unity.ai.navigation@5218e4bf7edc/EditorResources/Overlay/NavigationOverlay@64.png",
@@ -341,8 +358,6 @@
     "Library/PackageCache/com.unity.ai.navigation@5218e4bf7edc/Documentation~/NavMeshModifier.md",
     "Library/PackageCache/com.unity.ai.navigation@5218e4bf7edc/Documentation~/NavMeshLink.md",
     "Library/PackageCache/com.unity.ai.navigation@5218e4bf7edc/Documentation~/NavigationOverview.md",
-    "Library/PackageCache/com.unity.ai.navigation@5218e4bf7edc/Documentation~/NavMeshBuildingComponents.md",
-    "Library/PackageCache/com.unity.ai.navigation@5218e4bf7edc/Documentation~/NavMeshAgent.md",
-    "Library/PackageCache/com.unity.ai.navigation@5218e4bf7edc/Documentation~/NavInnerWorkings.md"
+    "Library/PackageCache/com.unity.ai.navigation@5218e4bf7edc/Documentation~/NavMeshBuildingComponents.md"
   ]
 }
